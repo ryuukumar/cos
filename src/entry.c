@@ -73,7 +73,7 @@ void _start(void) {
 
 	printf("\n\nHello, World!\n\n");
 
-	set_color(0x88  aaee);
+	set_color(0x88aaee);
 	printf("System info:\n");
 	if (bootinfo_req.response != NULL) {
 		set_color(0x888888);
