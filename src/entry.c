@@ -31,6 +31,13 @@ static volatile struct limine_memmap_request memmap_req = {
 	.id = LIMINE_MEMMAP_REQUEST ,
 	.revision = 0
 };
+
+static volatile struct limine_hhdm_request hhdm_req = {
+	.id = LIMINE_HHDM_REQUEST,
+	.revision = 0
+};
+
+uint64_t hhdm_base = 0;
  
 // Halt and catch fire function.
 static void hcf(void) {
@@ -61,9 +68,20 @@ void _start(void) {
 	drawBorder(20);
 
 	__init_console__(framebuffer->width, framebuffer->height,
-						40, 40, 1, 1, 3);
+						40, 40, 1, 1, 2);
 
-	// init_memmgt();
+	// Check if we got a valid HHDM response.
+	if (hhdm_req.response != NULL) {
+		hhdm_base = hhdm_req.response->offset;
+		printf("HHDM Address: %lx\n\n", hhdm_base);
+	} else {
+		printf("Error: did not receive HHDM address.\n\n");
+	}
+
+	init_memmgt(hhdm_base);
+	walk_pagetable();
+
+	printf("Paddr of 0x%lx : 0x%lx\n", , get_paddr(&hhdm_base));
 
 	set_color(0x44eeaa);
 
@@ -85,22 +103,23 @@ void _start(void) {
 		printf("\nSystem booted at time %ld.\n", boottime_req.response->boot_time);
 	} else printf("\nDid not receive boot time from Limine.\n");
 
-	/*
 	printf("\n\n");
 	uint64_t cr3;
 	__asm__ volatile ("mov %%cr3, %0" : "=r" (cr3));
 	cr3 = cr3 & 0xFFFFFFFFFF000;
 
 	printf("CR3: %lx", cr3);
-	*/
 
-	if (memmap_req.response != NULL) {
+	cr3 += hhdm_base;
+	printf("\nCR3 with offset: %lx", cr3);
+
+	/*if (memmap_req.response != NULL) {
 		for (uint64_t i=0; i<memmap_req.response->entry_count; i++) {
 			printf("%d: 0x%lx to 0x%lx | type %d\n", i, memmap_req.response->entries[i]->base,
 				memmap_req.response->entries[i]->base + memmap_req.response->entries[i]->length - 1,
 				memmap_req.response->entries[i]->type);
 		}
-	}
+	}*/
  
 	// We're done, just hang...
 	hcf();

@@ -79,7 +79,7 @@ void printf(const char* format, ...) {
 				} break;
 			case '\t':
 				size_t idx = get_idx();
-				idx += (TAB_WIDTH - idx % TAB_WIDTH);
+				idx = (idx / TAB_WIDTH + 1) * TAB_WIDTH;
 				set_idx(idx);
 				break;
 			default:
