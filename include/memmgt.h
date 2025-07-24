@@ -76,4 +76,13 @@ void* get_paddr(void* vaddr);
 
 uint64_t allocate_physical_pageframes(size_t);
 
+
+// LIBALLOC FUNCTION IMPLEMENTATIONS
+
+void* try_assign_pt(pt_entry_t*, size_t);
+int   liballoc_lock();
+void  liballoc_unlock();
+void* liballoc_alloc(size_t);
+int   liballoc_free(void*, size_t);
+
 #endif

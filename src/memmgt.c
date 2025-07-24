@@ -197,3 +197,87 @@ void* get_paddr(void* vaddr) {
 
 	return (void*)phys_addr;
 }
+
+
+
+
+
+/*
+
+LIBALLOC FUNCTION IMPLEMENTATIONS
+
+*/
+
+void* try_assign_pt(pt_entry_t* pt_base_ptr, size_t count) {
+	if (is_locked) return NULL;
+
+	int free_count = 0;
+	for (int i = 0; i < 512; i++) {
+		if (pt_base_ptr[i].allocated) {
+			free_count = 0;
+			continue;
+		}
+		else {
+			free_count++;
+			if ((size_t)free_count == count) {
+				int init_idx = i - count + 1;
+
+				for (int j = init_idx; j <= i; j++) {
+					pt_base_ptr[j].allocated = 1;
+				}
+
+				void* alloc_addr = (void*)((1ll << 39) | ((uint64_t)init_idx << 12));
+				return alloc_addr;
+			}
+		}
+	}
+	return NULL;
+}
+
+int liballoc_lock() {
+	is_locked = true;
+	return 0;
+}
+
+int liballoc_unlock() {
+	is_locked = false;
+	return 0;
+}
+
+void* liballoc_alloc(size_t count) {
+	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
+	if (!pml4t_entry->present) return NULL;
+	pdpt_entry_t* pdpt_entry = &((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset))[0];
+	if (!pdpt_entry->present) return NULL;
+	pd_entry_t* pd_entry = &((pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset))[0];
+	if (!pd_entry->present) return NULL;
+	pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
+
+	return try_assign_pt(pt_base_ptr, count);
+}
+
+int liballoc_free(void* ptr, size_t count) {
+	if (is_locked) return -7;
+	if (get_paddr(ptr) == NULL) return -1;
+
+	uint64_t virtual_addr = (uint64_t)ptr;
+
+	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[(virtual_addr >> 39) & 0x1FF];
+	if (!pml4t_entry->present || ((virtual_addr >> 39) & 0x1FF) != 1) return -2;
+	pdpt_entry_t* pdpt_entry = &((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset))[(virtual_addr >> 30) & 0x1FF];
+	if (!pdpt_entry->present || ((virtual_addr >> 30) & 0x1FF) != 0) return -3;
+	pd_entry_t* pd_entry = &((pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset))[(virtual_addr >> 21) & 0x1FF];
+	if (!pd_entry->present || ((virtual_addr >> 21) & 0x1FF) != 0) return -4;
+	pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
+
+	for (size_t i = 0; i < count; i++) {
+		if (i + ((virtual_addr >> 12) & 0x1FF) >= 512) return -5; // out of bounds
+
+		pt_entry_t* pt_entry = &pt_base_ptr[i + ((virtual_addr >> 12) & 0x1FF)];
+		if (!pt_entry->allocated) return -6;
+
+		pt_entry->allocated = 0;
+	}
+
+	return 0;
+}
