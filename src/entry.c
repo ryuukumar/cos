@@ -8,6 +8,7 @@
 #include <gdt.h>
 #include <stack.h>
 #include <memmgt.h>
+#include <stdio.h>
 
 #define FONT_SIZE   2
 
@@ -73,15 +74,12 @@ void _start(void) {
 	// Check if we got a valid HHDM response.
 	if (hhdm_req.response != NULL) {
 		hhdm_base = hhdm_req.response->offset;
-		printf("HHDM Address: %lx\n\n", hhdm_base);
 	} else {
 		printf("Error: did not receive HHDM address.\n\n");
+		hcf();
 	}
 
-	init_memmgt(hhdm_base);
-	walk_pagetable();
-
-	printf("Paddr of 0x%lx : 0x%lx\n", , get_paddr(&hhdm_base));
+	init_memmgt(hhdm_base, memmap_req.response);
 
 	set_color(0x44eeaa);
 
@@ -109,17 +107,6 @@ void _start(void) {
 	cr3 = cr3 & 0xFFFFFFFFFF000;
 
 	printf("CR3: %lx", cr3);
-
-	cr3 += hhdm_base;
-	printf("\nCR3 with offset: %lx", cr3);
-
-	/*if (memmap_req.response != NULL) {
-		for (uint64_t i=0; i<memmap_req.response->entry_count; i++) {
-			printf("%d: 0x%lx to 0x%lx | type %d\n", i, memmap_req.response->entries[i]->base,
-				memmap_req.response->entries[i]->base + memmap_req.response->entries[i]->length - 1,
-				memmap_req.response->entries[i]->type);
-		}
-	}*/
  
 	// We're done, just hang...
 	hcf();

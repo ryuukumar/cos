@@ -1,10 +1,29 @@
 #include <memmgt.h>
 #include <stdio.h>
 #include <memory.h>
+#include <limine.h>
 
+
+
+
+
+
+#define PAGE_SIZE 4096
+
+uint64_t alloc_frames_base  = 0;
+uint64_t alloc_frames_count = 0;
+uint64_t alloc_frames_limit = 0;
 
 pml4t_entry_t* pml4_base_ptr = NULL;
 uint64_t hhdm_offset = 0;
+
+bool is_locked = false;
+
+extern struct {
+	pdpt_entry_t pdpt_entry[512];
+	pd_entry_t   pd_entry[512];
+	pt_entry_t   pt_entry[512];
+} memmap;
 
 
 /*!
@@ -22,108 +41,127 @@ uint64_t read_cr3() {
  * Sets the base pointer for the PML4 table and stores the HHDM offset.
  * @param p_hhdm_offset The higher half direct mapping offset.
  */
-void init_memmgt(uint64_t p_hhdm_offset) {
+void init_memmgt(uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_response) {
 	uint64_t pml4_base = read_cr3() & 0xFFFFFFFFFF000;
 	pml4_base_ptr = (pml4t_entry_t*)(pml4_base + p_hhdm_offset);
 	hhdm_offset = p_hhdm_offset;
+
+	uint64_t highest_limit_so_far = 0;
+	uint64_t best_base_so_far = 0xffffffffffffffff;
+
+	// set permissible limit
+	if (memmap_response != NULL) {
+		for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
+			if (memmap_response->entries[i]->type == 0) {
+				if (memmap_response->entries[i]->length > highest_limit_so_far) {
+					highest_limit_so_far = memmap_response->entries[i]->length;
+					best_base_so_far = memmap_response->entries[i]->base;
+				}
+			}
+		}
+	}
+
+	if (highest_limit_so_far == 0) {
+		printf("It's so joever for physical memory\n");
+		return;
+	}
+
+	alloc_frames_base  = best_base_so_far;
+	alloc_frames_limit = highest_limit_so_far + best_base_so_far;
+
+	// set up default memory map
+	memset(&memmap, 0, sizeof(memmap));
+
+	for (int i = 0; i < 1; i++) {
+		memmap.pdpt_entry[i].present = 1;
+		memmap.pdpt_entry[i].read_write = 1;
+		memmap.pdpt_entry[i].pd_base_address = ((uint64_t)(get_paddr(&memmap.pd_entry[i * 512])) >> 12) & 0xFFFFFFFFFF;
+		memmap.pdpt_entry[i].xd = 1;
+	}
+
+	for (int i = 0; i < 1; i++) {
+		memmap.pd_entry[i].present = 1;
+		memmap.pd_entry[i].rw = 1;
+		memmap.pd_entry[i].nex = 1;
+		memmap.pd_entry[i].pt_base_address = ((uint64_t)(get_paddr(&memmap.pt_entry[i * 512])) >> 12) & 0xFFFFFFFFFF;
+	}
+
+	for (int i = 0; i < 512; i++) {
+		memmap.pt_entry[i].present = 1;
+		memmap.pt_entry[i].rw = 1;
+		memmap.pt_entry[i].frame_base_address = ((uint64_t)(alloc_frames_base + PAGE_SIZE * i) >> 12) & 0xFFFFFFFFFF;
+	}
+
+	// initialise PML4T idx 1 and PDPT idx 0 for our page assignments
+	uint64_t pdpt_base_address = ((uint64_t)(get_paddr(&memmap.pdpt_entry[0])));
+	pml4t_entry_t pml4t_entry = {
+		.present = 1,
+		.read_write = 1,
+		.user_supervisor = 0,
+		.page_write_through = 0,
+		.page_cache_disable = 0,
+		.accessed = 0,
+		.ignored1 = 0,
+		.page_size = 0, // must be 0 in PML4
+		.ignored2 = 0,
+		.pdpt_base_address = pdpt_base_address >> 12 & 0xFFFFFFFFFF, // physical address of PDPT
+		.ignored3 = 0,
+		.xd = 1 // execute-disable bit
+	};
+	pml4_base_ptr[1] = pml4t_entry;
+}
+
+uint64_t allocate_physical_pageframes(size_t count) {
+	if (alloc_frames_base + (PAGE_SIZE * (alloc_frames_count + count)) > alloc_frames_limit) return 0;
+	if (is_locked) return 0;
+
+	uint64_t allocated_memory = alloc_frames_base + (PAGE_SIZE * alloc_frames_count);
+	alloc_frames_count += count;
+	return allocated_memory;
 }
 
 /*!
  * Walks the page table hierarchy and prints present entries and their address ranges.
  */
 void walk_pagetable() {
-	for (int i = 0; i < 512; i++) {
-		pml4t_entry_t* pml4t_entry = &pml4_base_ptr[i];
-		if (!pml4t_entry->present) continue;
+	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
+	if (!pml4t_entry->present) return;
 
-		printf("PML4 %d:\tPDPT Base Address: 0x%lx\tVaddr: 0x%lx\n",
-			i, pml4t_entry->pdpt_base_address << 12,
-			(pml4t_entry->pdpt_base_address << 12)+hhdm_offset);
+	pdpt_entry_t* pdpt_base_ptr = (pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset);
+	pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[0];
+	if (!pdpt_entry->present) return;
 
-		pdpt_entry_t* pdpt_base_ptr = (pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset);
-		for (int j = 0; j < 512; j++) {
-			pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[j];
-			if (!pdpt_entry->present) continue;
+	pd_entry_t* pd_base_ptr = (pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset);
+	for (int k = 0; k < 512; k++) {
+		pd_entry_t* pd_entry = &pd_base_ptr[k];
+		if (!pd_entry->present) continue;
+		printf("PD %d: PT Base Address:   0x%lx\n",
+			k, pd_entry->pt_base_address << 12);
+		pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
+				
+		bool is_present_pt[512] = { false };
+		for (int k = 0; k < 512; k++) is_present_pt[k] = (&pt_base_ptr[k])->present;
 
-			printf("  PDPT %d:\tPD Base Address:   0x%lx\tVaddr: 0x%lx\n",
-				j, pdpt_entry->pd_base_address << 12,
-				(pdpt_entry->pd_base_address << 12) + hhdm_offset);
-
-			pd_entry_t* pd_base_ptr = (pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset);
-			bool is_present_pd[512] = { false };
-			for (int k = 0; k < 512; k++) is_present_pd[k] = (&pd_base_ptr[k])->present;
-
-			// print ranges of present pd's
-			int range_start = -1;
-			for (int k = 0; k <= 512; k++) {
-				if (k < 512 && is_present_pd[k]) {
-					if (range_start == -1)
-						range_start = k;
-				}
-				else {
-					if (range_start != -1) {
-						if (range_start == k - 1) {
-							printf("    Present PD: %d\n", range_start);
-						}
-						else {
-							printf("    Present PDs: %d-%d\n", range_start, k - 1);
-						}
-						range_start = -1;
+		// print ranges of present pd's
+		int range_start = -1;
+		for (int k = 0; k <= 512; k++) {
+			if (k < 512 && is_present_pt[k]) {
+				if (range_start == -1)
+					range_start = k;
+			}
+			else {
+				if (range_start != -1) {
+					if (range_start == k - 1) {
+						printf("  Present PT: %d\n", range_start);
 					}
+					else {
+						printf("  Present PTs: %d-%d\n", range_start, k - 1);
+					}
+					range_start = -1;
 				}
 			}
 		}
 	}
-}
-
-/*!
- * Finds the virtual address mapped to a given physical address.
- * @param paddr The physical address to look up.
- * @return The corresponding virtual address, or NULL if not mapped.
- */
-void* get_vaddr(void* paddr) {
-	uint64_t phys_addr = (uint64_t)paddr;
-	uint64_t target_frame = phys_addr >> 12;
-
-	for (int i = 0; i < 512; i++) {
-		pml4t_entry_t* pml4t_entry = &pml4_base_ptr[i];
-		if (!pml4t_entry->present) continue;
-
-		pdpt_entry_t* pdpt_base_ptr = (pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset);
-
-		for (int j = 0; j < 512; j++) {
-			pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[j];
-			if (!pdpt_entry->present) continue;
-
-			pd_entry_t* pd_base_ptr = (pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset);
-
-			for (int k = 0; k < 512; k++) {
-				pd_entry_t* pd_entry = &pd_base_ptr[k];
-				if (!pd_entry->present) continue;
-
-				pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
-
-				for (int l = 0; l < 512; l++) {
-					pt_entry_t* pt_entry = &pt_base_ptr[l];
-					if (!pt_entry->present) continue;
-
-					if (pt_entry->frame_base_address == target_frame) {
-						uint64_t vaddr = 0;
-						vaddr |= ((uint64_t)i << 39);
-						vaddr |= ((uint64_t)j << 30);
-						vaddr |= ((uint64_t)k << 21);
-						vaddr |= ((uint64_t)l << 12);
-						vaddr |= (phys_addr & 0xFFF);
-
-						return (void*)vaddr;
-					}
-				}
-			}
-		}
-	}
-
-	// Physical address not found in any mapped page
-	return NULL;
 }
 
 /*!

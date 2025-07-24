@@ -1,8 +1,11 @@
 #ifndef MEMMGT_H
-#define MEMMGT_h
+#define MEMMGT_H
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+
+#include <limine.h>
 
 typedef struct {
 	uint64_t present : 1;               // Page present in memory
@@ -60,11 +63,17 @@ typedef struct {
 	uint64_t dirty      : 1;
 	uint64_t pat        : 1;
 	uint64_t global     : 1;
-	uint64_t available1 : 3;
+	uint64_t allocated  : 1;
+	uint64_t available1 : 2;
 	uint64_t frame_base_address : 40;
 	uint64_t available2 : 11;
 	uint64_t nex        : 1;
 } pt_entry_t;
 
+void init_memmgt(uint64_t, struct limine_memmap_response*);
+void walk_pagetable(void);
+void* get_paddr(void* vaddr);
+
+uint64_t allocate_physical_pageframes(size_t);
 
 #endif

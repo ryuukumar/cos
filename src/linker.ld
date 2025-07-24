@@ -39,6 +39,11 @@ SECTIONS
 	.data : {
 		*(.data .data.*)
 	} :data
+
+	.memory_map : ALIGN(0x1000)
+    {
+        KEEP(*(.memory_map))
+    } :data
  
 	/* NOTE: .bss needs to be the last thing mapped to :data, otherwise lots of */
 	/* unnecessary zeros will be written to the binary. */
