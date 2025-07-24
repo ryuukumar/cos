@@ -209,8 +209,6 @@ LIBALLOC FUNCTION IMPLEMENTATIONS
 */
 
 void* try_assign_pt(pt_entry_t* pt_base_ptr, size_t count) {
-	if (is_locked) return NULL;
-
 	int free_count = 0;
 	for (int i = 0; i < 512; i++) {
 		if (pt_base_ptr[i].allocated) {
