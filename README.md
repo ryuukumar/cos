@@ -21,7 +21,7 @@ In order from `critical` to `meh`:
 - [required] `x86_64-elf` targeting cross compiler ([I wonder how you could set that up](https://github.com/ryuukumar/cross-compiler-compiler))
 - [required] `nasm` for building some assembly files (`sudo apt install nasm` or similar)
 - [required] `git` so we can download limine (`sudo apt install git` or similar)
-- [required] `xorriso` to build ISOs (`sudo apt install xorriso` or similar) ; you can skip this package if you're goated
+- [required] `xorriso` to build ISOs (`sudo apt install xorriso` or similar)
 - [optional] `doxygen` for documentation (`sudo apt install doxygen` or similar)
 - [optional] `qemu-system-x86` if you want to use `qemu.sh` to run COS (`sudo apt install qemu-system-x86` or similar)
 
