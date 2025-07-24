@@ -6,6 +6,7 @@
 #include <memory.h>
 #include <console.h>
 #include <string.h>
+#include <graphics.h>
 
 #define 	CONSOLE_HEIGHT		80
 #define		CONSOLE_WIDTH		140
@@ -83,7 +84,7 @@ void __init_console__ (size_t x_screen, size_t y_screen, size_t x_pad, size_t y_
 
 	fs = font_size;
 
-	for (int i=0; i<xc*yc; i++) buffer[i] = 32;
+	for (size_t i=0; i<xc*yc; i++) buffer[i] = 32;
 }
 
 /*!
@@ -99,8 +100,8 @@ void set_color(uint32_t c) {
 Update the display.
 */
 void update() {
-	for (int i=0; i<yc; i++) {
-		for (int j=0; j<xc; j++) {
+	for (size_t i=0; i<yc; i++) {
+		for (size_t j=0; j<xc; j++) {
 			renderGlyph(glyph(buffer[i*xc+j]), 
 					8, 5, xs+(fs*j*(5+xsp)), 
 					ys+(fs*i*(8+ysp)), fs,

@@ -70,7 +70,7 @@ void printf(const char* format, ...) {
 
 	bool buf = get_update_on_putch();
 	set_update_on_putch(false);
-	for (size_t i=0; i<strlen(format); i++) {
+	for (int i=0; i<strlen(format); i++) {
 		switch(format[i]) {
 			case '%':
 				{

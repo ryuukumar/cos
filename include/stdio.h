@@ -9,4 +9,4 @@
 
 void printf(const char*, ...);
 
-#endif STRING_H
+#endif

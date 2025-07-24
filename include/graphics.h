@@ -14,6 +14,6 @@ size_t postoi (int, int);
 
 void renderGlyph(unsigned char*, int, int, size_t, size_t, int, uint32_t);
 
-void drawBorder(int);
+void drawBorder(size_t);
 
 #endif
