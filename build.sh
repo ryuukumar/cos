@@ -1,3 +1,4 @@
+#!/bin/bash
 
 function heading() {
 	input_string=$1
@@ -23,6 +24,59 @@ function heading() {
 
 	echo -e "$final_string"
 }
+
+function show_help() {
+	echo -e "\e[1;32m$(heading "Build Script Help")\e[0m"
+	echo "Usage: ./build.sh [OPTIONS]"
+	echo ""
+	echo "Options:"
+	echo "  -d, --docs     Build documentation with Doxygen"
+	echo "  -f, --fresh    Clean build directory before building"
+	echo "  -h, --help     Show this help message and exit"
+	echo ""
+}
+
+function clean_build() {
+	echo -e "\e[1;33m\n$(heading "Removing all build files")\n\e[0m"
+	rm -rf build
+	rm -rf limine
+
+	echo -e "\e[1;33m\n$(heading "Removing ISO image")\n\e[0m"
+	rm -v image.iso
+
+	echo -e "\e[1;32m\n$(heading "Cleaning complete")\n\e[0m"
+}
+
+# Parse command line arguments
+BUILD_DOCS=false
+FRESH_BUILD=false
+
+while [[ $# -gt 0 ]]; do
+	case $1 in
+		-d|--docs)
+			BUILD_DOCS=true
+			shift
+			;;
+		-f|--fresh)
+			FRESH_BUILD=true
+			shift
+			;;
+		-h|--help)
+			show_help
+			exit 0
+			;;
+		*)
+			echo "Unknown option: $1"
+			echo "Use --help for usage information."
+			exit 1
+			;;
+	esac
+done
+
+# Clean build if requested
+if [ "$FRESH_BUILD" = true ]; then
+	clean_build
+fi
 
 echo -e "\e[1;33m\n$(heading "Checking for compilers")\n\e[0m"
 
@@ -58,9 +112,10 @@ else
 	echo -e "nasm found"
 fi
 
-echo -e "\e[1;33m\n$(heading "Building documentation")\n\e[0m"
-
-doxygen Doxyfile
+if [ "$BUILD_DOCS" = true ]; then
+	echo -e "\e[1;33m\n$(heading "Building documentation")\n\e[0m"
+	doxygen Doxyfile
+fi
 
 echo -e "\e[1;33m\n$(heading "Building OS binaries")\n\e[0m"
 
