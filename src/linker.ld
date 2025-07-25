@@ -9,9 +9,10 @@ ENTRY(_start)
 /* MMU permissions */
 PHDRS
 {
-	text    PT_LOAD    FLAGS((1 << 0) | (1 << 2)) ; /* Execute + Read */
-	rodata  PT_LOAD    FLAGS((1 << 2)) ;            /* Read only */
-	data    PT_LOAD    FLAGS((1 << 1) | (1 << 2)) ; /* Write + Read */
+	limine_requests PT_LOAD;
+    text PT_LOAD;
+    rodata PT_LOAD;
+    data PT_LOAD;
 }
  
 SECTIONS
@@ -21,20 +22,28 @@ SECTIONS
 	/* Any address in this region will do, but often 0xffffffff80000000 is chosen as */
 	/* that is the beginning of the region. */
 	. = 0xffffffff80000000;
+	
+	.limine_requests : {
+        KEEP(*(.limine_requests_start))
+        KEEP(*(.limine_requests))
+        KEEP(*(.limine_requests_end))
+    } :limine_requests
+
+	. = ALIGN(CONSTANT(MAXPAGESIZE));
  
 	.text : {
 		*(.text .text.*)
 	} :text
  
 	/* Move to the next memory page for .rodata */
-	. += CONSTANT(MAXPAGESIZE);
+	. = ALIGN(CONSTANT(MAXPAGESIZE));
  
 	.rodata : {
 		*(.rodata .rodata.*)
 	} :rodata
  
 	/* Move to the next memory page for .data */
-	. += CONSTANT(MAXPAGESIZE);
+	. = ALIGN(CONSTANT(MAXPAGESIZE));
  
 	.data : {
 		*(.data .data.*)

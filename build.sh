@@ -134,13 +134,11 @@ make -C limine
 echo -e "\e[1;33m\n$(heading "Populating ISO directory")\n\e[0m"
 
 # Create a directory which will be our ISO root.
-mkdir -p iso_root/boot
-mkdir -p iso_root/limine
+mkdir -p iso_root/boot/limine
  
 # Copy the relevant files over.
-cp -v limine/limine-bios.sys limine/limine-bios-cd.bin limine/limine-uefi-cd.bin iso_root/
+cp -v limine.conf limine/limine-bios.sys limine/limine-bios-cd.bin limine/limine-uefi-cd.bin iso_root/boot/limine/
 cp -v build/entry.elf iso_root/boot/
-cp -b limine.conf iso_root/limine/
  
 # Create the EFI boot tree and copy Limine's EFI executables over.
 mkdir -p iso_root/EFI/BOOT
@@ -149,15 +147,16 @@ cp -v limine/BOOT*.EFI iso_root/EFI/BOOT/
 echo -e "\e[1;33m\n$(heading "Creating ISO")\n\e[0m"
  
 # Create the bootable ISO.
-xorriso -as mkisofs -b limine-bios-cd.bin \
+xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
 		-no-emul-boot -boot-load-size 4 -boot-info-table \
-		--efi-boot limine-uefi-cd.bin \
+		--efi-boot boot/limine/limine-uefi-cd.bin \
 		-efi-boot-part --efi-boot-image --protective-msdos-label \
 		iso_root -o image.iso \
 		&& rm -rvf iso_root
  
 # Install Limine stage 1 and 2 for legacy BIOS boot.
 #./limine/limine-deploy image.iso
+./limine/limine bios-install image.iso
 
 echo -e "\nimage.iso generated with size $(wc -c <"image.iso") bytes"
 

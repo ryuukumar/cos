@@ -12,31 +12,11 @@
 
 #define FONT_SIZE   2
 
-// volatile so that compiler does not mess with the structure
-static volatile struct limine_framebuffer_request framebuffer_request = {
-	.id = LIMINE_FRAMEBUFFER_REQUEST,
-	.revision = 0
-};
-
-static volatile struct limine_bootloader_info_request bootinfo_req = {
-	.id = LIMINE_BOOTLOADER_INFO_REQUEST,
-	.revision = 0
-};
-
-static volatile struct limine_boot_time_request boottime_req = {
-	.id = LIMINE_BOOT_TIME_REQUEST,
-	.revision = 0
-};
-
-static volatile struct limine_memmap_request memmap_req = {
-	.id = LIMINE_MEMMAP_REQUEST ,
-	.revision = 0
-};
-
-static volatile struct limine_hhdm_request hhdm_req = {
-	.id = LIMINE_HHDM_REQUEST,
-	.revision = 0
-};
+extern volatile struct limine_framebuffer_request framebuffer_request;
+extern volatile struct limine_bootloader_info_request bootinfo_req;
+extern volatile struct limine_boot_time_request boottime_req;
+extern volatile struct limine_memmap_request memmap_req;
+extern volatile struct limine_hhdm_request hhdm_req;
 
 uint64_t hhdm_base = 0;
  
