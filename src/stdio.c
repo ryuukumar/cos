@@ -1,5 +1,5 @@
+#include <kernel/console.h>
 #include <stdio.h>
-#include <console.h>
 #include <string.h>
 
 

@@ -1,8 +1,8 @@
+#include <kernel/gdt.h>
+#include <kernel/stack.h>
+#include <memory.h>
 #include <stdint.h>
 #include <string.h>
-#include <gdt.h>
-#include <memory.h>
-#include <stack.h>
 
 gdt_t gdt = {
 	{0, 0, 0, 0, 0, 0}, // null

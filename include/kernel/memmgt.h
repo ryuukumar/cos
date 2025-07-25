@@ -1,11 +1,10 @@
 #ifndef MEMMGT_H
 #define MEMMGT_H
 
+#include <kernel/limine.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
-
-#include <limine.h>
 
 typedef struct {
 	uint64_t present : 1;               // Page present in memory

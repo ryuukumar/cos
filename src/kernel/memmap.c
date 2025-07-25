@@ -1,6 +1,6 @@
+#include <kernel/memmgt.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <memmgt.h>
 
 __attribute__((section(".memory_map"), aligned(0x1000)))
 struct {

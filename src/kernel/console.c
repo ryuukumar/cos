@@ -1,12 +1,11 @@
+#include <kernel/console.h>
+#include <kernel/graphics.h>
+#include <kernel/hardfonts/classic.h>
+#include <memory.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
-
-#include <hardfonts/classic.h>
-#include <memory.h>
-#include <console.h>
 #include <string.h>
-#include <graphics.h>
 
 #define 	CONSOLE_HEIGHT		80
 #define		CONSOLE_WIDTH		140

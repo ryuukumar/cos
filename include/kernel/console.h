@@ -1,9 +1,9 @@
 #ifndef CONSOLE_H
 #define CONSOLE_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 #define TAB_WIDTH   8
 

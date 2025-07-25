@@ -1,16 +1,14 @@
-#include <stdint.h>
-#include <stddef.h>
-#include <limine.h>
-
-#include <graphics.h>
-#include <console.h>
-#include <hardfonts/classic.h>
-#include <gdt.h>
-#include <stack.h>
-#include <memmgt.h>
-#include <stdio.h>
-
+#include <kernel/console.h>
+#include <kernel/gdt.h>
+#include <kernel/graphics.h>
+#include <kernel/hardfonts/classic.h>
+#include <kernel/limine.h>
+#include <kernel/memmgt.h>
+#include <kernel/stack.h>
 #include <liballoc/liballoc.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #define FONT_SIZE   2
 

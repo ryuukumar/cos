@@ -1,7 +1,8 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#include <limine.h>
+#include <kernel/limine.h>
+#include <stddef.h>
 
 struct posn {
 	size_t x;

@@ -1,7 +1,7 @@
-#include <memmgt.h>
-#include <stdio.h>
+#include <kernel/limine.h>
+#include <kernel/memmgt.h>
 #include <memory.h>
-#include <limine.h>
+#include <stdio.h>
 
 
 

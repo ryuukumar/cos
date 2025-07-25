@@ -1,6 +1,6 @@
-#include <stdint.h>
+#include <kernel/graphics.h>
 #include <stddef.h>
-#include <graphics.h>
+#include <stdint.h>
 
 static struct limine_framebuffer * framebuffer;
 static size_t frmw, frmh;
