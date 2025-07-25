@@ -10,6 +10,8 @@
 #include <memmgt.h>
 #include <stdio.h>
 
+#include <liballoc/liballoc.h>
+
 #define FONT_SIZE   2
 
 // volatile so that compiler does not mess with the structure
