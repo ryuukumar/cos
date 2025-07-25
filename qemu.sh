@@ -17,7 +17,7 @@ function heading() {
 	# Output hashtags
 	for ((i=1; i<=string_length+4; i++))
 	do
-		+=$line_char
+		final_string+=$line_char
 	done
 	final_string+="\n"  # Add a newline after the hashtags
 
