@@ -33,10 +33,6 @@ $(eval $(call DEFAULT_VAR,CFLAGS,$(DEFAULT_CFLAGS)))
 override DEFAULT_CPPFLAGS :=
 $(eval $(call DEFAULT_VAR,CPPFLAGS,$(DEFAULT_CPPFLAGS)))
  
-# User controllable nasm flags.
-override DEFAULT_NASMFLAGS := -F dwarf -g
-$(eval $(call DEFAULT_VAR,NASMFLAGS,$(DEFAULT_NASMFLAGS)))
- 
 # User controllable linker flags. We set none by default.
 override DEFAULT_LDFLAGS :=
 $(eval $(call DEFAULT_VAR,LDFLAGS,$(DEFAULT_LDFLAGS)))
@@ -83,18 +79,12 @@ ifeq ($(shell $(LD) --help 2>&1 | grep 'no-pie' >/dev/null 2>&1; echo $$?),0)
 	override LDFLAGS += -no-pie
 endif
  
-# Internal nasm flags that should not be changed by the user.
-override NASMFLAGS += \
-	-Wall \
-	-f elf64
- 
-# Use "find" to glob all *.c, *.S, and *.asm files in the tree and obtain the
+# Use "find" to glob all *.c, *.s, and *.asm files in the tree and obtain the
 # object and header dependency file names.
 override CFILES := $(shell find -L . -type f -name '*.c' | grep -v 'limine/')
-override ASFILES := $(shell find -L . -type f -name '*.S' | grep -v 'limine/')
-override NASMFILES := $(shell find -L . -type f -name '*.asm' | grep -v 'limine/')
-override OBJ := $(patsubst %.c,build/%.c.o,$(CFILES)) $(patsubst %.S,build/%.S.o,$(ASFILES)) $(patsubst %.asm,build/%.asm.o,$(NASMFILES))
-override HEADER_DEPS := $(patsubst %.c,build/%.c.d,$(CFILES)) $(patsubst %.S,build/%.S.d,$(ASFILES))
+override ASFILES := $(shell find -L . -type f -name '*.s' | grep -v 'limine/')
+override OBJ := $(patsubst %.c,build/%.c.o,$(CFILES)) $(patsubst %.s,build/%.s.o,$(ASFILES))
+override HEADER_DEPS := $(patsubst %.c,build/%.c.d,$(CFILES)) $(patsubst %.s,build/%.s.d,$(ASFILES))
  
 # Default target.
 .PHONY: all
@@ -113,14 +103,9 @@ build/%.c.o: %.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
  
 # Compilation rules for *.S files.
-build/%.S.o: %.S
+build/%.s.o: %.s
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
- 
-# Compilation rules for *.asm (nasm) files.
-build/%.asm.o: %.asm
-	@mkdir -p $(@D)
-	nasm $(NASMFLAGS) $< -o $@
  
 # Remove object files and the final executable.
 .PHONY: clean

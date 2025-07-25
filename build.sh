@@ -104,14 +104,6 @@ else
 	echo -e "x86_64-elf-as found"
 fi
 
-if ! command -v nasm &> /dev/null; then
-	echo -e "\e[1;31m\n$(heading "ERROR: nasm not found.")\n\e[0m"
-	echo -e "nasm can be simply installed with: sudo apt install nasm"
-	exit
-else
-	echo -e "nasm found"
-fi
-
 if [ "$BUILD_DOCS" = true ]; then
 	echo -e "\e[1;33m\n$(heading "Building documentation")\n\e[0m"
 	doxygen Doxyfile
