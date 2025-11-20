@@ -21,3 +21,4 @@ tss_flush:
 	movw $0x48, %ax
 	ltr %ax
 	ret
+	

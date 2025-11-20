@@ -65,10 +65,6 @@ Convert long integer to representative string with base b.
 void ulitos (uint64_t i, char* buf, uint32_t b) {
 	int ctr = 0;
 	bool negative = false;
-	if (i<0) {
-		i = -i;
-		negative = true;
-	}
 	do {
 		if (i%b < 10) buf[ctr++] = '0' + i%b;
 		else buf[ctr++] = 'a' + i%b - 10;
