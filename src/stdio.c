@@ -11,7 +11,7 @@ Handle the different cases of %-- in printf
 @param	args	pointer to the arguments printf received
 @param	ul	whether the format prints an unsigned/long character
 */
-void fmtprintf(const char* format, int* i, va_list* args, bool ul) {
+void fmtprintf(const char* format, size_t* i, va_list* args, bool ul) {
 	switch(format[*i]) {
 		case 's':
 		{
@@ -70,7 +70,7 @@ void printf(const char* format, ...) {
 
 	bool buf = get_update_on_putch();
 	set_update_on_putch(false);
-	for (int i=0; i<strlen(format); i++) {
+	for (size_t i=0; i<strlen(format); i++) {
 		switch(format[i]) {
 			case '%':
 				{
