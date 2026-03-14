@@ -69,6 +69,15 @@ typedef struct {
 	uint64_t nex        : 1;
 } pt_entry_t;
 
+typedef struct {
+	uint64_t pages_base;
+	uint64_t pages_maxlen;
+	uint64_t pages_used;
+	uint8_t* map;
+} memmap_bitmap;
+
+typedef uint64_t* paddr_t;
+
 void init_memmgt(uint64_t, struct limine_memmap_response*);
 void walk_pagetable(void);
 void* get_paddr(void* vaddr);

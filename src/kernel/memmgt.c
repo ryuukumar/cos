@@ -36,6 +36,25 @@ uint64_t read_cr3() {
 	return cr3;
 }
 
+paddr_t alloc_ppage(memmap_bitmap* bitmap) {
+	if (bitmap->pages_used >= bitmap->pages_maxlen) return NULL;
+
+	uint64_t total_bytes = (bitmap->pages_maxlen + 7) / 8;
+	for (uint64_t i = 0; i < total_bytes; i++) {
+		if (bitmap->map[i] == 0xFF) continue;
+		for (int bit = 0; bit < 8; bit++) {
+			uint64_t idx = i * 8 + bit;
+			if (idx >= bitmap->pages_maxlen) return NULL;
+			if (!(bitmap->map[i] & (1 << bit))) {
+				bitmap->map[i] |= (1 << bit);
+				bitmap->pages_used++;
+				return (paddr_t)(bitmap->pages_base + PAGE_SIZE * idx);
+			}
+		}
+	}
+	return NULL;
+}
+
 /*!
  * Initializes the memory management subsystem.
  * Sets the base pointer for the PML4 table and stores the HHDM offset.
@@ -46,28 +65,34 @@ void init_memmgt(uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_r
 	pml4_base_ptr = (pml4t_entry_t*)(pml4_base + p_hhdm_offset);
 	hhdm_offset = p_hhdm_offset;
 
-	uint64_t highest_limit_so_far = 0;
+	uint64_t highest_length_so_far = 0;
 	uint64_t best_base_so_far = 0xffffffffffffffff;
 
 	// set permissible limit
 	if (memmap_response != NULL) {
 		for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
 			if (memmap_response->entries[i]->type == 0) {
-				if (memmap_response->entries[i]->length > highest_limit_so_far) {
-					highest_limit_so_far = memmap_response->entries[i]->length;
+				if (memmap_response->entries[i]->length > highest_length_so_far) {
+					highest_length_so_far = memmap_response->entries[i]->length;
 					best_base_so_far = memmap_response->entries[i]->base;
 				}
 			}
 		}
 	}
 
-	if (highest_limit_so_far == 0) {
-		printf("It's so joever for physical memory\n");
+	if (highest_length_so_far < PAGE_SIZE * 16) {
+		printf("Too little memory!! (0x%lx bytes)\n", highest_length_so_far);
 		return;
 	}
 
 	alloc_frames_base  = best_base_so_far;
-	alloc_frames_limit = highest_limit_so_far + best_base_so_far;
+	alloc_frames_limit = highest_length_so_far + best_base_so_far;
+
+	// set up bitmap for physical page allocation
+	memmap_bitmap bitmap;
+	bitmap.pages_base    = alloc_frames_base;
+	bitmap.pages_maxlen  = 13 * PAGE_SIZE * 8;
+	bitmap.pages_used    = 0;
 
 	// set up default memory map
 	memset(&memmap, 0, sizeof(memmap));
