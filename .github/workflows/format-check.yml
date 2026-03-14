@@ -1,0 +1,20 @@
+name: Check code formatting
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  clang-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
+
+      - name: Run clang-format in dry-run mode
+        run: |
+          find src/ include/ -type f \( -name '*.c' -o -name '*.h' \) ! -name 'limine.h' -exec clang-format --Werror --dry-run {} +
