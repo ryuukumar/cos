@@ -15,7 +15,7 @@ extern void* isr_stub_table[];
 void idt_set_gate(uint8_t vector, void* isr, uint8_t gate_type, uint8_t dpl, uint8_t present) {
     idt_entry_t* descriptor = &idt[vector];
 
-    descriptor->offset_1 = (uint64_t)isr && 0xFFFF;
+    descriptor->offset_1 = (uint64_t)isr & 0xFFFF;
     descriptor->offset_2 = ((uint64_t)isr >> 16) & 0xFFFF;
     descriptor->offset_3 = ((uint64_t)isr >> 32) & 0xFFFFFFFF;
 
