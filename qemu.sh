@@ -27,6 +27,6 @@ function heading() {
 echo -e "\e[1;33m\n$(heading "Running QEMU")\n\e[0m"
 
 echo "Running image.iso as CD-ROM image."
-qemu-system-x86_64 -cdrom image.iso -vga std
+qemu-system-x86_64 -cdrom image.iso -vga std -serial file:serial.log
 
 echo -e "\e[1;32m\n$(heading "Run complete")\n\e[0m"
