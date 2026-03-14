@@ -31,7 +31,8 @@ inline void pic_send_eoi (uint8_t irq) {
  * @param offset2 slave PIC vector offset
  */
 static void pic_remap (int offset1, int offset2) {
-	outb (PIC1_COMMAND, ICW1_INIT | ICW1_ICW4); // starts the initialization sequence (in cascade mode)
+	outb (PIC1_COMMAND,
+		  ICW1_INIT | ICW1_ICW4); // starts the initialization sequence (in cascade mode)
 	io_wait ();
 	outb (PIC2_COMMAND, ICW1_INIT | ICW1_ICW4);
 	io_wait ();

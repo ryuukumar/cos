@@ -97,7 +97,8 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	for (int i = 0; i < 1; i++) {
 		memmap.pdpt_entry[i].present = 1;
 		memmap.pdpt_entry[i].read_write = 1;
-		memmap.pdpt_entry[i].pd_base_address = ((uint64_t)(get_paddr (&memmap.pd_entry[i * 512])) >> 12) & 0xFFFFFFFFFF;
+		memmap.pdpt_entry[i].pd_base_address =
+			((uint64_t)(get_paddr (&memmap.pd_entry[i * 512])) >> 12) & 0xFFFFFFFFFF;
 		memmap.pdpt_entry[i].xd = 1;
 	}
 
@@ -105,13 +106,15 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 		memmap.pd_entry[i].present = 1;
 		memmap.pd_entry[i].rw = 1;
 		memmap.pd_entry[i].nex = 1;
-		memmap.pd_entry[i].pt_base_address = ((uint64_t)(get_paddr (&memmap.pt_entry[i * 512])) >> 12) & 0xFFFFFFFFFF;
+		memmap.pd_entry[i].pt_base_address =
+			((uint64_t)(get_paddr (&memmap.pt_entry[i * 512])) >> 12) & 0xFFFFFFFFFF;
 	}
 
 	for (int i = 0; i < 512; i++) {
 		memmap.pt_entry[i].present = 1;
 		memmap.pt_entry[i].rw = 1;
-		memmap.pt_entry[i].frame_base_address = ((uint64_t)(alloc_frames_base + PAGE_SIZE * i) >> 12) & 0xFFFFFFFFFF;
+		memmap.pt_entry[i].frame_base_address =
+			((uint64_t)(alloc_frames_base + PAGE_SIZE * i) >> 12) & 0xFFFFFFFFFF;
 	}
 
 	// initialise PML4T idx 1 and PDPT idx 0 for our page assignments
@@ -152,7 +155,8 @@ void walk_pagetable () {
 	if (!pml4t_entry->present)
 		return;
 
-	pdpt_entry_t* pdpt_base_ptr = (pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset);
+	pdpt_entry_t* pdpt_base_ptr =
+		(pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset);
 	pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[0];
 	if (!pdpt_entry->present)
 		return;
@@ -207,7 +211,8 @@ void* get_paddr (void* vaddr) {
 	if (!pml4t_entry->present)
 		return NULL;
 
-	pdpt_entry_t* pdpt_base_ptr = (pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset);
+	pdpt_entry_t* pdpt_base_ptr =
+		(pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset);
 	pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[pdpt_index];
 	if (!pdpt_entry->present)
 		return NULL;
@@ -270,7 +275,8 @@ void* liballoc_alloc (size_t count) {
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
 	if (!pml4t_entry->present)
 		return NULL;
-	pdpt_entry_t* pdpt_entry = &((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset))[0];
+	pdpt_entry_t* pdpt_entry =
+		&((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset))[0];
 	if (!pdpt_entry->present)
 		return NULL;
 	pd_entry_t* pd_entry = &((pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset))[0];
@@ -292,10 +298,12 @@ int liballoc_free (void* ptr, size_t count) {
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[(virtual_addr >> 39) & 0x1FF];
 	if (!pml4t_entry->present || ((virtual_addr >> 39) & 0x1FF) != 1)
 		return -2;
-	pdpt_entry_t* pdpt_entry = &((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset))[(virtual_addr >> 30) & 0x1FF];
+	pdpt_entry_t* pdpt_entry = &((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) +
+												 hhdm_offset))[(virtual_addr >> 30) & 0x1FF];
 	if (!pdpt_entry->present || ((virtual_addr >> 30) & 0x1FF) != 0)
 		return -3;
-	pd_entry_t* pd_entry = &((pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset))[(virtual_addr >> 21) & 0x1FF];
+	pd_entry_t* pd_entry = &((pd_entry_t*)((pdpt_entry->pd_base_address << 12) +
+										   hhdm_offset))[(virtual_addr >> 21) & 0x1FF];
 	if (!pd_entry->present || ((virtual_addr >> 21) & 0x1FF) != 0)
 		return -4;
 	pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);

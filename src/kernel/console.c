@@ -12,8 +12,10 @@
 
 bool PUTCH_UPDATE = false;
 
-unsigned char bufferstr[CONSOLE_HEIGHT * CONSOLE_WIDTH] = {0};		  // TODO: replace this with malloc when implemented
-uint32_t colorbufferstr[CONSOLE_HEIGHT * CONSOLE_WIDTH] = {0xffffff}; // TODO: replace this with malloc when implemented
+unsigned char bufferstr[CONSOLE_HEIGHT * CONSOLE_WIDTH] = {
+	0}; // TODO: replace this with malloc when implemented
+uint32_t colorbufferstr[CONSOLE_HEIGHT * CONSOLE_WIDTH] = {
+	0xffffff}; // TODO: replace this with malloc when implemented
 unsigned char* buffer = bufferstr;
 uint32_t* colorbuffer = colorbufferstr;
 size_t x, y, xs, ys, xsp, ysp, xc, yc, fs;
@@ -60,12 +62,15 @@ Initialise the console with the default (classic) font
 @param	y_spc spacing between lines
 @param	font_size font size
 */
-void __init_console__ (size_t x_screen, size_t y_screen, size_t x_pad, size_t y_pad, size_t x_spc, size_t y_spc, size_t font_size) {
+void __init_console__ (size_t x_screen, size_t y_screen, size_t x_pad, size_t y_pad, size_t x_spc,
+					   size_t y_spc, size_t font_size) {
 	x = x_screen - 2 * x_pad;
 	y = y_screen - 2 * y_pad;
 
-	xc = (x / ((5 + x_spc) * font_size) > CONSOLE_WIDTH) ? CONSOLE_WIDTH : x / ((5 + x_spc) * font_size);
-	yc = (y / ((8 + y_spc) * font_size) > CONSOLE_HEIGHT) ? CONSOLE_HEIGHT : y / ((8 + y_spc) * font_size);
+	xc = (x / ((5 + x_spc) * font_size) > CONSOLE_WIDTH) ? CONSOLE_WIDTH
+														 : x / ((5 + x_spc) * font_size);
+	yc = (y / ((8 + y_spc) * font_size) > CONSOLE_HEIGHT) ? CONSOLE_HEIGHT
+														  : y / ((8 + y_spc) * font_size);
 
 	xsp = x_spc;
 	ysp = y_spc;
@@ -92,7 +97,8 @@ Update the display.
 void update () {
 	for (size_t i = 0; i < yc; i++) {
 		for (size_t j = 0; j < xc; j++) {
-			renderGlyph (glyph (buffer[i * xc + j]), 8, 5, xs + (fs * j * (5 + xsp)), ys + (fs * i * (8 + ysp)), fs, colorbuffer[i * xc + j]);
+			renderGlyph (glyph (buffer[i * xc + j]), 8, 5, xs + (fs * j * (5 + xsp)),
+						 ys + (fs * i * (8 + ysp)), fs, colorbuffer[i * xc + j]);
 		}
 	}
 }

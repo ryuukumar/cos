@@ -3,11 +3,14 @@
 /**  Durand's Amazing Super Duper Memory functions.  */
 
 #define VERSION "1.1"
-#define ALIGNMENT 16ul // 4ul				///< This is the byte alignment that memory must be allocated on. IMPORTANT for GTK and other stuff.
+#define ALIGNMENT                                                                                  \
+	16ul // 4ul				///< This is the byte alignment that memory must be allocated on.
+		 // IMPORTANT for GTK and other stuff.
 
 #define ALIGN_TYPE char /// unsigned char[16] /// unsigned short
-#define ALIGN_INFO                                                                                                                                   \
-	sizeof (ALIGN_TYPE) * 16 ///< Alignment information is stored right before the pointer. This is the number of bytes of information stored there.
+#define ALIGN_INFO                                                                                 \
+	sizeof (ALIGN_TYPE) * 16 ///< Alignment information is stored right before the pointer. This is
+							 ///< the number of bytes of information stored there.
 
 #define USE_CASE1
 #define USE_CASE2
@@ -16,24 +19,24 @@
 #define USE_CASE5
 
 /** This macro will conveniently align our pointer upwards */
-#define ALIGN(ptr)                                                                                                                                   \
-	if (ALIGNMENT > 1) {                                                                                                                             \
-		uintptr_t diff;                                                                                                                              \
-		ptr = (void*)((uintptr_t)ptr + ALIGN_INFO);                                                                                                  \
-		diff = (uintptr_t)ptr & (ALIGNMENT - 1);                                                                                                     \
-		if (diff != 0) {                                                                                                                             \
-			diff = ALIGNMENT - diff;                                                                                                                 \
-			ptr = (void*)((uintptr_t)ptr + diff);                                                                                                    \
-		}                                                                                                                                            \
-		*((ALIGN_TYPE*)((uintptr_t)ptr - ALIGN_INFO)) = diff + ALIGN_INFO;                                                                           \
+#define ALIGN(ptr)                                                                                 \
+	if (ALIGNMENT > 1) {                                                                           \
+		uintptr_t diff;                                                                            \
+		ptr = (void*)((uintptr_t)ptr + ALIGN_INFO);                                                \
+		diff = (uintptr_t)ptr & (ALIGNMENT - 1);                                                   \
+		if (diff != 0) {                                                                           \
+			diff = ALIGNMENT - diff;                                                               \
+			ptr = (void*)((uintptr_t)ptr + diff);                                                  \
+		}                                                                                          \
+		*((ALIGN_TYPE*)((uintptr_t)ptr - ALIGN_INFO)) = diff + ALIGN_INFO;                         \
 	}
 
-#define UNALIGN(ptr)                                                                                                                                 \
-	if (ALIGNMENT > 1) {                                                                                                                             \
-		uintptr_t diff = *((ALIGN_TYPE*)((uintptr_t)ptr - ALIGN_INFO));                                                                              \
-		if (diff < (ALIGNMENT + ALIGN_INFO)) {                                                                                                       \
-			ptr = (void*)((uintptr_t)ptr - diff);                                                                                                    \
-		}                                                                                                                                            \
+#define UNALIGN(ptr)                                                                               \
+	if (ALIGNMENT > 1) {                                                                           \
+		uintptr_t diff = *((ALIGN_TYPE*)((uintptr_t)ptr - ALIGN_INFO));                            \
+		if (diff < (ALIGNMENT + ALIGN_INFO)) {                                                     \
+			ptr = (void*)((uintptr_t)ptr - diff);                                                  \
+		}                                                                                          \
 	}
 
 #define LIBALLOC_MAGIC 0xc001c0de
@@ -75,8 +78,9 @@ struct liballoc_minor {
 static struct liballoc_major* l_memRoot = NULL; ///< The root memory block acquired from the system.
 static struct liballoc_major* l_bestBet = NULL; ///< The major with the most free memory.
 
-static unsigned int l_pageSize = 4096;	   ///< The size of an individual page. Set up in liballoc_init.
-static unsigned int l_pageCount = 16;	   ///< The number of pages to request per chunk. Set up in liballoc_init.
+static unsigned int l_pageSize = 4096; ///< The size of an individual page. Set up in liballoc_init.
+static unsigned int l_pageCount =
+	16; ///< The number of pages to request per chunk. Set up in liballoc_init.
 static unsigned long long l_allocated = 0; ///< Running total of allocated memory.
 static unsigned long long l_inuse = 0;	   ///< Running total of used memory.
 
@@ -189,7 +193,8 @@ static struct liballoc_major* allocate_new_page (unsigned int size) {
 	l_allocated += maj->size;
 
 #ifdef DEBUG
-	printf ("liballoc: Resource allocated %x of %i pages (%i bytes) for %i size.\n", maj, st, maj->size, size);
+	printf ("liballoc: Resource allocated %x of %i pages (%i bytes) for %i size.\n", maj, st,
+			maj->size, size);
 
 	printf ("liballoc: Total memory usage = %i KB\n", (int)((l_allocated / (1024))));
 	FLUSH ();
@@ -356,7 +361,8 @@ void* PREFIX (malloc) (size_t req_size) {
 
 		if (diff >= (size + sizeof (struct liballoc_minor))) {
 			// Yes, space in front. Squeeze in.
-			maj->first->prev = (struct liballoc_minor*)((uintptr_t)maj + sizeof (struct liballoc_major));
+			maj->first->prev =
+				(struct liballoc_minor*)((uintptr_t)maj + sizeof (struct liballoc_major));
 			maj->first->prev->next = maj->first;
 			maj->first = maj->first->prev;
 
@@ -400,7 +406,9 @@ void* PREFIX (malloc) (size_t req_size) {
 
 				if (diff >= (size + sizeof (struct liballoc_minor))) {
 					// yay....
-					min->next = (struct liballoc_minor*)((uintptr_t)min + sizeof (struct liballoc_minor) + min->size);
+					min->next =
+						(struct liballoc_minor*)((uintptr_t)min + sizeof (struct liballoc_minor) +
+												 min->size);
 					min->next->prev = min;
 					min = min->next;
 					min->next = NULL;
@@ -435,7 +443,8 @@ void* PREFIX (malloc) (size_t req_size) {
 
 				if (diff >= (size + sizeof (struct liballoc_minor))) {
 					// yay......
-					new_min = (struct liballoc_minor*)((uintptr_t)min + sizeof (struct liballoc_minor) + min->size);
+					new_min = (struct liballoc_minor*)((uintptr_t)min +
+													   sizeof (struct liballoc_minor) + min->size);
 
 					new_min->magic = LIBALLOC_MAGIC;
 					new_min->next = min->next;
@@ -515,7 +524,8 @@ void PREFIX (free) (void* ptr) {
 	if (ptr == NULL) {
 		l_warningCount += 1;
 #if defined DEBUG || defined INFO
-		printf ("liballoc: WARNING: PREFIX(free)( NULL ) called from %x\n", __builtin_return_address (0));
+		printf ("liballoc: WARNING: PREFIX(free)( NULL ) called from %x\n",
+				__builtin_return_address (0));
 		FLUSH ();
 #endif
 		return;
@@ -531,23 +541,27 @@ void PREFIX (free) (void* ptr) {
 		l_errorCount += 1;
 
 		// Check for overrun errors. For all bytes of LIBALLOC_MAGIC
-		if (((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) || ((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) ||
+		if (((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) ||
+			((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) ||
 			((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF))) {
 			l_possibleOverruns += 1;
 #if defined DEBUG || defined INFO
-			printf ("liballoc: ERROR: Possible 1-3 byte overrun for magic %x != %x\n", min->magic, LIBALLOC_MAGIC);
+			printf ("liballoc: ERROR: Possible 1-3 byte overrun for magic %x != %x\n", min->magic,
+					LIBALLOC_MAGIC);
 			FLUSH ();
 #endif
 		}
 
 		if (min->magic == LIBALLOC_DEAD) {
 #if defined DEBUG || defined INFO
-			printf ("liballoc: ERROR: multiple PREFIX(free)() attempt on %x from %x.\n", ptr, __builtin_return_address (0));
+			printf ("liballoc: ERROR: multiple PREFIX(free)() attempt on %x from %x.\n", ptr,
+					__builtin_return_address (0));
 			FLUSH ();
 #endif
 		} else {
 #if defined DEBUG || defined INFO
-			printf ("liballoc: ERROR: Bad PREFIX(free)( %x ) called from %x\n", ptr, __builtin_return_address (0));
+			printf ("liballoc: ERROR: Bad PREFIX(free)( %x ) called from %x\n", ptr,
+					__builtin_return_address (0));
 			FLUSH ();
 #endif
 		}
@@ -653,23 +667,27 @@ void* PREFIX (realloc) (void* p, size_t size) {
 		l_errorCount += 1;
 
 		// Check for overrun errors. For all bytes of LIBALLOC_MAGIC
-		if (((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) || ((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) ||
+		if (((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) ||
+			((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) ||
 			((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF))) {
 			l_possibleOverruns += 1;
 #if defined DEBUG || defined INFO
-			printf ("liballoc: ERROR: Possible 1-3 byte overrun for magic %x != %x\n", min->magic, LIBALLOC_MAGIC);
+			printf ("liballoc: ERROR: Possible 1-3 byte overrun for magic %x != %x\n", min->magic,
+					LIBALLOC_MAGIC);
 			FLUSH ();
 #endif
 		}
 
 		if (min->magic == LIBALLOC_DEAD) {
 #if defined DEBUG || defined INFO
-			printf ("liballoc: ERROR: multiple PREFIX(free)() attempt on %x from %x.\n", ptr, __builtin_return_address (0));
+			printf ("liballoc: ERROR: multiple PREFIX(free)() attempt on %x from %x.\n", ptr,
+					__builtin_return_address (0));
 			FLUSH ();
 #endif
 		} else {
 #if defined DEBUG || defined INFO
-			printf ("liballoc: ERROR: Bad PREFIX(free)( %x ) called from %x\n", ptr, __builtin_return_address (0));
+			printf ("liballoc: ERROR: Bad PREFIX(free)( %x ) called from %x\n", ptr,
+					__builtin_return_address (0));
 			FLUSH ();
 #endif
 		}

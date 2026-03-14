@@ -87,7 +87,9 @@ void kernel_dispatch_interrupt (registers_t* registers) {
 	}
 }
 
-void idt_register_handler (int vector, irq_handler_t handler) { interrupt_handlers[vector] = handler; }
+void idt_register_handler (int vector, irq_handler_t handler) {
+	interrupt_handlers[vector] = handler;
+}
 
 void __init_idt__ (void) {
 	idtr.size = (uint16_t)(sizeof (idt_entry_t) * 256) - 1;
