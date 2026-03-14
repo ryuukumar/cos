@@ -11,6 +11,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <kernel/hw/pic.h>
 
 #define FONT_SIZE 2
 
@@ -48,10 +49,10 @@ void _start (void) {
 	gdt_init ();
 	// tss_init();
 
-	// __init_pic__();
+	__init_pic__();
 	__init_idt__ ();
 
-	// asm ("sti");
+	asm ("sti");
 
 	__init_serial__ ();
 
