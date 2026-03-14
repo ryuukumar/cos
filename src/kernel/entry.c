@@ -2,6 +2,7 @@
 #include <kernel/gdt.h>
 #include <kernel/graphics.h>
 #include <kernel/hardfonts/classic.h>
+#include <kernel/hw/pic.h>
 #include <kernel/idt.h>
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
@@ -11,7 +12,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <kernel/hw/pic.h>
 
 #define FONT_SIZE 2
 
@@ -49,7 +49,7 @@ void _start (void) {
 	gdt_init ();
 	// tss_init();
 
-	__init_pic__();
+	__init_pic__ ();
 	__init_idt__ ();
 
 	asm ("sti");
