@@ -48,6 +48,28 @@ static void pic_remap(int offset1, int offset2)
 	io_wait();
 	outb(PIC2_DATA, ICW4_8086);
 	io_wait();
+
+    // Mask all interrupts initially
+    outb(PIC1_DATA, 0xff);
+    outb(PIC2_DATA, 0xff);
+}
+
+void pic_set_mask(uint8_t irq_line) {
+    if (irq_line < 8) {
+        outb(PIC1_DATA, inb(PIC1_DATA) | (1 << irq_line));
+    } else {
+        irq_line -= 8;
+        outb(PIC2_DATA, inb(PIC2_DATA) | (1 << irq_line));
+    }
+}
+
+void pic_clr_mask(uint8_t irq_line) {
+    if (irq_line < 8) {
+        outb(PIC1_DATA, inb(PIC1_DATA) & ~(1 << irq_line));
+    } else {
+        irq_line -= 8;
+        outb(PIC2_DATA, inb(PIC2_DATA) & ~(1 << irq_line));
+    }
 }
 
 void __init_pic__ (void) {
