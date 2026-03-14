@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define TAB_WIDTH   8
+#define TAB_WIDTH 8
 
 void set_update_on_putch (bool);
 bool get_update_on_putch ();
@@ -14,9 +14,9 @@ size_t get_idx ();
 
 void __init_console__ (size_t, size_t, size_t, size_t, size_t, size_t, size_t);
 void set_color (uint32_t);
-void update();
+void update ();
 
-void putchar(unsigned char);
-void putstr(const char*, size_t);
+void putchar (unsigned char);
+void putstr (const char*, size_t);
 
 #endif
