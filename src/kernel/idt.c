@@ -10,6 +10,8 @@ static idtr_t idtr;
 
 irq_handler_t interrupt_handlers[256];
 
+extern void* isr_stub_table[];
+
 void idt_set_gate(uint8_t vector, void* isr, uint8_t gate_type, uint8_t dpl, uint8_t present) {
     idt_entry_t* descriptor = &idt[vector];
 
@@ -89,5 +91,14 @@ void idt_register_handler(int vector, irq_handler_t handler) {
 }
 
 void __init_idt__ (void) {
-    
+    idtr.size = (uint16_t)(sizeof(idt_entry_t) * 256) - 1;
+    idtr.offset = (uint64_t)&idt[0];
+
+    // currently setup is same for all gates
+    for (int vector = 0; vector < 256; vector++) {
+        idt_set_gate(vector, isr_stub_table[vector], 0x0E, 0, 1);
+        interrupt_handlers[vector] = 0;
+    }
+
+    __asm__ volatile ("lidt %0" : : "m"(idtr));
 }
