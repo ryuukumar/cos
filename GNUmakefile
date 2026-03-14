@@ -111,3 +111,8 @@ build/%.s.o: %.s
 .PHONY: clean
 clean:
 	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS)
+
+# Format C source and header files (only touches src/ and main/)
+.PHONY: format
+format:
+	find src/ include/ -type f \( -name '*.c' -o -name '*.h' \) -exec clang-format -i {} +
