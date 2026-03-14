@@ -4,6 +4,7 @@
 #include <kernel/hardfonts/classic.h>
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
+#include <kernel/serial.h>
 #include <kernel/stack.h>
 #include <liballoc/liballoc.h>
 #include <stddef.h>
@@ -44,6 +45,8 @@ void _start(void) {
 
 	gdt_init();
 	//tss_init();
+
+	__init_serial__();
 
 	__init_graphics__(framebuffer);
 	drawBorder(20);
