@@ -1,5 +1,5 @@
 
-; macros for isr setup
+# macros for isr setup
 
 .macro ISR_NOERR num
 .global isr\num
@@ -17,7 +17,7 @@ isr\num:
 .endm
 
 
-; common stub
+# common stub
 .global isr_common_stub
 .extern kernel_dispatch_interrupt
 
@@ -61,7 +61,7 @@ isr_common_stub:
     iretq
 
 
-; here be the isr definitions
+# here be the isr definitions
 
 ISR_NOERR 0
 ISR_NOERR 1
@@ -96,23 +96,32 @@ ISR_ERR   29
 ISR_ERR   30
 ISR_NOERR 31
 
-; interrupts 32 to 255 all have no error code
+
+# interrupts 32 to 255 all have no error code
+
 .altmacro
+.macro GENERATE_ISR num
+    ISR_NOERR \num
+.endm
+
 .set i, 32
 .rept 224
-    ISR_NOERR %i
+    GENERATE_ISR %i
     .set i, i+1
 .endr
 
-
-; here be dragons (actually stub table)
+# here be dragons (actually stub table)
 
 .section .data
 .global isr_stub_table
 
+.macro GENERATE_PTR num
+    .quad isr\num
+.endm
+
 isr_stub_table:
 .set i, 0
 .rept 256
-    .quad isr\i
+    GENERATE_PTR %i
     .set i, i+1
 .endr

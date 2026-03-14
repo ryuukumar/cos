@@ -1,7 +1,7 @@
 
 #include <kernel/idt.h>
 
-#include <kernel/stdio.h>
+#include <stdio.h>
 
 __attribute__((aligned(0x10)))
 static idt_entry_t idt[256];
@@ -78,8 +78,8 @@ static void log_registers_to_serial(registers_t* registers) {
 void kernel_dispatch_interrupt(registers_t* registers) {
     log_registers_to_serial(registers);
 
-    irq_handler_t handler = interrupt_handlers[r->int_no];
-    if (handler) handler(r);
+    irq_handler_t handler = interrupt_handlers[registers->interrupt_number];
+    if (handler) handler(registers);
     else {
         printf("Unhandled interrupt! Hasta la vista");
         while(1);
