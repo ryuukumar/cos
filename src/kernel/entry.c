@@ -2,6 +2,7 @@
 #include <kernel/gdt.h>
 #include <kernel/graphics.h>
 #include <kernel/hardfonts/classic.h>
+#include <kernel/idt.h>
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
 #include <kernel/serial.h>
@@ -46,7 +47,11 @@ void _start(void) {
 	gdt_init();
 	//tss_init();
 
+	__init_idt__();
+
 	__init_serial__();
+
+	write_serial_str("Hello from COS!\n");
 
 	__init_graphics__(framebuffer);
 	drawBorder(20);
