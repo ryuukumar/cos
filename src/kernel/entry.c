@@ -36,7 +36,8 @@ Entry point of kernel. Everything is set up here.
 */
 void _start (void) {
 	// Ensure we got a framebuffer.
-	if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1) {
+	if (framebuffer_request.response == NULL ||
+		framebuffer_request.response->framebuffer_count < 1) {
 		hcf ();
 	}
 

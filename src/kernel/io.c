@@ -6,7 +6,9 @@
  * @param port port to write
  * @param val value to write
  */
-inline void outb (uint16_t port, uint8_t val) { __asm__ volatile ("outb %b0, %w1" : : "a"(val), "Nd"(port) : "memory"); }
+inline void outb (uint16_t port, uint8_t val) {
+	__asm__ volatile ("outb %b0, %w1" : : "a"(val), "Nd"(port) : "memory");
+}
 
 /*!
  * Read a single byte from a port
