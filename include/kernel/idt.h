@@ -8,7 +8,7 @@
 
 typedef struct __attribute__((packed)) {
     uint16_t size;
-    uint64_t offset : 48;
+    uint64_t offset;
 } idtr_t;
 
 typedef struct __attribute__((packed)) {

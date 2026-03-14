@@ -44,10 +44,15 @@ void _start(void) {
 	// Note: we assume the framebuffer model is RGB with 32-bit pixels.
 	struct limine_framebuffer *framebuffer = framebuffer_request.response->framebuffers[0];
 
+	asm ("cli");
+
 	gdt_init();
 	//tss_init();
 
+	__init_pic__();
 	__init_idt__();
+
+	asm ("sti");
 
 	__init_serial__();
 
