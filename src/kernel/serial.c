@@ -49,3 +49,12 @@ void write_serial (uint8_t val) {
     while (!(inb(SERIAL_COM_1 + 5) & 0x20));
     outb (SERIAL_COM_1, val);
 }
+
+/*!
+ * Write a string to SERIAL_COM_1
+ * @param str The string to write to serial
+ */
+void write_serial_str (const char* str) {
+    char* x = (char*) str;
+    while (*x != 0) write_serial (*(x++));
+}

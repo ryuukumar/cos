@@ -12,5 +12,6 @@ int __init_serial__ (void);
 
 uint8_t read_serial (void);
 void write_serial (uint8_t val);
+void write_serial_str (const char* str);
 
 #endif
