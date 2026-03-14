@@ -2,6 +2,7 @@
 #include <kernel/gdt.h>
 #include <kernel/graphics.h>
 #include <kernel/hardfonts/classic.h>
+#include <kernel/hw/pic.h>
 #include <kernel/idt.h>
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
@@ -48,10 +49,10 @@ void _start (void) {
 	gdt_init ();
 	// tss_init();
 
-	// __init_pic__();
+	__init_pic__ ();
 	__init_idt__ ();
 
-	// asm ("sti");
+	asm ("sti");
 
 	__init_serial__ ();
 
