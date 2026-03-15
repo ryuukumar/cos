@@ -62,8 +62,7 @@ typedef struct {
 	uint64_t dirty : 1;
 	uint64_t pat : 1;
 	uint64_t global : 1;
-	uint64_t allocated : 1;
-	uint64_t available1 : 2;
+	uint64_t available1 : 3;
 	uint64_t frame_base_address : 40;
 	uint64_t available2 : 11;
 	uint64_t nex : 1;
