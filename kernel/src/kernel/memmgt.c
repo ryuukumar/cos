@@ -275,7 +275,7 @@ static bool is_vaddr_t_lt (vaddr_t* a, vaddr_t* b) {
  * @param last last virtual address in range
  * @param base_addr base address of physical memory of corresponding size
  */
-static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr) {
+static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr, bool user) {
 	uint64_t phys_base_track = (uint64_t)base_addr;
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[first.pml4_index];
 
@@ -291,6 +291,7 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
 			pdpt_entry->present = 1;
 			pdpt_entry->read_write = 1;
 			pdpt_entry->pd_base_address = (uint64_t)new_table / PAGE_SIZE;
+			pdpt_entry->user_supervisor = user;
 			memset (get_vaddr_from_frame ((uint64_t)new_table / PAGE_SIZE), 0, PAGE_SIZE);
 		}
 
@@ -302,6 +303,7 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
 			pd_entry->present = 1;
 			pd_entry->rw = 1;
 			pd_entry->pt_base_address = (uint64_t)new_table / PAGE_SIZE;
+			pd_entry->us = user;
 			memset (get_vaddr_from_frame ((uint64_t)new_table / PAGE_SIZE), 0, PAGE_SIZE);
 		}
 
@@ -311,6 +313,7 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
 		pt_entry->present = 1;
 		pt_entry->rw = 1;
 		pt_entry->frame_base_address = phys_base_track / PAGE_SIZE;
+		pt_entry->us = user;
 		phys_base_track += PAGE_SIZE;
 
 		if (!is_vaddr_t_lt (&current, &last))
@@ -333,7 +336,7 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
  * @param count number of consecutive pages to allocate
  * @return base virtual address of allocated pages
  */
-void* alloc_vpages (size_t req_count) {
+void* alloc_vpages (size_t req_count, bool user) {
 	// all memory allocations are currently under one pml4 entry. this is 512 gb of memory, which
 	// should be plenty for literally any use case of COS.
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
@@ -414,7 +417,7 @@ void* alloc_vpages (size_t req_count) {
 							  ((start_page_idx + req_count - 1) >> 9) & 0x1FF,
 							  (start_page_idx + req_count - 1) & 0x1FF, 0};
 
-		alloc_all_vpages_in_range (first_vaddr, last_vaddr, base_physical);
+		alloc_all_vpages_in_range (first_vaddr, last_vaddr, base_physical, user);
 		return vaddr_t_to_ptr (&first_vaddr);
 	}
 
@@ -425,7 +428,7 @@ void* alloc_vpages (size_t req_count) {
  * Allocate one virtual page
  * @return base virtual address of allocated page
  */
-void* alloc_vpage (void) { return alloc_vpages (1); }
+void* alloc_vpage (bool user) { return alloc_vpages (1, user); }
 
 /*!
  * Check if page structure is empty
@@ -675,7 +678,7 @@ int liballoc_unlock () {
 	return 0;
 }
 
-void* liballoc_alloc (size_t count) { return alloc_vpages (count); }
+void* liballoc_alloc (size_t count) { return alloc_vpages (count, false); }
 
 int liballoc_free (void* ptr, size_t count) {
 	if (is_locked)
