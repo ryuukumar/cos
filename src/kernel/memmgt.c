@@ -64,20 +64,20 @@ inline void* get_vaddr_hhdm (uint64_t phys_address) {
  * Set a bit in the memory bitmap
  * @param page_idx page index
  */
-static inline void bitmap_set_bit(uint64_t page_idx) {
-    bitmap.map[page_idx / 8] |= (1 << (page_idx % 8));
-    bitmap.pages_used++;
+static inline void bitmap_set_bit (uint64_t page_idx) {
+	bitmap.map[page_idx / 8] |= (1 << (page_idx % 8));
+	bitmap.pages_used++;
 }
 
 /*!
  * Clear a bit in the memory bitmap
  * @param page_idx page index
  */
-static inline void bitmap_clear_bit(uint64_t page_idx) {
-    if (bitmap.map[page_idx / 8] & (1 << (page_idx % 8))) {
-        bitmap.map[page_idx / 8] &= ~(1 << (page_idx % 8));
-        bitmap.pages_used--;
-    }
+static inline void bitmap_clear_bit (uint64_t page_idx) {
+	if (bitmap.map[page_idx / 8] & (1 << (page_idx % 8))) {
+		bitmap.map[page_idx / 8] &= ~(1 << (page_idx % 8));
+		bitmap.pages_used--;
+	}
 }
 
 paddr_t alloc_ppage () {
@@ -109,7 +109,8 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 		struct limine_memmap_entry* entry = memmap_response->entries[i];
 		if (entry->type == LIMINE_MEMMAP_USABLE) {
 			uint64_t top = entry->base + entry->length;
-			if (top > addr_limit) addr_limit = top;
+			if (top > addr_limit)
+				addr_limit = top;
 		}
 	}
 
@@ -117,35 +118,38 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 	uint64_t bitmap_size = (total_pages + 7) / 8;
 
 	void* bitmap_phys_addr = NULL;
-	for (uint64_t i=0; i<memmap_response->entry_count; i++) {
+	for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
 		struct limine_memmap_entry* entry = memmap_response->entries[i];
 		if (entry->type == LIMINE_MEMMAP_USABLE && entry->length >= bitmap_size) {
-			bitmap_phys_addr = (void*) entry->base;
+			bitmap_phys_addr = (void*)entry->base;
 			break;
 		}
 	}
 
 	if (bitmap_phys_addr == NULL) {
-		write_serial_str ("Not enough contiguous memory for bitmap setup!! Please download some RAM.\n");
-		printf("Not enough contiguous memory for bitmap setup!! Please download some RAM.\n");
+		write_serial_str (
+			"Not enough contiguous memory for bitmap setup!! Please download some RAM.\n");
+		printf ("Not enough contiguous memory for bitmap setup!! Please download some RAM.\n");
 		__asm__ ("hlt");
 	}
 
-	bitmap.map = (uint8_t*) get_vaddr_hhdm ((uint64_t)bitmap_phys_addr);
+	bitmap.map = (uint8_t*)get_vaddr_hhdm ((uint64_t)bitmap_phys_addr);
 	bitmap.pages_base = 0;
 	bitmap.pages_maxlen = total_pages;
 	bitmap.pages_used = total_pages;
 
-	memset(bitmap.map, 0xFF, bitmap_size);
+	memset (bitmap.map, 0xFF, bitmap_size);
 
-	uint64_t bitmap_fst_page = (uint64_t) bitmap_phys_addr / PAGE_SIZE;
-	uint64_t bitmap_lst_page = bitmap_fst_page + ((bitmap_size + PAGE_SIZE -1)/PAGE_SIZE);
+	uint64_t bitmap_fst_page = (uint64_t)bitmap_phys_addr / PAGE_SIZE;
+	uint64_t bitmap_lst_page = bitmap_fst_page + ((bitmap_size + PAGE_SIZE - 1) / PAGE_SIZE);
 
-	for (uint64_t i = 0; i<memmap_response->entry_count; i++) {
+	for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
 		struct limine_memmap_entry* entry = memmap_response->entries[i];
 		if (entry->type == LIMINE_MEMMAP_USABLE) {
-			for (uint64_t p = entry->base / PAGE_SIZE ; p < (entry->base + entry->length) / PAGE_SIZE ; p++) {
-				if (p < bitmap_fst_page || p >= bitmap_lst_page) bitmap_clear_bit(p);
+			for (uint64_t p = entry->base / PAGE_SIZE;
+				 p < (entry->base + entry->length) / PAGE_SIZE; p++) {
+				if (p < bitmap_fst_page || p >= bitmap_lst_page)
+					bitmap_clear_bit (p);
 			}
 		}
 	}
