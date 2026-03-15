@@ -691,29 +691,6 @@ LIBALLOC FUNCTION IMPLEMENTATIONS
 
 */
 
-void* try_assign_pt (pt_entry_t* pt_base_ptr, size_t count) {
-	int free_count = 0;
-	for (int i = 0; i < 512; i++) {
-		if (pt_base_ptr[i].allocated) {
-			free_count = 0;
-			continue;
-		} else {
-			free_count++;
-			if ((size_t)free_count == count) {
-				int init_idx = i - count + 1;
-
-				for (int j = init_idx; j <= i; j++) {
-					pt_base_ptr[j].allocated = 1;
-				}
-
-				void* alloc_addr = (void*)((1ll << 39) | ((uint64_t)init_idx << 12));
-				return alloc_addr;
-			}
-		}
-	}
-	return NULL;
-}
-
 int liballoc_lock () {
 	is_locked = true;
 	return 0;
