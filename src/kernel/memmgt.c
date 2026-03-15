@@ -480,26 +480,23 @@ void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 					// --- GARBAGE COLLECTION ---
 					// We only need to check if a table is empty when we cross its boundary OR on
 					// our final page.
-					if ((current.pt_index == 511) || (!is_vaddr_t_lt (&current, &last))) {
-						if (is_table_empty (pt_base)) {
-							free_ppage ((void*)(pd_entry->pt_base_address * PAGE_SIZE));
-							pd_entry->present = 0;
-							pd_entry->pt_base_address = 0;
+					bool on_final_pg = !is_vaddr_t_lt (&current, &last);
+					if (((current.pt_index == 511) || on_final_pg) && is_table_empty (pt_base)) {
+						free_ppage ((void*)(pd_entry->pt_base_address * PAGE_SIZE));
+						pd_entry->present = 0;
+						pd_entry->pt_base_address = 0;
 
-							if (((current.pd_index == 511) || (!is_vaddr_t_lt (&current, &last))) &&
-								is_table_empty (pd_base)) {
-								free_ppage ((void*)(pdpt_entry->pd_base_address * PAGE_SIZE));
-								pdpt_entry->present = 0;
-								pdpt_entry->pd_base_address = 0;
+						if (((current.pd_index == 511) || on_final_pg) &&
+							is_table_empty (pd_base)) {
+							free_ppage ((void*)(pdpt_entry->pd_base_address * PAGE_SIZE));
+							pdpt_entry->present = 0;
+							pdpt_entry->pd_base_address = 0;
 
-								if (((current.pdpt_index == 511) ||
-									 (!is_vaddr_t_lt (&current, &last))) &&
-									is_table_empty (pdpt_base)) {
-									free_ppage (
-										(void*)(pml4t_entry->pdpt_base_address * PAGE_SIZE));
-									pml4t_entry->present = 0;
-									pml4t_entry->pdpt_base_address = 0;
-								}
+							if (((current.pdpt_index == 511) || on_final_pg) &&
+								is_table_empty (pdpt_base)) {
+								free_ppage ((void*)(pml4t_entry->pdpt_base_address * PAGE_SIZE));
+								pml4t_entry->present = 0;
+								pml4t_entry->pdpt_base_address = 0;
 							}
 						}
 					}
