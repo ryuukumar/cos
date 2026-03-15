@@ -76,7 +76,18 @@ typedef struct {
 	uint8_t* map;
 } memmap_bitmap;
 
+typedef struct {
+	uint8_t pml4_index;
+	uint8_t pdpt_index;
+	uint8_t pd_index;
+	uint8_t pt_index;
+	uint16_t offset;
+} vaddr_t;
+
 typedef uint64_t* paddr_t;
+
+vaddr_t get_vaddr_t_from_ptr (void* ptr);
+void* get_vaddr_hhdm (uint64_t phys_address);
 
 void init_memmgt (uint64_t, struct limine_memmap_response*);
 void walk_pagetable (void);
