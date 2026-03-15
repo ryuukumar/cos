@@ -1,3 +1,4 @@
+#include <kernel/idt.h>
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
 #include <kernel/serial.h>
@@ -156,11 +157,33 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 }
 
 /*!
+ * Simple handler for page fault, prints faulting address from CR2
+ * @param registers idt-passed registers object
+ */
+void page_fault_handler (registers_t* registers) {
+	uint64_t cr2;
+	__asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
+
+	char buffer[16];
+	ulitos (cr2, buffer, 16);
+
+	write_serial_str ("\nEncountered a page fault!\n");
+	write_serial_str ("Faulting address: 0x");
+	write_serial_str (buffer);
+	write_serial ('\n');
+
+	for (;;)
+		__asm__ volatile ("hlt");
+}
+
+/*!
  * Initializes the memory management subsystem.
  * Sets the base pointer for the PML4 table and stores the HHDM offset.
  * @param p_hhdm_offset The higher half direct mapping offset.
  */
 void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_response) {
+	idt_register_handler (0xE, (irq_handler_t)page_fault_handler);
+
 	uint64_t pml4_base = read_cr3 () & 0xFFFFFFFFFF000;
 	pml4_base_ptr = (pml4t_entry_t*)(pml4_base + p_hhdm_offset);
 	hhdm_offset = p_hhdm_offset;
