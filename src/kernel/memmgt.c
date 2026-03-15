@@ -45,6 +45,23 @@ vaddr_t get_vaddr_t_from_ptr (void* ptr) {
 }
 
 /*!
+ * Get a virtual pointer from a vaddr_t object. Automatically performs sign extension required in
+ * x86_64
+ * @param virtual_addr the vaddr_t object
+ * @return corresponding virtual pointer
+ */
+inline void* vaddr_t_to_ptr (vaddr_t* virtual_addr) {
+	uint64_t ptr_64t = ((uint64_t)virtual_addr->pml4_index << 39) |
+					   ((uint64_t)virtual_addr->pdpt_index << 30) |
+					   ((uint64_t)virtual_addr->pd_index << 21) |
+					   ((uint64_t)virtual_addr->pt_index << 12) | (uint64_t)virtual_addr->offset;
+
+	if (ptr_64t & (1ULL << 47))
+		ptr_64t |= 0xFFFF000000000000ULL;
+	return (void*)ptr_64t;
+}
+
+/*!
  * Convert a physical frame to vaddr pointer with HHDM mapping
  * @param phys_frame the physical frame
  * @return pointer to virtual memory using HHDM mapping
