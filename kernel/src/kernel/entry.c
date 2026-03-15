@@ -8,6 +8,7 @@
 #include <kernel/memmgt.h>
 #include <kernel/serial.h>
 #include <kernel/stack.h>
+#include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -73,6 +74,7 @@ void _start (void) {
 	}
 
 	__init_memmgt__ (hhdm_base, memmap_req.response);
+	__init_syscalls__ ();
 
 	set_color (0x44eeaa);
 
