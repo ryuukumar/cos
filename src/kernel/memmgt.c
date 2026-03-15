@@ -175,19 +175,18 @@ void walk_pagetable () {
 	if (!pml4t_entry->present)
 		return;
 
-	pdpt_entry_t* pdpt_base_ptr =
-		(pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset);
+	pdpt_entry_t* pdpt_base_ptr = (pdpt_entry_t*)get_vaddr_hhdm (pml4t_entry->pdpt_base_address);
 	pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[0];
 	if (!pdpt_entry->present)
 		return;
 
-	pd_entry_t* pd_base_ptr = (pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset);
+	pd_entry_t* pd_base_ptr = (pd_entry_t*)get_vaddr_hhdm (pdpt_entry->pd_base_address);
 	for (int k = 0; k < 512; k++) {
 		pd_entry_t* pd_entry = &pd_base_ptr[k];
 		if (!pd_entry->present)
 			continue;
 		printf ("PD %d: PT Base Address:   0x%lx\n", k, pd_entry->pt_base_address << 12);
-		pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
+		pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_hhdm (pd_entry->pt_base_address);
 
 		bool is_present_pt[512] = {false};
 		for (int k = 0; k < 512; k++)
@@ -225,23 +224,22 @@ void* get_paddr (void* vaddr) {
 	if (!pml4t_entry->present)
 		return NULL;
 
-	pdpt_entry_t* pdpt_base_ptr =
-		(pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset);
+	pdpt_entry_t* pdpt_base_ptr = (pdpt_entry_t*)get_vaddr_hhdm (pml4t_entry->pdpt_base_address);
 	pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[virtual_addr.pdpt_index];
 	if (!pdpt_entry->present)
 		return NULL;
 
-	pd_entry_t* pd_base_ptr = (pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset);
+	pd_entry_t* pd_base_ptr = (pd_entry_t*)get_vaddr_hhdm (pdpt_entry->pd_base_address);
 	pd_entry_t* pd_entry = &pd_base_ptr[virtual_addr.pd_index];
 	if (!pd_entry->present)
 		return NULL;
 
-	pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
+	pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_hhdm (pd_entry->pt_base_address);
 	pt_entry_t* pt_entry = &pt_base_ptr[virtual_addr.pt_index];
 	if (!pt_entry->present)
 		return NULL;
 
-	uint64_t phys_addr = (pt_entry->frame_base_address << 12) | page_offset;
+	uint64_t phys_addr = (pt_entry->frame_base_address << 12) | virtual_addr.offset;
 
 	return (void*)phys_addr;
 }
@@ -289,14 +287,13 @@ void* liballoc_alloc (size_t count) {
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
 	if (!pml4t_entry->present)
 		return NULL;
-	pdpt_entry_t* pdpt_entry =
-		&((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset))[0];
+	pdpt_entry_t* pdpt_entry = &((pdpt_entry_t*)get_vaddr_hhdm (pml4t_entry->pdpt_base_address))[0];
 	if (!pdpt_entry->present)
 		return NULL;
-	pd_entry_t* pd_entry = &((pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset))[0];
+	pd_entry_t* pd_entry = &((pd_entry_t*)get_vaddr_hhdm (pdpt_entry->pd_base_address))[0];
 	if (!pd_entry->present)
 		return NULL;
-	pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
+	pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_hhdm (pd_entry->pt_base_address);
 
 	return try_assign_pt (pt_base_ptr, count);
 }
@@ -313,14 +310,14 @@ int liballoc_free (void* ptr, size_t count) {
 	if (!pml4t_entry->present || vaddr.pml4_index != 1)
 		return -2;
 	pdpt_entry_t* pdpt_entry =
-		&((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset))[vaddr.pdpt_index];
+		&((pdpt_entry_t*)get_vaddr_hhdm (pml4t_entry->pdpt_base_address))[vaddr.pdpt_index];
 	if (!pdpt_entry->present || vaddr.pdpt_index != 0)
 		return -3;
 	pd_entry_t* pd_entry =
-		&((pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset))[vaddr.pd_index];
+		&((pd_entry_t*)get_vaddr_hhdm (pdpt_entry->pd_base_address))[vaddr.pd_index];
 	if (!pd_entry->present || vaddr.pd_index != 0)
 		return -4;
-	pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
+	pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_hhdm (pd_entry->pt_base_address);
 
 	for (size_t i = 0; i < count; i++) {
 		if (i + vaddr.pt_index >= 512)
