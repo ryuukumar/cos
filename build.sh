@@ -113,7 +113,7 @@ echo -e "\e[1;33m\n$(heading "Building OS binaries")\n\e[0m"
 
 make -j$(nproc)
 
-echo -e "\nentry.elf generated with size $(wc -c <"build/entry.elf") bytes"
+echo -e "\nentry.elf generated with size $(wc -c <"build/kernel/entry.elf") bytes"
 
 echo -e "\e[1;33m\n$(heading "Building Limine-deploy")\n\e[0m"
 
@@ -130,7 +130,7 @@ mkdir -p iso_root/boot/limine
  
 # Copy the relevant files over.
 cp -v limine.conf limine/limine-bios.sys limine/limine-bios-cd.bin limine/limine-uefi-cd.bin iso_root/boot/limine/
-cp -v build/entry.elf iso_root/boot/
+cp -v build/kernel/entry.elf iso_root/boot/
  
 # Create the EFI boot tree and copy Limine's EFI executables over.
 mkdir -p iso_root/EFI/BOOT
