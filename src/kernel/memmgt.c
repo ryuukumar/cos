@@ -114,7 +114,7 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 	}
 
 	uint64_t total_pages = addr_limit / PAGE_SIZE;
-	uint64_t bitmap_size = (total_bytes + 7) / 8;
+	uint64_t bitmap_size = (total_pages + 7) / 8;
 
 	void* bitmap_phys_addr = NULL;
 	for (uint64_t i=0; i<memmap_response->entry_count; i++) {
@@ -145,7 +145,7 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 		struct limine_memmap_entry* entry = memmap_response->entries[i];
 		if (entry->type == LIMINE_MEMMAP_USABLE) {
 			for (uint64_t p = entry->base / PAGE_SIZE ; p < (entry->base + entry->length) / PAGE_SIZE ; p++) {
-				if (p < bitmap_fst_page || p >= bitmap_end_page) bitmap_clear_bit(p);
+				if (p < bitmap_fst_page || p >= bitmap_lst_page) bitmap_clear_bit(p);
 			}
 		}
 	}
