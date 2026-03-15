@@ -520,6 +520,36 @@ void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 }
 
 /*!
+ * Free multiple consecutive virtual pages=
+ * @param ptr virtual address of the first page to free
+ * @param count number of consecutive pages to free
+ */
+void free_vpages (void* ptr, size_t count) {
+	if (ptr == NULL || count == 0)
+		return;
+
+	void* phys_base = get_paddr (ptr);
+	if (phys_base == NULL)
+		return;
+
+	free_ppages (phys_base, count);
+
+	uint64_t start_ptr_64t = (uint64_t)ptr;
+	uint64_t last_ptr_64t = start_ptr_64t + ((count - 1) * PAGE_SIZE);
+
+	vaddr_t first_vaddr = get_vaddr_t_from_ptr ((void*)start_ptr_64t);
+	vaddr_t last_vaddr = get_vaddr_t_from_ptr ((void*)last_ptr_64t);
+
+	free_all_vpages_in_range (first_vaddr, last_vaddr);
+}
+
+/*!
+ * Free single virtual page
+ * @param ptr virtual address of the page to free
+ */
+void free_vpage (void* ptr) { free_vpages (ptr, 1); }
+
+/*!
  * Initializes the memory management subsystem.
  * Sets the base pointer for the PML4 table and stores the HHDM offset.
  * @param p_hhdm_offset The higher half direct mapping offset.
