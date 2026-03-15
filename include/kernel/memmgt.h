@@ -77,10 +77,10 @@ typedef struct {
 } memmap_bitmap;
 
 typedef struct {
-	uint8_t pml4_index;
-	uint8_t pdpt_index;
-	uint8_t pd_index;
-	uint8_t pt_index;
+	uint16_t pml4_index;
+	uint16_t pdpt_index;
+	uint16_t pd_index;
+	uint16_t pt_index;
 	uint16_t offset;
 } vaddr_t;
 
