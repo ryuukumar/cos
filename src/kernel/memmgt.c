@@ -253,51 +253,31 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	// set up bitmap for physical page allocation
 	init_physical_bitmap (memmap_response);
 
-	// set up default memory map
-	memset (&memmap, 0, sizeof (memmap));
-
-	for (int i = 0; i < 1; i++) {
-		memmap.pdpt_entry[i].present = 1;
-		memmap.pdpt_entry[i].read_write = 1;
-		memmap.pdpt_entry[i].pd_base_address =
-			((uint64_t)(get_paddr (&memmap.pd_entry[i * 512])) >> 12) & 0xFFFFFFFFFF;
-		memmap.pdpt_entry[i].xd = 1;
-	}
-
-	for (int i = 0; i < 1; i++) {
-		memmap.pd_entry[i].present = 1;
-		memmap.pd_entry[i].rw = 1;
-		memmap.pd_entry[i].nex = 1;
-		memmap.pd_entry[i].pt_base_address =
-			((uint64_t)(get_paddr (&memmap.pt_entry[i * 512])) >> 12) & 0xFFFFFFFFFF;
-	}
-
+	paddr_t phys_tables = alloc_ppages (3);
 	paddr_t initial_frames = alloc_ppages (512);
 
+	pdpt_entry_t* pdpt = (pdpt_entry_t*) get_vaddr_from_frame((uint64_t)phys_tables / PAGE_SIZE);
+	pd_entry_t* pd = (pd_entry_t*) get_vaddr_from_frame(((uint64_t)phys_tables / PAGE_SIZE) + 1);
+	pt_entry_t* pt = (pt_entry_t*) get_vaddr_from_frame(((uint64_t)phys_tables / PAGE_SIZE) + 2);
+
+	pdpt[0].present = 1;
+    pdpt[0].read_write = 1;
+    pdpt[0].pd_base_address = (((uint64_t)phys_tables) / PAGE_SIZE) + 1;
+
+    pd[0].present = 1;
+    pd[0].rw = 1;
+    pd[0].pt_base_address = (((uint64_t)phys_tables) / PAGE_SIZE) + 2;
+
 	for (int i = 0; i < 512; i++) {
-		memmap.pt_entry[i].present = 1;
-		memmap.pt_entry[i].rw = 1;
-		memmap.pt_entry[i].frame_base_address =
-			(((uint64_t)initial_frames + PAGE_SIZE * i) >> 12) & 0xFFFFFFFFFF;
+		pt[i].present = 1;
+		pt[i].rw = 1;
+		pt[i].frame_base_address = (((uint64_t)initial_frames / PAGE_SIZE) + i);
 	}
 
 	// initialise PML4T idx 1 and PDPT idx 0 for our page assignments
-	uint64_t pdpt_base_address = ((uint64_t)(get_paddr (&memmap.pdpt_entry[0])));
-	pml4t_entry_t pml4t_entry = {
-		.present = 1,
-		.read_write = 1,
-		.user_supervisor = 0,
-		.page_write_through = 0,
-		.page_cache_disable = 0,
-		.accessed = 0,
-		.ignored1 = 0,
-		.page_size = 0, // must be 0 in PML4
-		.ignored2 = 0,
-		.pdpt_base_address = pdpt_base_address >> 12 & 0xFFFFFFFFFF, // physical address of PDPT
-		.ignored3 = 0,
-		.xd = 1 // execute-disable bit
-	};
-	pml4_base_ptr[1] = pml4t_entry;
+	pml4_base_ptr[1].present = 1;
+    pml4_base_ptr[1].read_write = 1;
+    pml4_base_ptr[1].pdpt_base_address = ((uint64_t)phys_tables) / PAGE_SIZE;
 }
 
 /*!
