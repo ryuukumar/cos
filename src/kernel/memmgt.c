@@ -724,53 +724,12 @@ int liballoc_unlock () {
 	return 0;
 }
 
-void* liballoc_alloc (size_t count) {
-	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
-	if (!pml4t_entry->present)
-		return NULL;
-	pdpt_entry_t* pdpt_entry =
-		&((pdpt_entry_t*)get_vaddr_from_frame (pml4t_entry->pdpt_base_address))[0];
-	if (!pdpt_entry->present)
-		return NULL;
-	pd_entry_t* pd_entry = &((pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address))[0];
-	if (!pd_entry->present)
-		return NULL;
-	pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
-
-	return try_assign_pt (pt_base_ptr, count);
-}
+void* liballoc_alloc (size_t count) { return alloc_vpages (count); }
 
 int liballoc_free (void* ptr, size_t count) {
 	if (is_locked)
 		return -7;
-	if (get_paddr (ptr) == NULL)
-		return -1;
 
-	vaddr_t vaddr = get_vaddr_t_from_ptr (ptr);
-
-	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[vaddr.pml4_index];
-	if (!pml4t_entry->present || vaddr.pml4_index != 1)
-		return -2;
-	pdpt_entry_t* pdpt_entry =
-		&((pdpt_entry_t*)get_vaddr_from_frame (pml4t_entry->pdpt_base_address))[vaddr.pdpt_index];
-	if (!pdpt_entry->present || vaddr.pdpt_index != 0)
-		return -3;
-	pd_entry_t* pd_entry =
-		&((pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address))[vaddr.pd_index];
-	if (!pd_entry->present || vaddr.pd_index != 0)
-		return -4;
-	pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
-
-	for (size_t i = 0; i < count; i++) {
-		if (i + vaddr.pt_index >= 512)
-			return -5; // out of bounds
-
-		pt_entry_t* pt_entry = &pt_base_ptr[i + vaddr.pt_index];
-		if (!pt_entry->allocated)
-			return -6;
-
-		pt_entry->allocated = 0;
-	}
-
+	free_vpages (ptr, count);
 	return 0;
 }
