@@ -35,5 +35,6 @@ typedef struct __attribute__ ((packed)) {
 typedef void (*irq_handler_t) (registers_t*);
 
 void __init_idt__ (void);
+void idt_register_handler (int vector, irq_handler_t handler);
 
 #endif
