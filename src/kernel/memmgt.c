@@ -30,6 +30,11 @@ uint64_t read_cr3 () {
 	return cr3;
 }
 
+/*!
+ * Get a vaddr_t object from a virtual pointer
+ * @param ptr the virtual pointer
+ * @return corresponding vaddr_t object
+ */
 vaddr_t get_vaddr_t_from_ptr (void* ptr) {
 	uint64_t ptr_64t = (uint64_t)ptr;
 	vaddr_t ret_vaddr;
