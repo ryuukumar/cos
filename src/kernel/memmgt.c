@@ -30,6 +30,19 @@ uint64_t read_cr3 () {
 	return cr3;
 }
 
+vaddr_t get_vaddr_t_from_ptr (void* ptr) {
+	uint64_t ptr_64t = (uint64_t) ptr;
+	vaddr_t ret_vaddr;
+
+	ret_vaddr.offset = ptr_64t & 0xFFF;
+	ret_vaddr.pt_index = (ptr_64t >> 12) & 0x1FF;
+	ret_vaddr.pd_index = (ptr_64t >> 21) & 0x1FF;
+	ret_vaddr.pdpt_index = (ptr_64t >> 30) & 0x1FF;
+	ret_vaddr.pml4_index = (ptr_64t >> 39) & 0x1FF;
+
+	return ret_vaddr;
+}
+
 paddr_t alloc_ppage (memmap_bitmap* bitmap) {
 	if (bitmap->pages_used >= bitmap->pages_maxlen)
 		return NULL;
