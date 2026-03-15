@@ -252,6 +252,7 @@ void* alloc_vpage (void) {
 	// all memory allocations are currently under one pml4 entry. this is 512 gb of memory, which
 	// should be plenty for literally any use case of COS.
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
+	if (!pml4t_entry->present) return NULL;
 
 	for (uint16_t pdpt_idx = 0; pdpt_idx < 512; pdpt_idx++) {
 		pdpt_entry_t* pdpt_base_ptr =
@@ -262,7 +263,7 @@ void* alloc_vpage (void) {
 			paddr_t new_frame = alloc_ppage ();
 			pdpt_entry->present = 1;
 			pdpt_entry->read_write = 1;
-			pdpt_entry->frame_base_address = (uint64_t)new_frame / PAGE_SIZE;
+			pdpt_entry->pd_base_address = (uint64_t)new_frame / PAGE_SIZE;
 		}
 
 		for (uint16_t pd_idx = 0; pd_idx < 512; pd_idx++) {
@@ -274,7 +275,7 @@ void* alloc_vpage (void) {
 				paddr_t new_frame = alloc_ppage ();
 				pd_entry->present = 1;
 				pd_entry->rw = 1;
-				pd_entry->frame_base_address = (uint64_t)new_frame / PAGE_SIZE;
+				pd_entry->pt_base_address = (uint64_t)new_frame / PAGE_SIZE;
 			}
 
 			for (uint16_t pt_idx = 0; pt_idx < 512; pt_idx++) {
