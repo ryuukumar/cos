@@ -254,7 +254,7 @@ void page_fault_handler (registers_t* registers) {
  * @param b second vaddr
  * @return true if a lies before b, false otherwise
  */
-bool is_vaddr_t_lt (vaddr_t* a, vaddr_t* b) {
+static bool is_vaddr_t_lt (vaddr_t* a, vaddr_t* b) {
 	if (a->pml4_index == b->pml4_index) {
 		if (a->pdpt_index == b->pdpt_index) {
 			if (a->pd_index == b->pd_index) {
@@ -275,7 +275,7 @@ bool is_vaddr_t_lt (vaddr_t* a, vaddr_t* b) {
  * @param last last virtual address in range
  * @param base_addr base address of physical memory of corresponding size
  */
-void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr) {
+static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr) {
 	uint64_t phys_base_track = (uint64_t)base_addr;
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[first.pml4_index];
 
@@ -445,7 +445,7 @@ static bool is_table_empty (void* table_vaddr) {
  * @param first first virtual page in range
  * @param last last virtual page in range
  */
-void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
+static void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[first.pml4_index];
 	if (!pml4t_entry->present)
 		return;
