@@ -566,31 +566,12 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	// set up bitmap for physical page allocation
 	init_physical_bitmap (memmap_response);
 
-	paddr_t phys_tables = alloc_ppages (3);
-	paddr_t initial_frames = alloc_ppages (512);
+	paddr_t pdpt_frame = alloc_ppage();
+	memset(get_vaddr_from_frame((uint64_t)pdpt_frame/PAGE_SIZE), 0, PAGE_SIZE);
 
-	pdpt_entry_t* pdpt = (pdpt_entry_t*)get_vaddr_from_frame ((uint64_t)phys_tables / PAGE_SIZE);
-	pd_entry_t* pd = (pd_entry_t*)get_vaddr_from_frame (((uint64_t)phys_tables / PAGE_SIZE) + 1);
-	pt_entry_t* pt = (pt_entry_t*)get_vaddr_from_frame (((uint64_t)phys_tables / PAGE_SIZE) + 2);
-
-	pdpt[0].present = 1;
-	pdpt[0].read_write = 1;
-	pdpt[0].pd_base_address = (((uint64_t)phys_tables) / PAGE_SIZE) + 1;
-
-	pd[0].present = 1;
-	pd[0].rw = 1;
-	pd[0].pt_base_address = (((uint64_t)phys_tables) / PAGE_SIZE) + 2;
-
-	for (int i = 0; i < 512; i++) {
-		pt[i].present = 1;
-		pt[i].rw = 1;
-		pt[i].frame_base_address = (((uint64_t)initial_frames / PAGE_SIZE) + i);
-	}
-
-	// initialise PML4T idx 1 and PDPT idx 0 for our page assignments
 	pml4_base_ptr[1].present = 1;
 	pml4_base_ptr[1].read_write = 1;
-	pml4_base_ptr[1].pdpt_base_address = ((uint64_t)phys_tables) / PAGE_SIZE;
+	pml4_base_ptr[1].pdpt_base_address = ((uint64_t)pdpt_frame) / PAGE_SIZE;
 }
 
 /*!
