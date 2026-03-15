@@ -548,7 +548,7 @@ void free_vpage (void* ptr) { free_vpages (ptr, 1); }
  * Sets the base pointer for the PML4 table and stores the HHDM offset.
  * @param p_hhdm_offset The higher half direct mapping offset.
  */
-void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_response) {
+void __init_memmgt__ (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_response) {
 	idt_register_handler (0xE, (irq_handler_t)page_fault_handler);
 	memmap_response_ptr = memmap_response;
 

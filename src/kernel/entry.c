@@ -72,7 +72,7 @@ void _start (void) {
 		hcf ();
 	}
 
-	init_memmgt (hhdm_base, memmap_req.response);
+	__init_memmgt__ (hhdm_base, memmap_req.response);
 
 	set_color (0x44eeaa);
 
