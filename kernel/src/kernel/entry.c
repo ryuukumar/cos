@@ -134,7 +134,7 @@ void _start (void) {
 	__asm__ volatile ("mov %%cr3, %0" : "=r"(cr3));
 	cr3 = cr3 & 0xFFFFFFFFFF000;
 
-	printf ("CR3: %lx", cr3);
+	printf ("CR3: %lx\n", cr3);
 
 	if (mod_req.response == NULL || mod_req.response->module_count < 1) {
 		printf ("Error: no modules loaded.\n");
@@ -145,7 +145,7 @@ void _start (void) {
 	void* initramfs_addr = initramfs->address;
 	uint64_t initramfs_size = initramfs->size;
 
-	printf ("Initramfs at 0x%llx, size %ld bytes\n", initramfs_addr, initramfs_size);
+	printf ("\nInitramfs at 0x%llx, size %ld bytes\n", initramfs_addr, initramfs_size);
 
 	printf ("\nJumping to user land!\n");
 
