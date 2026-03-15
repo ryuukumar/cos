@@ -364,10 +364,25 @@ void* get_paddr (void* vaddr) {
 	if (!pdpt_entry->present)
 		return NULL;
 
+	if (pdpt_entry->page_size) {
+        uint64_t phys_addr = (pdpt_entry->pd_base_address << 12) | 
+                             ((uint64_t)virtual_addr.pd_index << 21) |
+                             ((uint64_t)virtual_addr.pt_index << 12) | 
+                             virtual_addr.offset;
+        return (void*)phys_addr;
+    }
+
 	pd_entry_t* pd_base_ptr = (pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address);
 	pd_entry_t* pd_entry = &pd_base_ptr[virtual_addr.pd_index];
 	if (!pd_entry->present)
 		return NULL;
+
+	if (pd_entry->page_size) {
+        uint64_t phys_addr = (pd_entry->pt_base_address << 12) | 
+                             ((uint64_t)virtual_addr.pt_index << 12) |
+                             virtual_addr.offset;
+        return (void*)phys_addr;
+    }
 
 	pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
 	pt_entry_t* pt_entry = &pt_base_ptr[virtual_addr.pt_index];
