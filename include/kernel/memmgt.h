@@ -62,8 +62,7 @@ typedef struct {
 	uint64_t dirty : 1;
 	uint64_t pat : 1;
 	uint64_t global : 1;
-	uint64_t allocated : 1;
-	uint64_t available1 : 2;
+	uint64_t available1 : 3;
 	uint64_t frame_base_address : 40;
 	uint64_t available2 : 11;
 	uint64_t nex : 1;
@@ -77,10 +76,10 @@ typedef struct {
 } memmap_bitmap;
 
 typedef struct {
-	uint8_t pml4_index;
-	uint8_t pdpt_index;
-	uint8_t pd_index;
-	uint8_t pt_index;
+	uint16_t pml4_index;
+	uint16_t pdpt_index;
+	uint16_t pd_index;
+	uint16_t pt_index;
 	uint16_t offset;
 } vaddr_t;
 
@@ -88,12 +87,16 @@ typedef uint64_t* paddr_t;
 
 vaddr_t get_vaddr_t_from_ptr (void* ptr);
 void* get_vaddr_hhdm (uint64_t phys_address);
+void* vaddr_t_to_ptr (vaddr_t* virtual_addr);
 
-void init_memmgt (uint64_t, struct limine_memmap_response*);
+void* alloc_vpages (size_t req_count);
+void* alloc_vpage (void);
+void free_vpages (void* ptr, size_t count);
+void free_vpage (void* ptr);
+
+void __init_memmgt__ (uint64_t, struct limine_memmap_response*);
 void walk_pagetable (void);
 void* get_paddr (void* vaddr);
-
-uint64_t allocate_physical_pageframes (size_t);
 
 // LIBALLOC FUNCTION IMPLEMENTATIONS
 
