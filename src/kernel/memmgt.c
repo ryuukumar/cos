@@ -446,11 +446,6 @@ static bool is_table_empty (void* table_vaddr) {
  * @param last last virtual page in range
  */
 void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
-	if (first.pml4_index == 1) {
-		write_serial_str ("free_all_vpages_in_range called for pml4_index that is not 1!");
-		return;
-	}
-
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[first.pml4_index];
 	if (!pml4t_entry->present)
 		return;
@@ -527,6 +522,12 @@ void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 void free_vpages (void* ptr, size_t count) {
 	if (ptr == NULL || count == 0)
 		return;
+
+	vaddr_t vaddr = get_vaddr_t_from_ptr (ptr);
+	if (vaddr.pml4_index != 1) {
+		write_serial_str ("free_vpages called for pml4_index that is not 1!");
+		return;
+	}
 
 	void* phys_base = get_paddr (ptr);
 	if (phys_base == NULL)
