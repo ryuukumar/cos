@@ -486,13 +486,6 @@ void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 							free_ppage ((void*)(pdpt_entry->pd_base_address * PAGE_SIZE));
 							pdpt_entry->present = 0;
 							pdpt_entry->pd_base_address = 0;
-
-							if (((current.pdpt_index == 511) || on_final_pg) &&
-								is_table_empty (pdpt_base)) {
-								free_ppage ((void*)(pml4t_entry->pdpt_base_address * PAGE_SIZE));
-								pml4t_entry->present = 0;
-								pml4t_entry->pdpt_base_address = 0;
-							}
 						}
 					}
 				}
