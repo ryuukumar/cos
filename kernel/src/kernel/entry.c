@@ -22,6 +22,7 @@ extern volatile struct limine_framebuffer_request framebuffer_request;
 extern volatile struct limine_bootloader_info_request bootinfo_req;
 extern volatile struct limine_boot_time_request boottime_req;
 extern volatile struct limine_memmap_request memmap_req;
+extern volatile struct limine_module_request mod_req;
 extern volatile struct limine_hhdm_request hhdm_req;
 
 uint64_t hhdm_base = 0;
@@ -135,12 +136,23 @@ void _start (void) {
 
 	printf ("CR3: %lx", cr3);
 
+	if (mod_req.response == NULL || mod_req.response->module_count < 1) {
+		printf ("Error: no modules loaded.\n");
+		hcf ();
+	}
+
+	struct limine_file* initramfs = mod_req.response->modules[0];
+	void* initramfs_addr = initramfs->address;
+	uint64_t initramfs_size = initramfs->size;
+
+	printf ("Initramfs at 0x%llx, size %ld bytes\n", initramfs_addr, initramfs_size);
+
 	printf ("\nJumping to user land!\n");
 
 	/*
 	 * TODO: bunch of stuff
-	 * - [ ] set up user mode code to actually compile
-	 * - [ ] set up limine loading it as a module
+	 * - [x] set up user mode code to actually compile
+	 * - [x] set up limine loading it as a module
 	 * - [ ] set up a vfs
 	 * - [ ] set up elf-loading
 	 * - [ ] set up cpio reading and ramfs driver
