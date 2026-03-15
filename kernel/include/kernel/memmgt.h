@@ -89,8 +89,8 @@ vaddr_t get_vaddr_t_from_ptr (void* ptr);
 void* get_vaddr_hhdm (uint64_t phys_address);
 void* vaddr_t_to_ptr (vaddr_t* virtual_addr);
 
-void* alloc_vpages (size_t req_count);
-void* alloc_vpage (void);
+void* alloc_vpages (size_t req_count, bool user);
+void* alloc_vpage (bool user);
 void free_vpages (void* ptr, size_t count);
 void free_vpage (void* ptr);
 

@@ -91,6 +91,14 @@ void idt_register_handler (int vector, irq_handler_t handler) {
 	interrupt_handlers[vector] = handler;
 }
 
+void idt_set_flags (int vector, uint8_t gate_type, uint8_t dpl, uint8_t ist) {
+	idt_entry_t* descriptor = &idt[vector];
+
+	descriptor->gate_type = gate_type;
+	descriptor->dpl = dpl;
+	descriptor->ist = ist;
+}
+
 void __init_idt__ (void) {
 	idtr.size = (uint16_t)(sizeof (idt_entry_t) * 256) - 1;
 	idtr.offset = (uint64_t)&idt[0];
