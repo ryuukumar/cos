@@ -212,31 +212,25 @@ void walk_pagetable () {
  * @return The corresponding physical address, or NULL if not mapped.
  */
 void* get_paddr (void* vaddr) {
-	uint64_t virtual_addr = (uint64_t)vaddr;
+	vaddr_t virtual_addr = get_vaddr_t_from_ptr (vaddr);
 
-	uint64_t pml4_index = (virtual_addr >> 39) & 0x1FF;
-	uint64_t pdpt_index = (virtual_addr >> 30) & 0x1FF;
-	uint64_t pd_index = (virtual_addr >> 21) & 0x1FF;
-	uint64_t pt_index = (virtual_addr >> 12) & 0x1FF;
-	uint64_t page_offset = virtual_addr & 0xFFF;
-
-	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[pml4_index];
+	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[virtual_addr.pml4_index];
 	if (!pml4t_entry->present)
 		return NULL;
 
 	pdpt_entry_t* pdpt_base_ptr =
 		(pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset);
-	pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[pdpt_index];
+	pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[virtual_addr.pdpt_index];
 	if (!pdpt_entry->present)
 		return NULL;
 
 	pd_entry_t* pd_base_ptr = (pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset);
-	pd_entry_t* pd_entry = &pd_base_ptr[pd_index];
+	pd_entry_t* pd_entry = &pd_base_ptr[virtual_addr.pd_index];
 	if (!pd_entry->present)
 		return NULL;
 
 	pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
-	pt_entry_t* pt_entry = &pt_base_ptr[pt_index];
+	pt_entry_t* pt_entry = &pt_base_ptr[virtual_addr.pt_index];
 	if (!pt_entry->present)
 		return NULL;
 
@@ -301,36 +295,36 @@ void* liballoc_alloc (size_t count) {
 }
 
 int liballoc_free (void* ptr, size_t count) {
-	if (is_locked)
-		return -7;
-	if (get_paddr (ptr) == NULL)
-		return -1;
+    if (is_locked)
+        return -7;
+    if (get_paddr (ptr) == NULL)
+        return -1;
 
-	uint64_t virtual_addr = (uint64_t)ptr;
+    vaddr_t vaddr = get_vaddr_t_from_ptr(ptr);
 
-	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[(virtual_addr >> 39) & 0x1FF];
-	if (!pml4t_entry->present || ((virtual_addr >> 39) & 0x1FF) != 1)
-		return -2;
-	pdpt_entry_t* pdpt_entry = &((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) +
-												 hhdm_offset))[(virtual_addr >> 30) & 0x1FF];
-	if (!pdpt_entry->present || ((virtual_addr >> 30) & 0x1FF) != 0)
-		return -3;
-	pd_entry_t* pd_entry = &((pd_entry_t*)((pdpt_entry->pd_base_address << 12) +
-										   hhdm_offset))[(virtual_addr >> 21) & 0x1FF];
-	if (!pd_entry->present || ((virtual_addr >> 21) & 0x1FF) != 0)
-		return -4;
-	pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
+    pml4t_entry_t* pml4t_entry = &pml4_base_ptr[vaddr.pml4_index];
+    if (!pml4t_entry->present || vaddr.pml4_index != 1)
+        return -2;
+    pdpt_entry_t* pdpt_entry = &((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) +
+                                                 hhdm_offset))[vaddr.pdpt_index];
+    if (!pdpt_entry->present || vaddr.pdpt_index != 0)
+        return -3;
+    pd_entry_t* pd_entry = &((pd_entry_t*)((pdpt_entry->pd_base_address << 12) +
+                                           hhdm_offset))[vaddr.pd_index];
+    if (!pd_entry->present || vaddr.pd_index != 0)
+        return -4;
+    pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
 
-	for (size_t i = 0; i < count; i++) {
-		if (i + ((virtual_addr >> 12) & 0x1FF) >= 512)
-			return -5; // out of bounds
+    for (size_t i = 0; i < count; i++) {
+        if (i + vaddr.pt_index >= 512)
+            return -5; // out of bounds
 
-		pt_entry_t* pt_entry = &pt_base_ptr[i + ((virtual_addr >> 12) & 0x1FF)];
-		if (!pt_entry->allocated)
-			return -6;
+        pt_entry_t* pt_entry = &pt_base_ptr[i + vaddr.pt_index];
+        if (!pt_entry->allocated)
+            return -6;
 
-		pt_entry->allocated = 0;
-	}
+        pt_entry->allocated = 0;
+    }
 
-	return 0;
+    return 0;
 }
