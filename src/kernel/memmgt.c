@@ -102,7 +102,7 @@ paddr_t alloc_ppage () {
 	return NULL;
 }
 
-static void init_physical_bitmap (void) {
+static void init_physical_bitmap (struct limine_memmap_response* memmap_response) {
 	uint64_t addr_limit = 0;
 
 	for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
@@ -185,7 +185,7 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	alloc_frames_limit = highest_length_so_far + best_base_so_far;
 
 	// set up bitmap for physical page allocation
-	init_physical_bitmap ();
+	init_physical_bitmap (memmap_response);
 
 	// set up default memory map
 	memset (&memmap, 0, sizeof (memmap));
