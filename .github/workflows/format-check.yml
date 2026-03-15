@@ -16,5 +16,4 @@ jobs:
         run: sudo apt-get install -y clang-format
 
       - name: Run clang-format in dry-run mode
-        run: |
-          find src/ include/ -type f \( -name '*.c' -o -name '*.h' \) ! -name 'limine.h' -exec clang-format --Werror --dry-run {} +
+        run: make format
