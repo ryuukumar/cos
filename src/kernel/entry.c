@@ -104,5 +104,6 @@ void _start (void) {
 	printf ("CR3: %lx", cr3);
 
 	// We're done, just hang...
+	printf ("\n\nAll execution completed.");
 	hcf ();
 }
