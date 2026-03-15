@@ -48,9 +48,7 @@ vaddr_t get_vaddr_t_from_ptr (void* ptr) {
  * @param phys_address the physical address
  * @return pointer to virtual memory using HHDM mapping
  */
-void* get_vaddr_hhdm (uint64_t phys_address) {
-    return (void*)((phys_address << 12) + hhdm_offset);
-}
+void* get_vaddr_hhdm (uint64_t phys_address) { return (void*)((phys_address << 12) + hhdm_offset); }
 
 paddr_t alloc_ppage (memmap_bitmap* bitmap) {
 	if (bitmap->pages_used >= bitmap->pages_maxlen)
