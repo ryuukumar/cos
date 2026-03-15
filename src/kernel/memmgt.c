@@ -7,10 +7,6 @@
 
 #define PAGE_SIZE 4096
 
-uint64_t alloc_frames_base = 0;
-uint64_t alloc_frames_count = 0;
-uint64_t alloc_frames_limit = 0;
-
 pml4t_entry_t* pml4_base_ptr = NULL;
 uint64_t hhdm_offset = 0;
 
@@ -254,29 +250,6 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	pml4_base_ptr = (pml4t_entry_t*)(pml4_base + p_hhdm_offset);
 	hhdm_offset = p_hhdm_offset;
 
-	uint64_t highest_length_so_far = 0;
-	uint64_t best_base_so_far = 0xffffffffffffffff;
-
-	// set permissible limit
-	if (memmap_response != NULL) {
-		for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
-			if (memmap_response->entries[i]->type == 0) {
-				if (memmap_response->entries[i]->length > highest_length_so_far) {
-					highest_length_so_far = memmap_response->entries[i]->length;
-					best_base_so_far = memmap_response->entries[i]->base;
-				}
-			}
-		}
-	}
-
-	if (highest_length_so_far < PAGE_SIZE * 16) {
-		printf ("Too little memory!! (0x%lx bytes)\n", highest_length_so_far);
-		return;
-	}
-
-	alloc_frames_base = best_base_so_far;
-	alloc_frames_limit = highest_length_so_far + best_base_so_far;
-
 	// set up bitmap for physical page allocation
 	init_physical_bitmap (memmap_response);
 
@@ -299,11 +272,13 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 			((uint64_t)(get_paddr (&memmap.pt_entry[i * 512])) >> 12) & 0xFFFFFFFFFF;
 	}
 
+	paddr_t initial_frames = alloc_ppages (512);
+
 	for (int i = 0; i < 512; i++) {
 		memmap.pt_entry[i].present = 1;
 		memmap.pt_entry[i].rw = 1;
 		memmap.pt_entry[i].frame_base_address =
-			((uint64_t)(alloc_frames_base + PAGE_SIZE * i) >> 12) & 0xFFFFFFFFFF;
+			(((uint64_t)initial_frames + PAGE_SIZE * i) >> 12) & 0xFFFFFFFFFF;
 	}
 
 	// initialise PML4T idx 1 and PDPT idx 0 for our page assignments
@@ -323,17 +298,6 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 		.xd = 1 // execute-disable bit
 	};
 	pml4_base_ptr[1] = pml4t_entry;
-}
-
-uint64_t allocate_physical_pageframes (size_t count) {
-	if (alloc_frames_base + (PAGE_SIZE * (alloc_frames_count + count)) > alloc_frames_limit)
-		return 0;
-	if (is_locked)
-		return 0;
-
-	uint64_t allocated_memory = alloc_frames_base + (PAGE_SIZE * alloc_frames_count);
-	alloc_frames_count += count;
-	return allocated_memory;
 }
 
 /*!
