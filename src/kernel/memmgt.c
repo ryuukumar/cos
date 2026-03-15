@@ -57,8 +57,28 @@ inline void* get_vaddr_hhdm (uint64_t phys_address) {
 	return (void*)((phys_address << 12) + hhdm_offset);
 }
 
-paddr_t alloc_ppage (memmap_bitmap* bitmap) {
-	if (bitmap->pages_used >= bitmap->pages_maxlen)
+/*!
+ * Set a bit in the memory bitmap
+ * @param page_idx page index
+ */
+static inline void bitmap_set_bit(uint64_t page_idx) {
+    bitmap.map[page_idx / 8] |= (1 << (page_idx % 8));
+    bitmap.pages_used++;
+}
+
+/*!
+ * Clear a bit in the memory bitmap
+ * @param page_idx page index
+ */
+static inline void bitmap_clear_bit(uint64_t page_idx) {
+    if (bitmap.map[page_idx / 8] & (1 << (page_idx % 8))) {
+        bitmap.map[page_idx / 8] &= ~(1 << (page_idx % 8));
+        bitmap.pages_used--;
+    }
+}
+
+paddr_t alloc_ppage () {
+	if (bitmap.pages_used >= bitmap.pages_maxlen)
 		return NULL;
 
 	uint64_t total_bytes = (bitmap->pages_maxlen + 7) / 8;
