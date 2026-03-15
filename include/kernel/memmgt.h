@@ -86,6 +86,9 @@ typedef struct {
 
 typedef uint64_t* paddr_t;
 
+vaddr_t get_vaddr_t_from_ptr (void* ptr);
+void* get_vaddr_hhdm (uint64_t phys_address);
+
 void init_memmgt (uint64_t, struct limine_memmap_response*);
 void walk_pagetable (void);
 void* get_paddr (void* vaddr);
