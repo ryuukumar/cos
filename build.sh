@@ -131,6 +131,7 @@ mkdir -p iso_root/boot/limine
 # Copy the relevant files over.
 cp -v limine.conf limine/limine-bios.sys limine/limine-bios-cd.bin limine/limine-uefi-cd.bin iso_root/boot/limine/
 cp -v build/kernel/entry.elf iso_root/boot/
+cp -v build/initramfs.cpio iso_root/boot/
  
 # Create the EFI boot tree and copy Limine's EFI executables over.
 mkdir -p iso_root/EFI/BOOT
