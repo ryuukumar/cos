@@ -248,6 +248,57 @@ void page_fault_handler (registers_t* registers) {
 		__asm__ volatile ("hlt");
 }
 
+void* alloc_vpage (void) {
+	// all memory allocations are currently under one pml4 entry. this is 512 gb of memory, which
+	// should be plenty for literally any use case of COS.
+	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
+
+	for (uint16_t pdpt_idx = 0; pdpt_idx < 512; pdpt_idx++) {
+		pdpt_entry_t* pdpt_base_ptr =
+			(pdpt_entry_t*)get_vaddr_from_frame (pml4t_entry->pdpt_base_address);
+		pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[pdpt_idx];
+
+		if (!pdpt_entry->present) {
+			paddr_t new_frame = alloc_ppage ();
+			pdpt_entry->present = 1;
+			pdpt_entry->read_write = 1;
+			pdpt_entry->frame_base_address = (uint64_t)new_frame / PAGE_SIZE;
+		}
+
+		for (uint16_t pd_idx = 0; pd_idx < 512; pd_idx++) {
+			pd_entry_t* pd_base_ptr =
+				(pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address);
+			pd_entry_t* pd_entry = &pd_base_ptr[pd_idx];
+
+			if (!pd_entry->present) {
+				paddr_t new_frame = alloc_ppage ();
+				pd_entry->present = 1;
+				pd_entry->rw = 1;
+				pd_entry->frame_base_address = (uint64_t)new_frame / PAGE_SIZE;
+			}
+
+			for (uint16_t pt_idx = 0; pt_idx < 512; pt_idx++) {
+				pt_entry_t* pt_base_ptr =
+					(pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
+				pt_entry_t* pt_entry = &pt_base_ptr[pt_idx];
+
+				if (pt_entry->present)
+					continue;
+
+				paddr_t new_frame = alloc_ppage ();
+				pt_entry->present = 1;
+				pt_entry->rw = 1;
+				pt_entry->frame_base_address = (uint64_t)new_frame / PAGE_SIZE;
+
+				vaddr_t virtual_addr = {1, pdpt_idx, pd_idx, pt_idx, 0};
+				return vaddr_t_to_ptr (&virtual_addr);
+			}
+		}
+	}
+
+	return NULL;
+}
+
 /*!
  * Initializes the memory management subsystem.
  * Sets the base pointer for the PML4 table and stores the HHDM offset.
