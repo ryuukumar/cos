@@ -18,6 +18,8 @@ bool is_locked = false;
 
 memmap_bitmap bitmap;
 
+struct limine_memmap_response* memmap_response_ptr;
+
 extern struct {
 	pdpt_entry_t pdpt_entry[512];
 	pd_entry_t pd_entry[512];
@@ -81,27 +83,90 @@ static inline void bitmap_clear_bit (uint64_t page_idx) {
 	}
 }
 
-paddr_t alloc_ppage () {
-	if (bitmap.pages_used >= bitmap.pages_maxlen)
+/*!
+ * Allocate multiple consecutive physical frames
+ * @param count number of consecutive frames to allocate
+ * @return base physical address of allocated frames
+ */
+paddr_t alloc_ppages (uint64_t count) {
+	if (count == 0)
+		return NULL;
+	if (bitmap.pages_used + count > bitmap.pages_maxlen)
 		return NULL;
 
-	uint64_t total_bytes = (bitmap.pages_maxlen + 7) / 8;
-	for (uint64_t i = 0; i < total_bytes; i++) {
-		if (bitmap.map[i] == 0xFF)
+	uint64_t current_streak = 0;
+	uint64_t start_idx = 0;
+
+	for (uint64_t i = 0; i < bitmap.pages_maxlen; i++) {
+		if (i % 8 == 0 && current_streak == 0 && bitmap.map[i / 8] == 0xFF) {
+			i += 7;
 			continue;
-		for (int bit = 0; bit < 8; bit++) {
-			uint64_t idx = i * 8 + bit;
-			if (idx >= bitmap.pages_maxlen)
-				return NULL;
-			if (!(bitmap.map[i] & (1 << bit))) {
-				bitmap.map[i] |= (1 << bit);
-				bitmap.pages_used++;
-				return (paddr_t)(bitmap.pages_base + PAGE_SIZE * idx);
-			}
 		}
+
+		if ((bitmap.map[i / 8] & (1 << (i % 8))) == 0) {
+			if (current_streak == 0)
+				start_idx = i;
+			current_streak++;
+
+			if (current_streak == count) {
+				for (uint64_t j = start_idx; j < start_idx + count; j++)
+					bitmap_set_bit (j);
+				return (paddr_t)(bitmap.pages_base + PAGE_SIZE * start_idx);
+			}
+		} else
+			current_streak = 0;
 	}
+
 	return NULL;
 }
+
+/*!
+ * Allocate a single physical frame
+ * @return base physical address of allocated frame
+ */
+paddr_t alloc_ppage () { return alloc_ppages (1); }
+
+/*!
+ * Free multiple consecutive physical frames
+ * @param paddr base physical address of frames to free
+ * @param count number of frames to free
+ */
+void free_ppages (void* paddr, uint64_t count) {
+	uint64_t start_idx = (uint64_t)paddr / PAGE_SIZE;
+
+	for (uint64_t i = 0; i < count; i++) {
+		uint64_t current_paddr = (uint64_t)paddr + (i * PAGE_SIZE);
+		bool is_valid = false;
+
+		if (memmap_response_ptr != NULL) {
+			for (uint64_t j = 0; j < memmap_response_ptr->entry_count; j++) {
+				struct limine_memmap_entry* entry = memmap_response_ptr->entries[j];
+				if (entry->type == LIMINE_MEMMAP_USABLE && current_paddr >= entry->base &&
+					current_paddr < (entry->base + entry->length)) {
+					is_valid = true;
+					break;
+				}
+			}
+		}
+
+		if (!is_valid) {
+			char buffer[16];
+			ulitos ((uint64_t)paddr, buffer, 16);
+			write_serial_str ("Tried to free reserved memory! Address: 0x");
+			write_serial_str (buffer);
+			write_serial_str ("\nHalting.\n");
+			__asm__ ("hlt");
+		}
+
+		bitmap_clear_bit (start_idx + i);
+	}
+}
+
+/*!
+ * Free a single physical frame
+ * @param paddr base physical address of frame to free
+ */
+void free_ppage (void* paddr) { free_ppages (paddr, 1); }
 
 static void init_physical_bitmap (struct limine_memmap_response* memmap_response) {
 	uint64_t addr_limit = 0;
@@ -183,6 +248,7 @@ void page_fault_handler (registers_t* registers) {
  */
 void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_response) {
 	idt_register_handler (0xE, (irq_handler_t)page_fault_handler);
+	memmap_response_ptr = memmap_response;
 
 	uint64_t pml4_base = read_cr3 () & 0xFFFFFFFFFF000;
 	pml4_base_ptr = (pml4t_entry_t*)(pml4_base + p_hhdm_offset);
