@@ -81,36 +81,40 @@ endif
  
 # Use "find" to glob all *.c, *.s, and *.asm files in the tree and obtain the
 # object and header dependency file names.
-override CFILES := $(shell find -L . -type f -name '*.c' | grep -v 'limine/')
-override ASFILES := $(shell find -L . -type f -name '*.s' | grep -v 'limine/')
-override OBJ := $(patsubst %.c,build/%.c.o,$(CFILES)) $(patsubst %.s,build/%.s.o,$(ASFILES))
-override HEADER_DEPS := $(patsubst %.c,build/%.c.d,$(CFILES)) $(patsubst %.s,build/%.s.d,$(ASFILES))
+override CFILES := $(shell find -L . -type f -name '*.c')
+override ASFILES := $(shell find -L . -type f -name '*.s')
+
+# Output directory for the build. Can be overridden.
+override BUILD_DIR := ../build/kernel
+
+override OBJ := $(patsubst %.c,$(BUILD_DIR)/%.c.o,$(CFILES)) $(patsubst %.s,$(BUILD_DIR)/%.s.o,$(ASFILES))
+override HEADER_DEPS := $(patsubst %.c,$(BUILD_DIR)/%.c.d,$(CFILES)) $(patsubst %.s,$(BUILD_DIR)/%.s.d,$(ASFILES))
  
 # Default target.
 .PHONY: all
-all: build/$(KERNEL)
+all: $(BUILD_DIR)/$(KERNEL)
  
 # Link rules for the final kernel executable.
-build/$(KERNEL): $(OBJ)
+$(BUILD_DIR)/$(KERNEL): $(OBJ)
 	$(LD) $(OBJ) $(LDFLAGS) -o $@
  
 # Include header dependencies.
 -include $(HEADER_DEPS)
  
 # Compilation rules for *.c files.
-build/%.c.o: %.c | $(BUILD_DIR)
+$(BUILD_DIR)/%.c.o: %.c
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
  
 # Compilation rules for *.S files.
-build/%.s.o: %.s
+$(BUILD_DIR)/%.s.o: %.s
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
  
 # Remove object files and the final executable.
 .PHONY: clean
 clean:
-	rm -rf $(KERNEL) $(OBJ) $(HEADER_DEPS)
+	rm -rf $(BUILD_DIR)
 
 # Format C source and header files (only touches src/ and main/)
 .PHONY: format
