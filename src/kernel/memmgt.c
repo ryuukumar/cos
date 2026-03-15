@@ -16,12 +16,6 @@ memmap_bitmap bitmap;
 
 struct limine_memmap_response* memmap_response_ptr;
 
-extern struct {
-	pdpt_entry_t pdpt_entry[512];
-	pd_entry_t pd_entry[512];
-	pt_entry_t pt_entry[512];
-} memmap;
-
 /*!
  * Reads the value of the CR3 register, which contains the physical address of the PML4 table.
  * @return The value of the CR3 register.
