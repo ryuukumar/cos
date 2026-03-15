@@ -31,7 +31,7 @@ uint64_t read_cr3 () {
 }
 
 vaddr_t get_vaddr_t_from_ptr (void* ptr) {
-	uint64_t ptr_64t = (uint64_t) ptr;
+	uint64_t ptr_64t = (uint64_t)ptr;
 	vaddr_t ret_vaddr;
 
 	ret_vaddr.offset = ptr_64t & 0xFFF;
@@ -295,36 +295,36 @@ void* liballoc_alloc (size_t count) {
 }
 
 int liballoc_free (void* ptr, size_t count) {
-    if (is_locked)
-        return -7;
-    if (get_paddr (ptr) == NULL)
-        return -1;
+	if (is_locked)
+		return -7;
+	if (get_paddr (ptr) == NULL)
+		return -1;
 
-    vaddr_t vaddr = get_vaddr_t_from_ptr(ptr);
+	vaddr_t vaddr = get_vaddr_t_from_ptr (ptr);
 
-    pml4t_entry_t* pml4t_entry = &pml4_base_ptr[vaddr.pml4_index];
-    if (!pml4t_entry->present || vaddr.pml4_index != 1)
-        return -2;
-    pdpt_entry_t* pdpt_entry = &((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) +
-                                                 hhdm_offset))[vaddr.pdpt_index];
-    if (!pdpt_entry->present || vaddr.pdpt_index != 0)
-        return -3;
-    pd_entry_t* pd_entry = &((pd_entry_t*)((pdpt_entry->pd_base_address << 12) +
-                                           hhdm_offset))[vaddr.pd_index];
-    if (!pd_entry->present || vaddr.pd_index != 0)
-        return -4;
-    pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
+	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[vaddr.pml4_index];
+	if (!pml4t_entry->present || vaddr.pml4_index != 1)
+		return -2;
+	pdpt_entry_t* pdpt_entry =
+		&((pdpt_entry_t*)((pml4t_entry->pdpt_base_address << 12) + hhdm_offset))[vaddr.pdpt_index];
+	if (!pdpt_entry->present || vaddr.pdpt_index != 0)
+		return -3;
+	pd_entry_t* pd_entry =
+		&((pd_entry_t*)((pdpt_entry->pd_base_address << 12) + hhdm_offset))[vaddr.pd_index];
+	if (!pd_entry->present || vaddr.pd_index != 0)
+		return -4;
+	pt_entry_t* pt_base_ptr = (pt_entry_t*)((pd_entry->pt_base_address << 12) + hhdm_offset);
 
-    for (size_t i = 0; i < count; i++) {
-        if (i + vaddr.pt_index >= 512)
-            return -5; // out of bounds
+	for (size_t i = 0; i < count; i++) {
+		if (i + vaddr.pt_index >= 512)
+			return -5; // out of bounds
 
-        pt_entry_t* pt_entry = &pt_base_ptr[i + vaddr.pt_index];
-        if (!pt_entry->allocated)
-            return -6;
+		pt_entry_t* pt_entry = &pt_base_ptr[i + vaddr.pt_index];
+		if (!pt_entry->allocated)
+			return -6;
 
-        pt_entry->allocated = 0;
-    }
+		pt_entry->allocated = 0;
+	}
 
-    return 0;
+	return 0;
 }
