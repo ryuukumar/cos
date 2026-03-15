@@ -559,8 +559,8 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	// set up bitmap for physical page allocation
 	init_physical_bitmap (memmap_response);
 
-	paddr_t pdpt_frame = alloc_ppage();
-	memset(get_vaddr_from_frame((uint64_t)pdpt_frame/PAGE_SIZE), 0, PAGE_SIZE);
+	paddr_t pdpt_frame = alloc_ppage ();
+	memset (get_vaddr_from_frame ((uint64_t)pdpt_frame / PAGE_SIZE), 0, PAGE_SIZE);
 
 	pml4_base_ptr[1].present = 1;
 	pml4_base_ptr[1].read_write = 1;
