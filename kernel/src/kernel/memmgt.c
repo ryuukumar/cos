@@ -291,9 +291,9 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
 			pdpt_entry->present = 1;
 			pdpt_entry->read_write = 1;
 			pdpt_entry->pd_base_address = (uint64_t)new_table / PAGE_SIZE;
-			pdpt_entry->user_supervisor = user;
 			memset (get_vaddr_from_frame ((uint64_t)new_table / PAGE_SIZE), 0, PAGE_SIZE);
 		}
+		pdpt_entry->user_supervisor = user;
 
 		pd_entry_t* pd_base = (pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address);
 		pd_entry_t* pd_entry = &pd_base[current.pd_index];
@@ -303,9 +303,9 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
 			pd_entry->present = 1;
 			pd_entry->rw = 1;
 			pd_entry->pt_base_address = (uint64_t)new_table / PAGE_SIZE;
-			pd_entry->us = user;
 			memset (get_vaddr_from_frame ((uint64_t)new_table / PAGE_SIZE), 0, PAGE_SIZE);
 		}
+		pd_entry->us = user;
 
 		pt_entry_t* pt_base = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
 		pt_entry_t* pt_entry = &pt_base[current.pt_index];
@@ -567,6 +567,7 @@ void __init_memmgt__ (uint64_t p_hhdm_offset, struct limine_memmap_response* mem
 
 	pml4_base_ptr[1].present = 1;
 	pml4_base_ptr[1].read_write = 1;
+	pml4_base_ptr[1].user_supervisor = 1;
 	pml4_base_ptr[1].pdpt_base_address = ((uint64_t)pdpt_frame) / PAGE_SIZE;
 }
 
