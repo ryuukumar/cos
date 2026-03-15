@@ -14,6 +14,8 @@ uint64_t hhdm_offset = 0;
 
 bool is_locked = false;
 
+memmap_bitmap bitmap;
+
 extern struct {
 	pdpt_entry_t pdpt_entry[512];
 	pd_entry_t pd_entry[512];
@@ -81,18 +83,18 @@ paddr_t alloc_ppage () {
 	if (bitmap.pages_used >= bitmap.pages_maxlen)
 		return NULL;
 
-	uint64_t total_bytes = (bitmap->pages_maxlen + 7) / 8;
+	uint64_t total_bytes = (bitmap.pages_maxlen + 7) / 8;
 	for (uint64_t i = 0; i < total_bytes; i++) {
-		if (bitmap->map[i] == 0xFF)
+		if (bitmap.map[i] == 0xFF)
 			continue;
 		for (int bit = 0; bit < 8; bit++) {
 			uint64_t idx = i * 8 + bit;
-			if (idx >= bitmap->pages_maxlen)
+			if (idx >= bitmap.pages_maxlen)
 				return NULL;
-			if (!(bitmap->map[i] & (1 << bit))) {
-				bitmap->map[i] |= (1 << bit);
-				bitmap->pages_used++;
-				return (paddr_t)(bitmap->pages_base + PAGE_SIZE * idx);
+			if (!(bitmap.map[i] & (1 << bit))) {
+				bitmap.map[i] |= (1 << bit);
+				bitmap.pages_used++;
+				return (paddr_t)(bitmap.pages_base + PAGE_SIZE * idx);
 			}
 		}
 	}
