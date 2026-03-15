@@ -5,7 +5,7 @@
 #include <memory.h>
 #include <stdio.h>
 
-#define PAGE_SIZE 4096
+#define PAGE_SIZE 4096ull
 
 pml4t_entry_t* pml4_base_ptr = NULL;
 uint64_t hhdm_offset = 0;
@@ -313,7 +313,7 @@ void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr) 
 		pt_entry->frame_base_address = phys_base_track / PAGE_SIZE;
 		phys_base_track += PAGE_SIZE;
 
-		if (!is_vaddr_t_lt (&current, &first))
+		if (!is_vaddr_t_lt (&current, &last))
 			break;
 
 		current.pt_index++;
@@ -399,7 +399,7 @@ void* alloc_vpages (size_t req_count) {
 			count_so_far++;
 			if (count_so_far == req_count)
 				break;
-			i++
+			i++;
 		}
 	}
 
@@ -486,15 +486,15 @@ void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 							pd_entry->present = 0;
 							pd_entry->pt_base_address = 0;
 
-							if ((current.pd_index == 511) ||
-								(!is_vaddr_t_lt (&current, &last)) && is_table_empty (pd_base)) {
+							if (((current.pd_index == 511) || (!is_vaddr_t_lt (&current, &last))) &&
+								is_table_empty (pd_base)) {
 								free_ppage ((void*)(pdpt_entry->pd_base_address * PAGE_SIZE));
 								pdpt_entry->present = 0;
 								pdpt_entry->pd_base_address = 0;
 
-								if ((current.pdpt_index == 511) ||
-									(!is_vaddr_t_lt (&current, &last)) &&
-										is_table_empty (pdpt_base)) {
+								if (((current.pdpt_index == 511) ||
+									 (!is_vaddr_t_lt (&current, &last))) &&
+									is_table_empty (pdpt_base)) {
 									free_ppage (
 										(void*)(pml4t_entry->pdpt_base_address * PAGE_SIZE));
 									pml4t_entry->present = 0;
