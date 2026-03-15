@@ -89,11 +89,14 @@ vaddr_t get_vaddr_t_from_ptr (void* ptr);
 void* get_vaddr_hhdm (uint64_t phys_address);
 void* vaddr_t_to_ptr (vaddr_t* virtual_addr);
 
+void* alloc_vpages (size_t req_count);
+void* alloc_vpage (void);
+void free_vpages (void* ptr, size_t count);
+void free_vpage (void* ptr);
+
 void init_memmgt (uint64_t, struct limine_memmap_response*);
 void walk_pagetable (void);
 void* get_paddr (void* vaddr);
-
-uint64_t allocate_physical_pageframes (size_t);
 
 // LIBALLOC FUNCTION IMPLEMENTATIONS
 
