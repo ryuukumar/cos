@@ -8,5 +8,6 @@
 size_t strlen (const char*);
 void itos (int32_t, char*, uint32_t);
 void ulitos (uint64_t, char*, uint32_t);
+int strcmp (const char* a, const char* b);
 
 #endif
