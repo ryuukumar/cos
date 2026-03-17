@@ -359,7 +359,7 @@ void* alloc_vpages (size_t req_count, bool user) {
 			// we found 512*512 consecutive free pages!
 			if (count_so_far == 0)
 				start_page_idx = i;
-			uint64_t pages_left = 512ull * 512ull - (i % 512ull * 512ull); // just in case
+			uint64_t pages_left = 512ull * 512ull - (i % (512ull * 512ull)); // just in case
 
 			if (count_so_far + pages_left >= req_count) {
 				count_so_far = req_count;
