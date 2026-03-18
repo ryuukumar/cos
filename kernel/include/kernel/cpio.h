@@ -1,6 +1,7 @@
 #ifndef CPIO_H
 #define CPIO_H
 
+#include <kernel/vfs.h>
 #include <stddef.h>
 
 // Standard defintion of newc cpio header
@@ -20,6 +21,15 @@ typedef struct {
 	char c_namesize[8];
 	char c_check[8];
 } cpio_newc_header_t;
+
+typedef struct {
+	char* c_name;
+	inode* c_inode;
+} child_t;
+
+typedef struct {
+	child_t* d_children;
+} dir_content_t;
 
 void load_initramfs (void* pos, size_t size);
 
