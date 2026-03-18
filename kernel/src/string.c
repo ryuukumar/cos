@@ -1,3 +1,4 @@
+#include <liballoc/liballoc.h>
 #include <string.h>
 
 /*!
@@ -94,4 +95,20 @@ int strcmp (const char* a, const char* b) {
 		if (a[i] != b[i])
 			return 1;
 	return 0;
+}
+
+/*
+ * Duplicate a string using the kernel allocator.
+ * Returns a newly allocated copy or NULL on failure.
+ */
+char* strdup (const char* s) {
+	if (!s)
+		return NULL;
+	size_t len = strlen (s);
+	char* dup = (char*)kmalloc (len + 1);
+	if (!dup)
+		return NULL;
+	for (size_t i = 0; i <= len; i++)
+		dup[i] = s[i];
+	return dup;
 }
