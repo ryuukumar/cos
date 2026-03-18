@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#define C_ISDIR 0040000
+#define C_ISREG 0100000
+#define C_ISLNK 0120000
+
+static uint64_t inode_no;
+
 static uint64_t hex_to_u64 (const char hex[8]) {
 	uint64_t val = 0;
 	for (int i = 0; i < 8; i++) {
@@ -46,12 +52,16 @@ static void* jump_next_file (void* pos) {
 	if ((uint64_t)pos % 4)
 		pos += 4 - ((uint64_t)pos % 4);
 
+	uint64_t filemode = hex_to_u64 (header->c_mode);
+	uint64_t filetype = filemode & 0170000;
 	return pos;
 }
 
 static void parse_file_to_inode (cpio_newc_header_t* header, inode* result) {
 	uint64_t namesize = hex_to_u64 (header->c_namesize);
 	uint64_t filesize = hex_to_u64 (header->c_filesize);
+	uint64_t filemode = hex_to_u64 (header->c_mode);
+	uint64_t filetype = filemode & 0170000;
 
 	memset ((void*)result, 0, sizeof (inode));
 
@@ -60,6 +70,17 @@ static void parse_file_to_inode (cpio_newc_header_t* header, inode* result) {
 	header++;
 
 	memcpy ((void*)result->i_filename, (void*)header, namesize);
+
+	result->i_no = inode_no++;
+
+	if ((filetype & C_ISREG) == filetype)
+		result->i_type = EFILE;
+	else if ((filetype & C_ISDIR) == filetype)
+		result->i_type = DIRECTORY;
+	else if ((filetype & C_ISLNK) == filetype)
+		result->i_type = LINK;
+	else
+		result->i_type = UNDEF;
 
 	if (result->i_sz > 0) {
 		void* data = (void*)header;
@@ -73,7 +94,7 @@ static void parse_file_to_inode (cpio_newc_header_t* header, inode* result) {
 }
 
 void load_initramfs (void* pos, size_t size) {
-	uint64_t num_entries = 0;
+	uint64_t num_entries = inode_no = 0;
 	void* track = pos;
 
 	do {

@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef enum { FILE, DIRECTORY } file_type_t;
+typedef enum { UNDEF, EFILE, DIRECTORY, LINK } file_type_t;
 
 typedef struct inode inode;
 typedef struct file file;
