@@ -32,6 +32,9 @@ typedef struct {
 	uint64_t d_count;
 } dir_content_t;
 
+int mkdir (char* dirname, inode** result, inode* root);
+int lookup (char* filename, inode** result, inode* root);
+
 void load_initramfs (void* pos, size_t size);
 
 #endif

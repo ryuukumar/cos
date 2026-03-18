@@ -99,6 +99,46 @@ static void parse_file_to_inode (cpio_newc_header_t* header, inode* result) {
 	}
 }
 
+int mkdir (char* dirname, inode** result, inode* root) {
+	// requires: guarantee that vfs input is valid
+	inode* new_dir = kmalloc (sizeof (inode));
+	memset ((void*)new_dir, 0, sizeof (inode));
+
+	// TODO: one of these for all of ramfs is enough, tbh
+	inode_operations* i_ops = kmalloc (sizeof (inode_operations));
+	i_ops->lookup = lookup;
+	i_ops->mkdir = mkdir;
+
+	new_dir->i_type = DIRECTORY;
+	new_dir->i_pvt = kmalloc (sizeof (dir_content_t));
+	new_dir->i_iops = i_ops;
+
+	// manually add the '.' and '..' entries
+	((dir_content_t*)new_dir->i_pvt)->d_count = 2;
+	((dir_content_t*)new_dir->i_pvt)->d_children = (child_t*)kmalloc (2 * sizeof (child_t));
+	child_t* dir_children = (child_t*)((dir_content_t*)new_dir->i_pvt)->d_children;
+
+	dir_children[0].c_name = strdup (".");
+	dir_children[0].c_inode = new_dir;
+	dir_children[1].c_name = strdup ("..");
+	dir_children[1].c_inode = root;
+
+	// construct parent replacement structures
+	dir_content_t* parent_pvt = (dir_content_t*)root->i_pvt;
+	child_t* new_parent_children = kmalloc ((parent_pvt->d_count + 1) * sizeof (child_t));
+	memcpy (new_parent_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
+	new_parent_children[parent_pvt->d_count].c_inode = new_dir;
+	new_parent_children[parent_pvt->d_count].c_name = strdup (dirname);
+	parent_pvt->d_count++;
+
+	// replace parent structure and free old one
+	kfree (parent_pvt->d_children);
+	parent_pvt->d_children = new_parent_children;
+
+	*result = new_dir;
+	return 0;
+}
+
 int lookup (char* filename, inode** result, inode* root) {
 	if (!root)
 		return -ENOROOT;
@@ -107,19 +147,19 @@ int lookup (char* filename, inode** result, inode* root) {
 	if (root->i_type != DIRECTORY)
 		return -EINVPATH;
 
-	// case '...' , empty dir
-	if (!root->i_pvt)
-		return -EPNOEXIST;
-
 	// case '.'
 	if (strcmp (filename, ".") == 0) {
 		*result = root;
 		return 0;
 	}
 
+	// case '*' , root is empty
+	if (!root->i_pvt)
+		return -EPNOEXIST;
+
 	dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
 
-	// case '/...' , empty dir
+	// case '*' , root is empty
 	if (!dir_content->d_children)
 		return -EPNOEXIST;
 
@@ -130,7 +170,7 @@ int lookup (char* filename, inode** result, inode* root) {
 			continue;
 
 		if (strcmp (d_child->c_name, filename) == 0) {
-			// case '/file'
+			// case '*'
 			*result = d_child->c_inode;
 			return 0;
 		}
@@ -151,6 +191,7 @@ void load_initramfs (void* pos, size_t size) {
 
 	inode_operations* i_ops = kmalloc (sizeof (inode_operations));
 	i_ops->lookup = lookup;
+	i_ops->mkdir = mkdir;
 
 	root_inode = kmalloc (sizeof (inode));
 	memset ((void*)root_inode, 0, sizeof (inode));
@@ -163,9 +204,9 @@ void load_initramfs (void* pos, size_t size) {
 	((dir_content_t*)root_inode->i_pvt)->d_children = (child_t*)kmalloc (2 * sizeof (child_t));
 	child_t* root_children = (child_t*)((dir_content_t*)root_inode->i_pvt)->d_children;
 
-	root_children[0].c_name = ".";
+	root_children[0].c_name = strdup (".");
 	root_children[0].c_inode = root_inode;
-	root_children[1].c_name = "..";
+	root_children[1].c_name = strdup ("..");
 	root_children[1].c_inode = root_inode;
 
 	// don't allocate for the TRAILER!!! entry
