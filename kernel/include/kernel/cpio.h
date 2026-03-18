@@ -40,6 +40,7 @@ typedef struct {
 
 typedef struct {
 	child_t* d_children;
+	uint64_t d_count;
 } dir_content_t;
 
 void load_initramfs (void* pos, size_t size);

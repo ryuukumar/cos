@@ -10,7 +10,7 @@ typedef struct inode inode;
 typedef struct file file;
 
 typedef struct {
-	int (*lookup) (struct inode* dir, struct inode* res, const char* name);
+	int (*lookup) (char*, inode*, inode*);
 } inode_operations;
 
 typedef struct {
