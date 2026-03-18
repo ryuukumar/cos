@@ -110,75 +110,52 @@ int lookup (char* filename, inode* result, inode* root) {
 	while (*next_slash != (char)0 && *next_slash != '/')
 		next_slash++;
 
-	if (*next_slash == 0) {
-		// file needed is probably in this directory
-		// can be three types:
-		// 1. `/path/to/dir/` - we received a dirpath, return inode of this dir
-		// 2. `/path/to/dir/dir2` - we received a dirpath, lookup and return
-		// 3. `/path/to/dir/fil.e` - we received a filename, lookup and return
+	// case '/'
+	if (*next_slash == 0 && next_slash == filename + 1) {
+		result = root;
+		return 0;
+	}
 
-		// case /path/to/dir/
-		if (next_slash == filename + 1) {
+	if (root->i_type != DIRECTORY) {
+		// case '/file'
+		if (*next_slash == 0) {
 			result = root;
 			return 0;
 		}
+		// case '/file/something_else'
+		return -EINVPATH;
+	}
 
-		// case /path/to/file/something
-		if (root->i_type != DIRECTORY)
-			return -EINVPATH;
+	// case '/...' , empty dir
+	if (!root->i_pvt)
+		return -EPNOEXIST;
 
-		// case /path/to/empty/dir
-		if (!root->i_pvt)
-			return -EPNOEXIST;
+	dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
 
-		dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
+	// case '/...' , empty dir
+	if (!dir_content->d_children)
+		return -EPNOEXIST;
 
-		// case /path/to/empty/dir
-		if (!dir_content->d_children)
-			return -EPNOEXIST;
+	for (uint64_t i = 0; i < dir_content->d_count; i++) {
+		child_t* d_child = &dir_content->d_children[i];
+		// invalid child ; continue searching
+		if (!d_child->c_inode || !d_child->c_name)
+			continue;
 
-		for (uint64_t i = 0; i < dir_content->d_count; i++) {
-			child_t* d_child = &dir_content->d_children[i];
-			if (!d_child->c_inode || !d_child->c_name)
-				continue;
-			if (strcmp (d_child->c_name, filename + 1) == 0) {
+		if (strcmp (d_child->c_name, filename + 1) == 0) {
+			// case '/file'
+			if (*next_slash == 0) {
 				result = d_child->c_inode;
 				return 0;
 			}
+
+			// case '/dir/...'
+			return d_child->c_inode->i_iops->lookup (next_slash, result, d_child->c_inode);
 		}
-
-		// case valid path, but object simply does not exist
-		return -EPNOEXIST;
-	} else {
-		// there is another component to the path
-		// our job is to extract the component we are interested in, and if it exists, call lookup
-		// on that
-
-		// case /path/to/file/something/else
-		if (root->i_type != DIRECTORY)
-			return -EINVPATH;
-
-		// case /path/to/empty/dir
-		if (!root->i_pvt)
-			return -EPNOEXIST;
-
-		dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
-
-		// case /path/to/empty/dir
-		if (!dir_content->d_children)
-			return -EPNOEXIST;
-
-		for (uint64_t i = 0; i < dir_content->d_count; i++) {
-			child_t* d_child = &dir_content->d_children[i];
-			if (!d_child->c_inode || !d_child->c_name)
-				continue;
-			if (strcmp (d_child->c_name, filename + 1) == 0)
-				return d_child->c_inode->i_iops->lookup (next_slash, result, d_child->c_inode);
-		}
-
-		// case valid path, but object simply does not exist
-		return -EPNOEXIST;
 	}
+
+	// case valid path, but object simply does not exist
+	return -EPNOEXIST;
 }
 
 void load_initramfs (void* pos, size_t size) {
@@ -198,6 +175,16 @@ void load_initramfs (void* pos, size_t size) {
 	root_inode->i_type = DIRECTORY;
 	root_inode->i_pvt = kmalloc (sizeof (dir_content_t));
 	root_inode->i_iops = i_ops;
+
+	// manually add the '.' and '..' entries
+	((dir_content_t*)root_inode->i_pvt)->d_count = 2;
+	((dir_content_t*)root_inode->i_pvt)->d_children = (child_t*)kmalloc (2 * sizeof (child_t));
+	child_t* root_children = (child_t*)((dir_content_t*)root_inode->i_pvt)->d_children;
+
+	root_children[0].c_name = ".";
+	root_children[0].c_inode = root_inode;
+	root_children[1].c_name = "..";
+	root_children[1].c_inode = root_inode;
 
 	// don't allocate for the TRAILER!!! entry
 	inode* cpio_inodes = kmalloc ((num_entries - 1) * sizeof (inode));
