@@ -61,13 +61,15 @@ static void parse_file_to_inode (cpio_newc_header_t* header, inode* result) {
 
 	memcpy ((void*)result->i_filename, (void*)header, namesize);
 
-	void* data = (void*)header;
-	data += namesize;
-	if ((uint64_t)data % 4)
-		data += 4 - ((uint64_t)data % 4);
+	if (result->i_sz > 0) {
+		void* data = (void*)header;
+		data += namesize;
+		if ((uint64_t)data % 4)
+			data += 4 - ((uint64_t)data % 4);
 
-	result->i_pvt = kmalloc (filesize);
-	memcpy (result->i_pvt, data, result->i_sz);
+		result->i_pvt = kmalloc (filesize);
+		memcpy (result->i_pvt, data, result->i_sz);
+	}
 }
 
 void load_initramfs (void* pos, size_t size) {
