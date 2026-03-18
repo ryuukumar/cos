@@ -52,8 +52,6 @@ static void* jump_next_file (void* pos) {
 	if ((uint64_t)pos % 4)
 		pos += 4 - ((uint64_t)pos % 4);
 
-	uint64_t filemode = hex_to_u64 (header->c_mode);
-	uint64_t filetype = filemode & 0170000;
 	return pos;
 }
 
