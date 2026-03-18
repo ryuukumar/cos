@@ -34,4 +34,6 @@ struct file {
 	file_operations* f_fops;
 };
 
+int do_lookup (char* filename, inode** result, inode* root);
+
 #endif
