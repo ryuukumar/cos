@@ -2,6 +2,7 @@
 #include <kernel/vfs.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>
+#include <string.h>
 
 int do_lookup (char* filename, inode** result, inode* root) {
 	// case root not provided
@@ -37,24 +38,24 @@ int do_lookup (char* filename, inode** result, inode* root) {
 		return 0;
 	}
 
-    // get the target_name
+	// get the target_name
 	char* target_name = (char*)kmalloc ((size_t)(next_slash - filename));
 	memcpy ((void*)target_name, (void*)(filename + 1), (size_t)(next_slash - filename) - 1);
 	target_name[(size_t)(next_slash - filename) - 1] = 0;
 
-    if (strcmp(target_name, ".") == 0) {
-        // case '/.'
-        if (*next_slash == 0) {
-            *result = root;
-            return 0;
-        }
+	if (strcmp (target_name, ".") == 0) {
+		// case '/.'
+		if (*next_slash == 0) {
+			*result = root;
+			return 0;
+		}
 
-        // case '/./*'
-        return do_lookup (next_slash, result, root);
-    }
+		// case '/./*'
+		return do_lookup (next_slash, result, root);
+	}
 
-    // case '/..*': currently handled by ramfs entry '..'
-    // TODO: handle .. in vfs when process roots are established
+	// case '/..*': currently handled by ramfs entry '..'
+	// TODO: handle .. in vfs when process roots are established
 
 	// case '/*', root is a directory, * may or may not be a file -- look it up
 	inode* target_inode = NULL;

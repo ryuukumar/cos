@@ -99,37 +99,23 @@ static void parse_file_to_inode (cpio_newc_header_t* header, inode* result) {
 	}
 }
 
-int lookup (char* filename, inode* result, inode* root) {
+int lookup (char* filename, inode** result, inode* root) {
 	if (!root)
 		return -ENOROOT;
-	if (!filename)
+	if (!filename || filename[0] == '\0')
 		return -EINVARG;
-	if (filename[0] != '/')
-		return -ENEEDABS;
-
-	char* next_slash = filename + 1;
-	while (*next_slash != (char)0 && *next_slash != '/')
-		next_slash++;
-
-	// case '/'
-	if (*next_slash == 0 && next_slash == filename + 1) {
-		result = root;
-		return 0;
-	}
-
-	if (root->i_type != DIRECTORY) {
-		// case '/file'
-		if (*next_slash == 0) {
-			result = root;
-			return 0;
-		}
-		// case '/file/something_else'
+	if (root->i_type != DIRECTORY)
 		return -EINVPATH;
-	}
 
-	// case '/...' , empty dir
+	// case '...' , empty dir
 	if (!root->i_pvt)
 		return -EPNOEXIST;
+
+	// case '.'
+	if (strcmp (filename, ".") == 0) {
+		*result = root;
+		return 0;
+	}
 
 	dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
 
@@ -143,15 +129,10 @@ int lookup (char* filename, inode* result, inode* root) {
 		if (!d_child->c_inode || !d_child->c_name)
 			continue;
 
-		if (strcmp (d_child->c_name, filename + 1) == 0) {
+		if (strcmp (d_child->c_name, filename) == 0) {
 			// case '/file'
-			if (*next_slash == 0) {
-				result = d_child->c_inode;
-				return 0;
-			}
-
-			// case '/dir/...'
-			return d_child->c_inode->i_iops->lookup (next_slash, result, d_child->c_inode);
+			*result = d_child->c_inode;
+			return 0;
 		}
 	}
 
