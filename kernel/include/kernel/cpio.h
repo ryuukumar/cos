@@ -4,6 +4,17 @@
 #include <kernel/vfs.h>
 #include <stddef.h>
 
+// No root inode
+#define ENOROOT 500
+// Invalid argument
+#define EINVARG 501
+// Need an absolute path
+#define ENEEDABS 502
+// Invalid path
+#define EINVPATH 503
+// Path does not exist
+#define EPNOEXIST 504
+
 // Standard defintion of newc cpio header
 typedef struct {
 	char c_magic[6];
