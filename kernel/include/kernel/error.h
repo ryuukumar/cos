@@ -11,5 +11,7 @@
 #define EINVPATH 503
 // Path does not exist
 #define EPNOEXIST 504
+// Path already exists
+#define EPEXISTS 505
 
 #endif

@@ -1,8 +1,55 @@
 #include <kernel/error.h>
+#include <kernel/serial.h>
 #include <kernel/vfs.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>
+#include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
+
+static bool filename_has_invalid_chars (char* filename) {
+	while (*filename != 0) {
+		if (*filename == '/' || *filename < (char)32)
+			return true;
+		filename++;
+	}
+	return false;
+}
+
+int do_mkdir (char* dirname, inode** result, inode* parent) {
+	// case parent not provided
+	if (!parent)
+		return -EINVARG;
+
+	// case parent is not a directory
+	if (parent->i_type != DIRECTORY)
+		return -EINVARG;
+
+	// case dirname is absent or 0 chars long
+	if (!dirname || *dirname == 0)
+		return -EINVARG;
+
+	// case dirname has invalid characters
+	if (filename_has_invalid_chars (dirname))
+		return -EINVARG;
+
+	printf ("Reached here!\n");
+
+	// case dirname is '.' or '..'
+	if (strcmp (dirname, ".") == 0 || strcmp (dirname, "..") == 0)
+		return -EINVARG;
+
+	// case dirname already exists
+	inode* lookup_result = NULL;
+	int error = parent->i_iops->lookup (dirname, &lookup_result, parent);
+	if (error == 0)
+		return -EPEXISTS;
+	if (error != -EPNOEXIST)
+		return error;
+
+	// case dirname valid, parent exists and dirname does not yet
+	return parent->i_iops->mkdir (dirname, result, parent);
+}
 
 int do_lookup (char* filename, inode** result, inode* root) {
 	// case root not provided

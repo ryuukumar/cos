@@ -11,6 +11,7 @@ typedef struct file file;
 
 typedef struct {
 	int (*lookup) (char*, inode**, inode*);
+	int (*mkdir) (char*, inode**, inode*);
 } inode_operations;
 
 typedef struct {
@@ -34,6 +35,7 @@ struct file {
 	file_operations* f_fops;
 };
 
+int do_mkdir (char* dirname, inode** result, inode* parent);
 int do_lookup (char* filename, inode** result, inode* root);
 
 #endif
