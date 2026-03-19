@@ -5,6 +5,7 @@
 #include <kernel/handlers.h>
 #include <kernel/hardfonts/classic.h>
 #include <kernel/hw/pic.h>
+#include <kernel/hw/timer.h>
 #include <kernel/idt.h>
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
@@ -87,6 +88,7 @@ void _start (void) {
 
 	asm ("sti");
 
+	init_timer ();
 	__init_serial__ ();
 
 	write_serial_str ("Hello from COS!\n");
@@ -149,6 +151,8 @@ void _start (void) {
 	printf ("\nInitramfs at 0x%llx, size %ld bytes\n", initramfs_addr, initramfs_size);
 
 	load_initramfs (initramfs_addr, (size_t)initramfs_size);
+
+	printf ("Current system tick: %lld", get_current_tick ());
 
 	printf ("\nJumping to user land!\n");
 
