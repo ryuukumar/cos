@@ -4,7 +4,7 @@
 
 #include <kernel/idt.h>
 
-void syscall_handler (registers_t* registers);
+registers_t* syscall_handler (registers_t* registers);
 void __init_syscalls__ (void);
 
 #endif

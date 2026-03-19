@@ -1,7 +1,10 @@
 #include <kernel/serial.h>
 #include <kernel/syscall.h>
 
-void syscall_handler (registers_t* registers) { uint8_t syscall_number = registers->rax; }
+registers_t* syscall_handler (registers_t* registers) {
+	// uint8_t syscall_number = registers->rax;
+	return registers;
+}
 
 void __init_syscalls__ (void) {
 	idt_register_handler (0x80, syscall_handler);

@@ -232,7 +232,7 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
  * Simple handler for page fault, prints faulting address from CR2
  * @param registers idt-passed registers object
  */
-void page_fault_handler (registers_t* registers) {
+registers_t* page_fault_handler (registers_t* registers) {
 	uint64_t cr2;
 	__asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
 
@@ -245,7 +245,9 @@ void page_fault_handler (registers_t* registers) {
 	write_serial ('\n');
 
 	for (;;)
-		__asm__ volatile ("hlt");
+		;
+
+	return registers;
 }
 
 /*!
