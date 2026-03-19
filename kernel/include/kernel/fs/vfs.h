@@ -27,7 +27,6 @@ struct inode {
 	void* i_pvt;
 	inode_operations* i_iops;
 	file_type_t i_type;
-	char* i_filename;
 };
 
 struct file {
