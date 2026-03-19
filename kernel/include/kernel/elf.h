@@ -40,6 +40,29 @@ typedef struct __attribute__ ((packed)) {
 	uint16_t elf_shstrndx;
 } elf64_header_t;
 
+typedef struct __attribute__ ((packed)) {
+	uint32_t p_flags;
+	uint64_t p_offset;
+	uint64_t p_vaddr;
+	uint64_t p_paddr;
+	uint64_t p_filesz;
+	uint64_t p_memsz;
+	uint64_t p_align;
+} elf64_pheader_t;
+
+typedef struct __attribute__ ((packed)) {
+	uint32_t s_name;
+	uint32_t s_type;
+	uint64_t s_flags;
+	uint64_t s_addr;
+	uint64_t s_offset;
+	uint64_t s_size;
+	uint32_t s_link;
+	uint32_t s_info;
+	uint64_t s_addralign;
+	uint64_t s_entsize;
+} elf64_sheader_t;
+
 bool verify_elf_loadable (elf_scanner_t* elf);
 
 #endif
