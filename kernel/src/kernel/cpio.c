@@ -58,15 +58,19 @@ static void* jump_next_file (void* pos) {
 	return pos;
 }
 
-static inode* create_folders_if_noexist (char* abspath) {
+static inode* create_folders_if_noexist (char* arg_abspath) {
+	char* abspath = kmalloc (strlen (arg_abspath) + 1);
+	memcpy ((void*)abspath, arg_abspath, strlen (arg_abspath));
+	abspath[strlen (arg_abspath)] = 0;
+
 	char* idx = abspath;
 	inode* parent = root_inode;
 	inode* child = NULL;
 
-	while (*idx != 0) {
-		while (*(idx + 1) == '/')
+	while (idx && *idx != 0) {
+		while (*idx == '/')
 			idx++;
-		if (*(idx + 1) == 0)
+		if (*idx == 0)
 			break;
 		if (parent == NULL)
 			break;
@@ -85,19 +89,19 @@ static inode* create_folders_if_noexist (char* abspath) {
 			continue;
 		} else {
 			if (parent->i_iops->mkdir (idx, &child, parent) == 0) {
-				char* new_dirname = ((dir_content_t*)parent->i_pvt)
-										->d_children[((dir_content_t*)parent->i_pvt)->d_count - 1]
-										.c_name;
 				parent = child;
 				child = NULL;
 				*next_slash = actual_char;
 				idx = next_slash;
 				continue;
-			} else
-				return NULL;
+			} else {
+				parent = NULL;
+				idx = NULL;
+			}
 		}
 	}
 
+	kfree (abspath);
 	return parent;
 }
 
@@ -110,32 +114,44 @@ static void parse_file_to_inode (cpio_newc_header_t* header) {
 	uint64_t filemode = hex_to_u64 (header->c_mode);
 	uint64_t filetype = filemode & 0170000;
 
-	char* filename = (char*)(header + 1);
-
-	if (strcmp (filename, "TRAILER!!!") == 0 || strcmp (filename, ".") == 0)
+	if (namesize == 0)
 		return;
 
-	if ((filetype & C_ISDIR) == filetype) {
+	char* filename = kmalloc (namesize);
+	memcpy ((void*)filename, (void*)(header + 1), namesize);
+	filename[namesize - 1] = 0; // enforce string in case corrupt
+
+	if (strcmp (filename, "TRAILER!!!") == 0 || strcmp (filename, ".") == 0)
+		goto cleanup;
+
+	if (filetype == C_ISDIR) {
 		inode* directory = create_folders_if_noexist (filename);
 		if (!directory)
-			return;
+			goto cleanup;
 	}
 
-	if ((filetype & C_ISREG) == filetype) {
+	if (filetype == C_ISREG) {
 		size_t path_len = strlen (filename);
 		char* last_slash = &filename[path_len - 1];
 		while (last_slash >= filename && *last_slash != '/')
 			last_slash--;
 
 		if (last_slash < filename)
-			return;
+			goto cleanup;
 		*last_slash = 0;
 
 		inode* parent_directory = create_folders_if_noexist (filename);
 		inode* new_file = NULL;
+		*last_slash = '/';
 
-		if (*(last_slash + 1) != 0)
-			do_create (last_slash + 1, &new_file, parent_directory);
+		if (!parent_directory)
+			goto cleanup;
+
+		if (*(last_slash + 1) != 0) {
+			int error = do_create (last_slash + 1, &new_file, parent_directory);
+			if (error != 0)
+				goto cleanup;
+		}
 
 		if (new_file) {
 			void* data = (void*)(header + 1);
@@ -148,6 +164,10 @@ static void parse_file_to_inode (cpio_newc_header_t* header) {
 			memcpy (new_file->i_pvt, data, new_file->i_sz);
 		}
 	}
+
+cleanup:
+	kfree (filename);
+	return;
 }
 
 int mkdir (char* dirname, inode** result, inode* root) {

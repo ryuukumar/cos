@@ -144,9 +144,10 @@ int do_lookup (char* filename, inode** result, inode* root) {
 	target_name[(size_t)(next_slash - filename) - 1] = 0;
 
 	if (strcmp (target_name, ".") == 0) {
+		kfree (target_name);
+
 		// case '/.'
 		if (*next_slash == 0) {
-			kfree(target_name);
 			*result = root;
 			return 0;
 		}
