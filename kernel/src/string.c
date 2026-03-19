@@ -1,3 +1,4 @@
+#include <liballoc/liballoc.h>
 #include <string.h>
 
 /*!
@@ -81,4 +82,33 @@ void ulitos (uint64_t i, char* buf, uint32_t b) {
 		buf[ctr++] = '-';
 	buf[ctr++] = 0;
 	reverse (buf);
+}
+
+/*!
+ * Compare two strings.
+ * @param a first string
+ * @param b second string
+ * @return whether strings are equal
+ */
+int strcmp (const char* a, const char* b) {
+	for (int i = 0; a[i] != 0 && b[i] != 0; i++)
+		if (a[i] != b[i])
+			return 1;
+	return 0;
+}
+
+/*
+ * Duplicate a string using the kernel allocator.
+ * Returns a newly allocated copy or NULL on failure.
+ */
+char* strdup (const char* s) {
+	if (!s)
+		return NULL;
+	size_t len = strlen (s);
+	char* dup = (char*)kmalloc (len + 1);
+	if (!dup)
+		return NULL;
+	for (size_t i = 0; i <= len; i++)
+		dup[i] = s[i];
+	return dup;
 }

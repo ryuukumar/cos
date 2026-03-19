@@ -1,4 +1,5 @@
 #include <kernel/console.h>
+#include <kernel/fs/cpio.h>
 #include <kernel/gdt.h>
 #include <kernel/graphics.h>
 #include <kernel/handlers.h>
@@ -146,6 +147,8 @@ void _start (void) {
 	uint64_t initramfs_size = initramfs->size;
 
 	printf ("\nInitramfs at 0x%llx, size %ld bytes\n", initramfs_addr, initramfs_size);
+
+	load_initramfs (initramfs_addr, (size_t)initramfs_size);
 
 	printf ("\nJumping to user land!\n");
 
