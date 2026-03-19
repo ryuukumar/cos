@@ -148,7 +148,7 @@ void _start (void) {
 
 	printf ("\nInitramfs at 0x%llx, size %ld bytes\n", initramfs_addr, initramfs_size);
 
-	load_initramfs (initramfs_addr, (size_t)initramfs_size);
+	load_initramfs (initramfs_addr);
 
 	printf ("\nJumping to user land!\n");
 

@@ -269,7 +269,7 @@ int lookup (char* filename, inode** result, inode* root) {
 	return -EPNOEXIST;
 }
 
-void load_initramfs (void* pos, size_t size) {
+void load_initramfs (void* pos) {
 	root_inode = kmalloc (sizeof (inode));
 	memset ((void*)root_inode, 0, sizeof (inode));
 	root_inode->i_type = DIRECTORY;
