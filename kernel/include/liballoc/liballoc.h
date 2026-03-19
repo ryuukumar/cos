@@ -1,9 +1,9 @@
 #ifndef _LIBALLOC_H
 #define _LIBALLOC_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 /** \defgroup ALLOCHOOKS liballoc hooks
  *
