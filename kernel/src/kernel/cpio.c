@@ -13,6 +13,8 @@
 static uint64_t inode_no;
 static inode* root_inode;
 
+static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
+
 static uint64_t hex_to_u64 (const char hex[8]) {
 	uint64_t val = 0;
 	for (int i = 0; i < 8; i++) {
@@ -56,7 +58,50 @@ static void* jump_next_file (void* pos) {
 	return pos;
 }
 
-static void parse_file_to_inode (cpio_newc_header_t* header, inode* result) {
+static inode* create_folders_if_noexist (char* abspath) {
+	char* idx = abspath;
+	inode* parent = root_inode;
+	inode* child = NULL;
+
+	while (*idx != 0) {
+		while (*(idx + 1) == '/')
+			idx++;
+		if (*(idx + 1) == 0)
+			break;
+		if (parent == NULL)
+			break;
+		char* next_slash = idx + 1;
+
+		while (*next_slash != 0 && *next_slash != '/')
+			next_slash++;
+		char actual_char = *next_slash;
+		*next_slash = 0;
+
+		if (parent->i_iops->lookup (idx, &child, parent) == 0) {
+			parent = child;
+			child = NULL;
+			*next_slash = actual_char;
+			idx = next_slash;
+			continue;
+		} else {
+			if (parent->i_iops->mkdir (idx, &child, parent) == 0) {
+				char* new_dirname = ((dir_content_t*)parent->i_pvt)
+										->d_children[((dir_content_t*)parent->i_pvt)->d_count - 1]
+										.c_name;
+				parent = child;
+				child = NULL;
+				*next_slash = actual_char;
+				idx = next_slash;
+				continue;
+			} else
+				return NULL;
+		}
+	}
+
+	return parent;
+}
+
+static void parse_file_to_inode (cpio_newc_header_t* header) {
 	if (header == NULL)
 		return;
 
@@ -65,37 +110,43 @@ static void parse_file_to_inode (cpio_newc_header_t* header, inode* result) {
 	uint64_t filemode = hex_to_u64 (header->c_mode);
 	uint64_t filetype = filemode & 0170000;
 
-	memset ((void*)result, 0, sizeof (inode));
+	char* filename = (char*)(header + 1);
 
-	result->i_filename = kmalloc (namesize);
-	result->i_sz = filesize;
-	header++;
+	if (strcmp (filename, "TRAILER!!!") == 0 || strcmp (filename, ".") == 0)
+		return;
 
-	memcpy ((void*)result->i_filename, (void*)header, namesize);
-
-	result->i_no = inode_no++;
-
-	if ((filetype & C_ISREG) == filetype)
-		result->i_type = EFILE;
-	else if ((filetype & C_ISDIR) == filetype)
-		result->i_type = DIRECTORY;
-	else if ((filetype & C_ISLNK) == filetype)
-		result->i_type = LINK;
-	else
-		result->i_type = UNDEF;
-
-	if (result->i_sz > 0 && result->i_type == EFILE) {
-		void* data = (void*)header;
-		data += namesize;
-		if ((uint64_t)data % 4)
-			data += 4 - ((uint64_t)data % 4);
-
-		result->i_pvt = kmalloc (filesize);
-		memcpy (result->i_pvt, data, result->i_sz);
+	if ((filetype & C_ISDIR) == filetype) {
+		inode* directory = create_folders_if_noexist (filename);
+		if (!directory)
+			return;
 	}
 
-	if (result->i_type == DIRECTORY) {
-		result->i_pvt = kmalloc (sizeof (dir_content_t));
+	if ((filetype & C_ISREG) == filetype) {
+		size_t path_len = strlen (filename);
+		char* last_slash = &filename[path_len - 1];
+		while (last_slash >= filename && *last_slash != '/')
+			last_slash--;
+
+		if (last_slash < filename)
+			return;
+		*last_slash = 0;
+
+		inode* parent_directory = create_folders_if_noexist (filename);
+		inode* new_file = NULL;
+
+		if (*(last_slash + 1) != 0)
+			do_create (last_slash + 1, &new_file, parent_directory);
+
+		if (new_file) {
+			void* data = (void*)(header + 1);
+			data += namesize;
+			if ((uint64_t)data % 4)
+				data += 4 - ((uint64_t)data % 4);
+
+			new_file->i_pvt = kmalloc (filesize);
+			new_file->i_sz = filesize;
+			memcpy (new_file->i_pvt, data, new_file->i_sz);
+		}
 	}
 }
 
@@ -104,14 +155,9 @@ int mkdir (char* dirname, inode** result, inode* root) {
 	inode* new_dir = kmalloc (sizeof (inode));
 	memset ((void*)new_dir, 0, sizeof (inode));
 
-	// TODO: one of these for all of ramfs is enough, tbh
-	inode_operations* i_ops = kmalloc (sizeof (inode_operations));
-	i_ops->lookup = lookup;
-	i_ops->mkdir = mkdir;
-
 	new_dir->i_type = DIRECTORY;
 	new_dir->i_pvt = kmalloc (sizeof (dir_content_t));
-	new_dir->i_iops = i_ops;
+	new_dir->i_iops = &i_ops;
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)new_dir->i_pvt)->d_count = 2;
@@ -129,13 +175,36 @@ int mkdir (char* dirname, inode** result, inode* root) {
 	memcpy (new_parent_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
 	new_parent_children[parent_pvt->d_count].c_inode = new_dir;
 	new_parent_children[parent_pvt->d_count].c_name = strdup (dirname);
-	parent_pvt->d_count++;
 
 	// replace parent structure and free old one
 	kfree (parent_pvt->d_children);
 	parent_pvt->d_children = new_parent_children;
+	parent_pvt->d_count++;
 
 	*result = new_dir;
+	return 0;
+}
+
+int create (char* filename, inode** result, inode* root) {
+	inode* new_file = kmalloc (sizeof (inode));
+	memset ((void*)new_file, 0, sizeof (inode));
+
+	new_file->i_type = EFILE;
+	new_file->i_iops = &i_ops;
+
+	// construct parent replacement structures
+	dir_content_t* parent_pvt = (dir_content_t*)root->i_pvt;
+	child_t* new_parent_children = kmalloc ((parent_pvt->d_count + 1) * sizeof (child_t));
+	memcpy (new_parent_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
+	new_parent_children[parent_pvt->d_count].c_inode = new_file;
+	new_parent_children[parent_pvt->d_count].c_name = strdup (filename);
+
+	// replace parent structure and free old one
+	kfree (parent_pvt->d_children);
+	parent_pvt->d_children = new_parent_children;
+	parent_pvt->d_count++;
+
+	*result = new_file;
 	return 0;
 }
 
@@ -181,23 +250,11 @@ int lookup (char* filename, inode** result, inode* root) {
 }
 
 void load_initramfs (void* pos, size_t size) {
-	uint64_t num_entries = inode_no = 0;
-	void* track = pos;
-
-	do {
-		track = jump_next_file (track);
-		num_entries++;
-	} while (track);
-
-	inode_operations* i_ops = kmalloc (sizeof (inode_operations));
-	i_ops->lookup = lookup;
-	i_ops->mkdir = mkdir;
-
 	root_inode = kmalloc (sizeof (inode));
 	memset ((void*)root_inode, 0, sizeof (inode));
 	root_inode->i_type = DIRECTORY;
 	root_inode->i_pvt = kmalloc (sizeof (dir_content_t));
-	root_inode->i_iops = i_ops;
+	root_inode->i_iops = &i_ops;
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)root_inode->i_pvt)->d_count = 2;
@@ -209,16 +266,8 @@ void load_initramfs (void* pos, size_t size) {
 	root_children[1].c_name = strdup ("..");
 	root_children[1].c_inode = root_inode;
 
-	// don't allocate for the TRAILER!!! entry
-	inode* cpio_inodes = kmalloc ((num_entries - 1) * sizeof (inode));
-	inode* cpio_base = cpio_inodes;
-
-	printf ("Found %lld entries.\n", num_entries);
-
-	while (--num_entries) {
-		parse_file_to_inode (pos, cpio_base++);
+	while (pos) {
+		parse_file_to_inode (pos);
 		pos = jump_next_file (pos);
-		printf ("Parsed file %s of length %lld.\n", (cpio_base - 1)->i_filename,
-				(cpio_base - 1)->i_sz);
 	}
 }

@@ -11,6 +11,7 @@ typedef struct file file;
 
 typedef struct {
 	int (*lookup) (char*, inode**, inode*);
+	int (*create) (char*, inode**, inode*);
 	int (*mkdir) (char*, inode**, inode*);
 } inode_operations;
 
@@ -36,6 +37,7 @@ struct file {
 };
 
 int do_mkdir (char* dirname, inode** result, inode* parent);
+int do_create (char* filename, inode** result, inode* parent);
 int do_lookup (char* filename, inode** result, inode* root);
 
 #endif
