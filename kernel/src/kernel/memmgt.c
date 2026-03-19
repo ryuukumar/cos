@@ -339,7 +339,7 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
 void* alloc_vpages (size_t req_count, bool user) {
 	// all memory allocations are currently under one pml4 entry. this is 512 gb of memory, which
 	// should be plenty for literally any use case of COS.
-	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
+	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[user ? 1 : 257];
 	if (!pml4t_entry->present)
 		return NULL;
 
@@ -515,7 +515,8 @@ static void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
  * @param ptr virtual address of the first page to free
  * @param count number of consecutive pages to free
  */
-void free_vpages (void* ptr, size_t count) {
+void free_vpages (void* ptr, size_t count, bool user) {
+	(void)user;
 	if (ptr == NULL || count == 0)
 		return;
 
@@ -544,7 +545,7 @@ void free_vpages (void* ptr, size_t count) {
  * Free single virtual page
  * @param ptr virtual address of the page to free
  */
-void free_vpage (void* ptr) { free_vpages (ptr, 1); }
+void free_vpage (void* ptr, bool user) { free_vpages (ptr, 1, user); }
 
 /*!
  * Initializes the memory management subsystem.
@@ -569,6 +570,10 @@ void __init_memmgt__ (uint64_t p_hhdm_offset, struct limine_memmap_response* mem
 	pml4_base_ptr[1].read_write = 1;
 	pml4_base_ptr[1].user_supervisor = 1;
 	pml4_base_ptr[1].pdpt_base_address = ((uint64_t)pdpt_frame) / PAGE_SIZE;
+
+	pml4_base_ptr[257].present = 1;
+	pml4_base_ptr[257].read_write = 1;
+	pml4_base_ptr[257].pdpt_base_address = ((uint64_t)pdpt_frame) / PAGE_SIZE;
 }
 
 /*!
@@ -679,12 +684,12 @@ int liballoc_unlock () {
 	return 0;
 }
 
-void* liballoc_alloc (size_t count, bool user) { return alloc_vpages (count, false); }
+void* liballoc_alloc (size_t count, bool user) { return alloc_vpages (count, user); }
 
 int liballoc_free (void* ptr, size_t count, bool user) {
 	if (is_locked)
 		return -7;
 
-	free_vpages (ptr, count);
+	free_vpages (ptr, count, user);
 	return 0;
 }

@@ -91,8 +91,8 @@ void* vaddr_t_to_ptr (vaddr_t* virtual_addr);
 
 void* alloc_vpages (size_t req_count, bool user);
 void* alloc_vpage (bool user);
-void free_vpages (void* ptr, size_t count);
-void free_vpage (void* ptr);
+void free_vpages (void* ptr, size_t count, bool user);
+void free_vpage (void* ptr, bool user);
 
 void __init_memmgt__ (uint64_t, struct limine_memmap_response*);
 void walk_pagetable (void);
