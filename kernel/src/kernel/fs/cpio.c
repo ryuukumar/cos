@@ -1,5 +1,5 @@
-#include <kernel/cpio.h>
 #include <kernel/error.h>
+#include <kernel/fs/cpio.h>
 #include <kernel/serial.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>

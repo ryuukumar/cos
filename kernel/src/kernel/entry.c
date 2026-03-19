@@ -1,5 +1,5 @@
 #include <kernel/console.h>
-#include <kernel/cpio.h>
+#include <kernel/fs/cpio.h>
 #include <kernel/gdt.h>
 #include <kernel/graphics.h>
 #include <kernel/handlers.h>

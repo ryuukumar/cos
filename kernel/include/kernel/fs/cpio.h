@@ -1,7 +1,7 @@
 #ifndef CPIO_H
 #define CPIO_H
 
-#include <kernel/vfs.h>
+#include <kernel/fs/vfs.h>
 #include <stddef.h>
 
 // Standard defintion of newc cpio header

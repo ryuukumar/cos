@@ -1,6 +1,6 @@
 #include <kernel/error.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/serial.h>
-#include <kernel/vfs.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>
 #include <stdbool.h>
