@@ -7,6 +7,9 @@
 
 #define PAGE_SIZE 4096ull
 
+#define USER_PML4_IDX 1
+#define KRNL_PML4_IDX 257
+
 pml4t_entry_t* pml4_base_ptr = NULL;
 uint64_t hhdm_offset = 0;
 
@@ -251,6 +254,14 @@ registers_t* page_fault_handler (registers_t* registers) {
 }
 
 /*!
+ * Check if vaddr is supposed to be a user page. Practically just a check if pml4 index is at least
+ * 256.
+ * @param addr vaddr to check
+ * @return whether it is a user page
+ */
+static inline bool is_vaddr_t_user (vaddr_t* addr) { return addr->pml4_index < 256; }
+
+/*!
  * Check if vaddr a is strictly less than vaddr b
  * @param a first vaddr
  * @param b second vaddr
@@ -277,7 +288,7 @@ static bool is_vaddr_t_lt (vaddr_t* a, vaddr_t* b) {
  * @param last last virtual address in range
  * @param base_addr base address of physical memory of corresponding size
  */
-static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr, bool user) {
+static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr) {
 	uint64_t phys_base_track = (uint64_t)base_addr;
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[first.pml4_index];
 
@@ -292,10 +303,10 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
 			paddr_t new_table = alloc_ppage ();
 			pdpt_entry->present = 1;
 			pdpt_entry->read_write = 1;
+			pdpt_entry->user_supervisor = is_vaddr_t_user (&current);
 			pdpt_entry->pd_base_address = (uint64_t)new_table / PAGE_SIZE;
 			memset (get_vaddr_from_frame ((uint64_t)new_table / PAGE_SIZE), 0, PAGE_SIZE);
 		}
-		pdpt_entry->user_supervisor = user;
 
 		pd_entry_t* pd_base = (pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address);
 		pd_entry_t* pd_entry = &pd_base[current.pd_index];
@@ -304,10 +315,10 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
 			paddr_t new_table = alloc_ppage ();
 			pd_entry->present = 1;
 			pd_entry->rw = 1;
+			pd_entry->us = is_vaddr_t_user (&current);
 			pd_entry->pt_base_address = (uint64_t)new_table / PAGE_SIZE;
 			memset (get_vaddr_from_frame ((uint64_t)new_table / PAGE_SIZE), 0, PAGE_SIZE);
 		}
-		pd_entry->us = user;
 
 		pt_entry_t* pt_base = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
 		pt_entry_t* pt_entry = &pt_base[current.pt_index];
@@ -315,7 +326,7 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
 		pt_entry->present = 1;
 		pt_entry->rw = 1;
 		pt_entry->frame_base_address = phys_base_track / PAGE_SIZE;
-		pt_entry->us = user;
+		pt_entry->us = is_vaddr_t_user (&current);
 		phys_base_track += PAGE_SIZE;
 
 		if (!is_vaddr_t_lt (&current, &last))
@@ -339,9 +350,9 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
  * @return base virtual address of allocated pages
  */
 void* alloc_vpages (size_t req_count, bool user) {
-	// all memory allocations are currently under one pml4 entry. this is 512 gb of memory, which
-	// should be plenty for literally any use case of COS.
-	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
+	// all memory allocations are currently under 2 pml4 entries. this is 512 gb of memory for
+	// kernel and user each, which should be plenty for literally any use case of COS.
+	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[user ? USER_PML4_IDX : KRNL_PML4_IDX];
 	if (!pml4t_entry->present)
 		return NULL;
 
@@ -419,7 +430,7 @@ void* alloc_vpages (size_t req_count, bool user) {
 							  ((start_page_idx + req_count - 1) >> 9) & 0x1FF,
 							  (start_page_idx + req_count - 1) & 0x1FF, 0};
 
-		alloc_all_vpages_in_range (first_vaddr, last_vaddr, base_physical, user);
+		alloc_all_vpages_in_range (first_vaddr, last_vaddr, base_physical);
 		return vaddr_t_to_ptr (&first_vaddr);
 	}
 
@@ -564,13 +575,20 @@ void __init_memmgt__ (uint64_t p_hhdm_offset, struct limine_memmap_response* mem
 	// set up bitmap for physical page allocation
 	init_physical_bitmap (memmap_response);
 
-	paddr_t pdpt_frame = alloc_ppage ();
-	memset (get_vaddr_from_frame ((uint64_t)pdpt_frame / PAGE_SIZE), 0, PAGE_SIZE);
+	paddr_t user_pdpt_frame = alloc_ppage ();
+	memset (get_vaddr_from_frame ((uint64_t)user_pdpt_frame / PAGE_SIZE), 0, PAGE_SIZE);
 
-	pml4_base_ptr[1].present = 1;
-	pml4_base_ptr[1].read_write = 1;
-	pml4_base_ptr[1].user_supervisor = 1;
-	pml4_base_ptr[1].pdpt_base_address = ((uint64_t)pdpt_frame) / PAGE_SIZE;
+	pml4_base_ptr[USER_PML4_IDX].present = 1;
+	pml4_base_ptr[USER_PML4_IDX].read_write = 1;
+	pml4_base_ptr[USER_PML4_IDX].user_supervisor = 1;
+	pml4_base_ptr[USER_PML4_IDX].pdpt_base_address = ((uint64_t)user_pdpt_frame) / PAGE_SIZE;
+
+	paddr_t krnl_pdpt_frame = alloc_ppage ();
+	memset (get_vaddr_from_frame ((uint64_t)krnl_pdpt_frame / PAGE_SIZE), 0, PAGE_SIZE);
+
+	pml4_base_ptr[KRNL_PML4_IDX].present = 1;
+	pml4_base_ptr[KRNL_PML4_IDX].read_write = 1;
+	pml4_base_ptr[KRNL_PML4_IDX].pdpt_base_address = ((uint64_t)krnl_pdpt_frame) / PAGE_SIZE;
 }
 
 /*!
