@@ -16,6 +16,13 @@ static bool filename_has_invalid_chars (char* filename) {
 	return false;
 }
 
+/*!
+ * Create directory 'dirname' in the supplied 'parent' inode.
+ * @param dirname name of new directory
+ * @param result pointer to the inode* where the directory's reference will be set
+ * @param parent directory where the new directory should be created
+ * @return 0 if created, else an error code from error.h
+ */
 int do_mkdir (char* dirname, inode** result, inode* parent) {
 	// case parent not provided
 	if (!parent)
@@ -51,6 +58,14 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
 	return parent->i_iops->mkdir (dirname, result, parent);
 }
 
+/*!
+ * Check if absolute filepath supplied in filename exists.
+ * If it does, set *result to the pointer to the inode.
+ * @param filename absolute path to lookup
+ * @param result pointer to the inode* where the matching inode may be placed
+ * @param root root inode from where to begin the search
+ * @return 0 if found, else an error code from error.h
+ */
 int do_lookup (char* filename, inode** result, inode* root) {
 	// case root not provided
 	if (!root)
