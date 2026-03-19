@@ -2,8 +2,8 @@
 #define PROCESS_H
 
 #include <kernel/fs/vfs.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define MAX_FDS 32
 
@@ -18,7 +18,7 @@ struct process {
 	struct file* p_fds[MAX_FDS];
 	inode *p_root, p_wd;
 	process* next;
-    bool user;
+	bool user;
 };
 
 typedef struct {

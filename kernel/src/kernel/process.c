@@ -44,12 +44,9 @@ int enqueue_process (process_queue* queue, process* new_process) {
 	}
 }
 
-int create_process (uintptr_t iptr, bool user, process** result) {
-	process* new_process = kmalloc (sizeof (process));
-	memset ((void*)new_process, 0, sizeof (process));
+int create_process (uintptr_t iptr, process** result) { return -ENOIMPL; }
 
-    new_process->p_id = next_free_pid++;
-    new_process->p_rsp = kmalloc(64 * 1024); // 64kb for stack
+void init_process (void) {
+	ready_queue.head = ready_queue.tail = NULL;
+	next_free_pid = 0ll;
 }
-
-void init_process (void) { ready_queue.head = ready_queue.tail = NULL; next_free_pid = 0ll; }
