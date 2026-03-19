@@ -103,7 +103,7 @@ void* get_paddr (void* vaddr);
 void* try_assign_pt (pt_entry_t*, size_t);
 int liballoc_lock ();
 int liballoc_unlock ();
-void* liballoc_alloc (size_t);
-int liballoc_free (void*, size_t);
+void* liballoc_alloc (size_t, bool);
+int liballoc_free (void*, size_t, bool);
 
 #endif

@@ -679,9 +679,9 @@ int liballoc_unlock () {
 	return 0;
 }
 
-void* liballoc_alloc (size_t count) { return alloc_vpages (count, false); }
+void* liballoc_alloc (size_t count, bool user) { return alloc_vpages (count, false); }
 
-int liballoc_free (void* ptr, size_t count) {
+int liballoc_free (void* ptr, size_t count, bool user) {
 	if (is_locked)
 		return -7;
 
