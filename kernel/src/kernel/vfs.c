@@ -56,6 +56,13 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
 	return parent->i_iops->mkdir (dirname, result, parent);
 }
 
+/*!
+ * Create file 'filename' in the supplied 'parent' inode.
+ * @param filename name of new file
+ * @param result pointer to the inode* where the file's reference will be set
+ * @param parent directory where the new file should be created
+ * @return 0 if created, else an error code from error.h
+ */
 int do_create (char* filename, inode** result, inode* parent) {
 	// case parent not provided
 	if (!parent)
@@ -139,6 +146,7 @@ int do_lookup (char* filename, inode** result, inode* root) {
 	if (strcmp (target_name, ".") == 0) {
 		// case '/.'
 		if (*next_slash == 0) {
+			kfree(target_name);
 			*result = root;
 			return 0;
 		}
