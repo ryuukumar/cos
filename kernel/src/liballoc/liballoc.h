@@ -172,7 +172,7 @@ static struct liballoc_major* allocate_new_page (unsigned int size) {
 	if (st < l_pageCount)
 		st = l_pageCount;
 
-	maj = (struct liballoc_major*)liballoc_alloc (st);
+	maj = (struct liballoc_major*)liballoc_alloc (st, LIBALLOC_USER);
 
 	if (maj == NULL) {
 		l_warningCount += 1;
@@ -607,7 +607,7 @@ void PREFIX (free) (void* ptr) {
 			maj->next->prev = maj->prev;
 		l_allocated -= maj->size;
 
-		liballoc_free (maj, maj->pages);
+		liballoc_free (maj, maj->pages, LIBALLOC_USER);
 	} else {
 		if (l_bestBet != NULL) {
 			int bestSize = l_bestBet->size - l_bestBet->usage;
