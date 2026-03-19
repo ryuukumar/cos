@@ -74,12 +74,12 @@ static void log_registers_to_serial (registers_t* registers) {
 	write_serial_str ("----------------------------------\n\n");
 }
 
-void kernel_dispatch_interrupt (registers_t* registers) {
+registers_t* kernel_dispatch_interrupt (registers_t* registers) {
 	log_registers_to_serial (registers);
 
 	irq_handler_t handler = interrupt_handlers[registers->interrupt_number];
 	if (handler)
-		handler (registers);
+		return handler (registers);
 	else {
 		printf ("Unhandled interrupt! Hasta la vista");
 		while (1)
