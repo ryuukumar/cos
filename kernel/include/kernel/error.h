@@ -3,8 +3,10 @@
 
 // Invalid argument
 #define EINVARG 100
-// Not implement
+// Not implemented
 #define ENOIMPL 101
+// Out of memory
+#define ENOMEM 102
 
 // No root inode
 #define ENOROOT 500
