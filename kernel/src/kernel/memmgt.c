@@ -27,7 +27,7 @@ registers_t* page_fault_handler (registers_t* registers);
  * Reads the value of the CR3 register, which contains the physical address of the PML4 table.
  * @return The value of the CR3 register.
  */
-uint64_t read_cr3 (void) {
+inline uint64_t read_cr3 (void) {
 	uint64_t cr3;
 	__asm__ volatile ("mov %%cr3, %0" : "=r"(cr3));
 	return cr3;
@@ -37,7 +37,7 @@ uint64_t read_cr3 (void) {
  * Writes a new value to the CR3 register.
  * @param new_value the new value of CR3
  */
-void write_cr3 (uint64_t new_value) {
+inline void write_cr3 (uint64_t new_value) {
 	__asm__ volatile ("mov %0, %%cr3" : : "r"(new_value) : "memory");
 }
 
@@ -422,9 +422,10 @@ void* alloc_vpages (size_t req_count, bool user) {
 		paddr_t base_physical = alloc_ppages (req_count);
 		if (base_physical == NULL) return NULL; // no more physical memory
 
-		vaddr_t first_vaddr = {1, (start_page_idx >> 18) & 0x1FF, (start_page_idx >> 9) & 0x1FF,
-							   start_page_idx & 0x1FF, 0};
-		vaddr_t last_vaddr = {1, ((start_page_idx + req_count - 1) >> 18) & 0x1FF,
+		vaddr_t first_vaddr = {user ? USER_PML4_IDX : KRNL_PML4_IDX, (start_page_idx >> 18) & 0x1FF,
+							   (start_page_idx >> 9) & 0x1FF, start_page_idx & 0x1FF, 0};
+		vaddr_t last_vaddr = {user ? USER_PML4_IDX : KRNL_PML4_IDX,
+							  ((start_page_idx + req_count - 1) >> 18) & 0x1FF,
 							  ((start_page_idx + req_count - 1) >> 9) & 0x1FF,
 							  (start_page_idx + req_count - 1) & 0x1FF, 0};
 
