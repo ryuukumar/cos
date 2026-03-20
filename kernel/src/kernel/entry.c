@@ -32,8 +32,9 @@ struct limine_framebuffer* framebuffer = NULL;
 struct limine_file*		   initramfs = NULL;
 uint64_t				   hhdm_base = 0;
 
-// Declaration of kernel entry point
+// Declaration of kernel entry points
 void _start (void);
+void _start_stage2 (void);
 
 // Halt and catch fire function.
 static void hcf (void) {
@@ -70,23 +71,6 @@ __attribute__ ((noreturn)) static void jump_to_usermode (uintptr_t entry_point,
 		;
 }
 
-static void get_limine_requests (void) {
-	// REQUIRED: framebuffer
-	if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1)
-		hcf ();
-
-	// REQUIRED: hhdm response
-	if (hhdm_req.response == NULL) hcf ();
-
-	// REQUIRED: modules (for initramfs)
-	if (mod_req.response == NULL || mod_req.response->module_count < 1) hcf ();
-
-	// set the values received from limine
-	framebuffer = framebuffer_request.response->framebuffers[0];
-	hhdm_base = hhdm_req.response->offset;
-	initramfs = mod_req.response->modules[0];
-}
-
 static void print_info (void) {
 	drawBorder (20);
 	set_color (0x44eeaa);
@@ -112,6 +96,45 @@ static void print_info (void) {
 		printf ("\nDid not receive boot time from Limine.\n");
 }
 
+__attribute__ ((noreturn)) void _start_stage2 (void) {
+	init_graphics (framebuffer);
+	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
+
+	print_info ();
+
+	void*	 initramfs_addr = initramfs->address;
+	uint64_t initramfs_size = initramfs->size;
+
+	printf ("\n[Stage 2] Running as PID %lld\n", get_current_process ()->p_id);
+	printf ("[Stage 2] Initramfs at 0x%llx, size %ld bytes\n", initramfs_addr, initramfs_size);
+
+	load_initramfs (initramfs_addr);
+
+	printf ("[Stage 2] Current system tick: %lld\n", get_current_tick ());
+
+	// TODO: ELF loading & user jump
+	printf ("\n\nAll execution completed.");
+	for (;;)
+		;
+}
+
+static void get_limine_requests (void) {
+	// REQUIRED: framebuffer
+	if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1)
+		hcf ();
+
+	// REQUIRED: hhdm response
+	if (hhdm_req.response == NULL) hcf ();
+
+	// REQUIRED: modules (for initramfs)
+	if (mod_req.response == NULL || mod_req.response->module_count < 1) hcf ();
+
+	// set the values received from limine
+	framebuffer = framebuffer_request.response->framebuffers[0];
+	hhdm_base = hhdm_req.response->offset;
+	initramfs = mod_req.response->modules[0];
+}
+
 /*!
 Entry point of kernel. Everything is set up here.
 */
@@ -124,8 +147,6 @@ void _start (void) {
 	init_idt ();
 	init_timer ();
 
-	asm ("sti");
-
 	init_serial ();
 	write_serial_str ("Hello from COS!\n");
 
@@ -134,34 +155,31 @@ void _start (void) {
 	init_memmgt (hhdm_base, memmap_req.response);
 	init_syscalls ();
 	init_handlers ();
-
-	init_graphics (framebuffer);
-	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
 	init_process ();
-	print_info ();
 
-	void*	 initramfs_addr = initramfs->address;
-	uint64_t initramfs_size = initramfs->size;
+	// Launch Stage 2 as the first process (PID 1)
+	process* stage2_proc = kmalloc (sizeof (process));
+	stage2_proc->p_id = 1;
+	stage2_proc->p_cr3 = read_cr3 ();
+	stage2_proc->p_user = false;
+	stage2_proc->p_state = TASK_READY;
 
-	printf ("\nInitramfs at 0x%llx, size %ld bytes\n", initramfs_addr, initramfs_size);
+	void* kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, false);
+	stage2_proc->p_kstack = (uintptr_t)kstack + STACK_SIZE;
 
-	load_initramfs (initramfs_addr);
+	registers_t* regs = (registers_t*)(stage2_proc->p_kstack - sizeof (registers_t));
+	memset (regs, 0, sizeof (registers_t));
+	regs->rip = (uintptr_t)_start_stage2;
+	regs->cs = 0x28; // Kernel code segment
+	regs->ss = 0x30; // Kernel data segment
+	regs->rsp = stage2_proc->p_kstack;
+	regs->rflags = 0x202; // IF=1
 
-	printf ("Current system tick: %lld", get_current_tick ());
+	stage2_proc->p_registers_ptr = regs;
+	enqueue_process (get_ready_queue (), stage2_proc);
 
-	printf ("\nJumping to user land!\n");
-
-	/*
-	 * TODO: bunch of stuff
-	 * - [x] set up user mode code to actually compile
-	 * - [x] set up limine loading it as a module
-	 * - [ ] set up a vfs
-	 * - [ ] set up elf-loading
-	 * - [ ] set up cpio reading and ramfs driver
-	 * only THEN actually jump to user code
-	 */
-
-	// We're done, just hang...
-	printf ("\n\nAll execution completed.");
-	hcf ();
+	write_serial_str ("\n[Stage 1] Hands off to scheduler.\n");
+	asm ("sti");
+	for (;;)
+		;
 }
