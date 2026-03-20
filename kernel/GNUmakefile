@@ -41,6 +41,9 @@ $(eval $(call DEFAULT_VAR,LDFLAGS,$(DEFAULT_LDFLAGS)))
 override CFLAGS += \
 	-Wall \
 	-Wextra \
+	-Wstrict-prototypes \
+	-Wmissing-prototypes \
+	-Wmissing-declarations \
 	-std=gnu11 \
 	-ffreestanding \
 	-fno-stack-protector \
@@ -57,6 +60,9 @@ override CFLAGS += \
 	-mno-sse2 \
 	-mno-red-zone \
 	-mcmodel=kernel
+
+# TODO: add these flags: -Wconversion -Wsign-conversion -Wcast-align \
+# -Wpointer-arith -Wshadow
  
 # Internal C preprocessor flags that should not be changed by the user.
 override CPPFLAGS := \

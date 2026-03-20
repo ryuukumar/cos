@@ -10,7 +10,7 @@ Handle the different cases of %-- in printf
 @param	args	pointer to the arguments printf received
 @param	ul	whether the format prints an unsigned/long character
 */
-void fmtprintf (const char* format, size_t* i, va_list* args, bool ul) {
+static void fmtprintf (const char* format, size_t* i, va_list* args, bool ul) {
 	switch (format[*i]) {
 	case 's': {
 		const char* str = va_arg (*args, const char*);

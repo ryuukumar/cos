@@ -8,4 +8,4 @@ registers_t* handle_gpf (registers_t* registers) {
 	return registers; // dead code but shuts up unused var warning
 }
 
-void __init_handlers__ (void) { idt_register_handler (0xD, handle_gpf); }
+void init_handlers (void) { idt_register_handler (0xD, handle_gpf); }

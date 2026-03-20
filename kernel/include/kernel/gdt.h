@@ -9,19 +9,19 @@ typedef struct __attribute__ ((packed)) {
 typedef struct __attribute__ ((packed)) {
 	uint16_t limit;
 	uint16_t base_low16;
-	uint8_t base_mid8;
-	uint8_t access;
-	uint8_t granularity;
-	uint8_t base_high8;
+	uint8_t	 base_mid8;
+	uint8_t	 access;
+	uint8_t	 granularity;
+	uint8_t	 base_high8;
 } gdt_entry_t;
 
 typedef struct __attribute__ ((packed)) {
 	uint16_t length;
 	uint16_t base_low16;
-	uint8_t base_mid8;
-	uint8_t flags0;
-	uint8_t flags1;
-	uint8_t base_high8;
+	uint8_t	 base_mid8;
+	uint8_t	 flags0;
+	uint8_t	 flags1;
+	uint8_t	 base_high8;
 	uint32_t base_upper32;
 	uint32_t reserved;
 } tss_entry_t;
@@ -50,8 +50,9 @@ typedef struct __attribute__ ((packed)) {
 	tss_entry_t tss;
 } gdt_t;
 
-void gdt_init (void);
-void tss_init (void);
+void init_gdt (void);
+void init_tss (void);
 void tss_set_stack (uintptr_t stack);
+
 extern void gdt_flush (gdt_pointer_t*);
 extern void tss_flush (void);

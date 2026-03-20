@@ -18,10 +18,10 @@ gdt_t gdt = {
 };
 
 gdt_pointer_t gdt_pointer;
-tss_t tss;
+tss_t		  tss;
 
-void gdt_init (void) {
-	tss_init ();
+void init_gdt (void) {
+	init_tss ();
 
 	gdt_pointer.size = sizeof (gdt_t) - 1;
 	gdt_pointer.offset = (uint64_t)&gdt;
@@ -30,7 +30,7 @@ void gdt_init (void) {
 	tss_flush ();
 }
 
-void tss_init (void) {
+void init_tss (void) {
 	memset (&tss, 0, sizeof (tss));
 
 	tss.rsp[0] = (uintptr_t)stack;

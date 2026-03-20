@@ -20,24 +20,29 @@
 
 #define FONT_SIZE 2
 
-extern volatile struct limine_framebuffer_request framebuffer_request;
+extern volatile struct limine_framebuffer_request	  framebuffer_request;
 extern volatile struct limine_bootloader_info_request bootinfo_req;
-extern volatile struct limine_boot_time_request boottime_req;
-extern volatile struct limine_memmap_request memmap_req;
-extern volatile struct limine_module_request mod_req;
-extern volatile struct limine_hhdm_request hhdm_req;
+extern volatile struct limine_boot_time_request		  boottime_req;
+extern volatile struct limine_memmap_request		  memmap_req;
+extern volatile struct limine_module_request		  mod_req;
+extern volatile struct limine_hhdm_request			  hhdm_req;
 
-uint64_t hhdm_base = 0;
+struct limine_framebuffer* framebuffer = NULL;
+struct limine_file*		   initramfs = NULL;
+uint64_t				   hhdm_base = 0;
+
+// Declaration of kernel entry point
+void _start (void);
 
 // Halt and catch fire function.
 static void hcf (void) {
 	asm ("cli");
-	for (;;) {
+	for (;;)
 		asm ("hlt");
-	}
 }
 
-__attribute__ ((noreturn)) void jump_to_usermode (uintptr_t entry_point, uintptr_t user_stack) {
+__attribute__ ((noreturn)) static void jump_to_usermode (uintptr_t entry_point,
+														 uintptr_t user_stack) {
 	__asm__ volatile (
 		"cli \n\t"			   // 1. Disable interrupts while swapping states
 		"mov $0x3B, %%ax \n\t" // 2. Load User Data Segment descriptor (0x38 | 3 = 0x3B)
@@ -64,52 +69,25 @@ __attribute__ ((noreturn)) void jump_to_usermode (uintptr_t entry_point, uintptr
 		;
 }
 
-/*!
-Entry point of kernel. Everything is set up here.
-*/
-void _start (void) {
-	// Ensure we got a framebuffer.
-	if (framebuffer_request.response == NULL ||
-		framebuffer_request.response->framebuffer_count < 1) {
+static void get_limine_requests (void) {
+	// REQUIRED: framebuffer
+	if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1)
 		hcf ();
-	}
 
-	// Fetch the first framebuffer.
-	// Note: we assume the framebuffer model is RGB with 32-bit pixels.
-	struct limine_framebuffer* framebuffer = framebuffer_request.response->framebuffers[0];
+	// REQUIRED: hhdm response
+	if (hhdm_req.response == NULL) hcf ();
 
-	asm ("cli");
+	// REQUIRED: modules (for initramfs)
+	if (mod_req.response == NULL || mod_req.response->module_count < 1) hcf ();
 
-	gdt_init ();
-	tss_init ();
+	// set the values received from limine
+	framebuffer = framebuffer_request.response->framebuffers[0];
+	hhdm_base = hhdm_req.response->offset;
+	initramfs = mod_req.response->modules[0];
+}
 
-	__init_pic__ ();
-	__init_idt__ ();
-
-	asm ("sti");
-
-	init_timer ();
-	__init_serial__ ();
-
-	write_serial_str ("Hello from COS!\n");
-
-	__init_graphics__ (framebuffer);
+static void print_info (void) {
 	drawBorder (20);
-
-	__init_console__ (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
-
-	// Check if we got a valid HHDM response.
-	if (hhdm_req.response != NULL) {
-		hhdm_base = hhdm_req.response->offset;
-	} else {
-		printf ("Error: did not receive HHDM address.\n\n");
-		hcf ();
-	}
-
-	__init_memmgt__ (hhdm_base, memmap_req.response);
-	__init_syscalls__ ();
-	__init_handlers__ ();
-
 	set_color (0x44eeaa);
 
 	printf ("COS 0.0%d", 7);
@@ -131,26 +109,41 @@ void _start (void) {
 		printf ("\nSystem booted at time %ld.\n", boottime_req.response->boot_time);
 	} else
 		printf ("\nDid not receive boot time from Limine.\n");
+}
 
-	printf ("\n\n");
-	uint64_t cr3;
-	__asm__ volatile ("mov %%cr3, %0" : "=r"(cr3));
-	cr3 = cr3 & 0xFFFFFFFFFF000;
+/*!
+Entry point of kernel. Everything is set up here.
+*/
+void _start (void) {
 
-	printf ("CR3: %lx\n", cr3);
+	asm ("cli");
 
-	if (mod_req.response == NULL || mod_req.response->module_count < 1) {
-		printf ("Error: no modules loaded.\n");
-		hcf ();
-	}
+	init_gdt ();
+	init_pic ();
+	init_idt ();
+	init_timer ();
 
-	struct limine_file* initramfs = mod_req.response->modules[0];
-	void* initramfs_addr = initramfs->address;
+	asm ("sti");
+
+	init_serial ();
+	write_serial_str ("Hello from COS!\n");
+
+	get_limine_requests ();
+
+	init_memmgt (hhdm_base, memmap_req.response);
+	init_syscalls ();
+	init_handlers ();
+
+	init_graphics (framebuffer);
+	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
+	print_info ();
+
+	void*	 initramfs_addr = initramfs->address;
 	uint64_t initramfs_size = initramfs->size;
 
 	printf ("\nInitramfs at 0x%llx, size %ld bytes\n", initramfs_addr, initramfs_size);
 
-	load_initramfs (initramfs_addr, (size_t)initramfs_size);
+	load_initramfs (initramfs_addr);
 
 	printf ("Current system tick: %lld", get_current_tick ());
 

@@ -9,9 +9,9 @@ struct posn {
 	size_t y;
 };
 
-extern void __init_graphics__ (struct limine_framebuffer*);
+extern void init_graphics (struct limine_framebuffer*);
 struct posn itopos (int);
-size_t postoi (int, int);
+size_t		postoi (int, int);
 
 void renderGlyph (unsigned char*, int, int, size_t, size_t, int, uint32_t);
 

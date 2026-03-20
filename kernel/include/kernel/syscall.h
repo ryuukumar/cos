@@ -5,6 +5,6 @@
 #include <kernel/idt.h>
 
 registers_t* syscall_handler (registers_t* registers);
-void __init_syscalls__ (void);
+void		 init_syscalls (void);
 
 #endif

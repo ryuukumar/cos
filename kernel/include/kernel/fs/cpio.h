@@ -23,7 +23,7 @@ typedef struct {
 } cpio_newc_header_t;
 
 typedef struct {
-	char* c_name;
+	char*  c_name;
 	inode* c_inode;
 } child_t;
 
@@ -36,6 +36,6 @@ int mkdir (char* dirname, inode** result, inode* root);
 int create (char* filename, inode** result, inode* root);
 int lookup (char* filename, inode** result, inode* root);
 
-void load_initramfs (void* pos, size_t size);
+void load_initramfs (void* pos);
 
 #endif

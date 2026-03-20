@@ -6,7 +6,7 @@ registers_t* syscall_handler (registers_t* registers) {
 	return registers;
 }
 
-void __init_syscalls__ (void) {
+void init_syscalls (void) {
 	idt_register_handler (0x80, syscall_handler);
 	idt_set_flags (0x80, 0x0E, 3, 0);
 }
