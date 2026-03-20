@@ -77,7 +77,7 @@ static void log_registers_to_serial (registers_t* registers) {
 }
 
 registers_t* kernel_dispatch_interrupt (registers_t* registers) {
-	log_registers_to_serial (registers);
+	if (registers->interrupt_number != 0x20) log_registers_to_serial (registers);
 
 	irq_handler_t handler = interrupt_handlers[registers->interrupt_number];
 	if (handler)
