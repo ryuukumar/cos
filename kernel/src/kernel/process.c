@@ -102,5 +102,5 @@ int process_fork (process* source_process, process** dest_ptr) {
 
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = NULL;
-	next_free_pid = 0ll;
+	next_free_pid = 1ll;
 }
