@@ -53,7 +53,10 @@ int process_fork (process* source_process, process** dest_ptr) {
 	if (errno != 0) return errno;
 
 	errno = enqueue_process (get_ready_queue (), new_process);
-	return errno;
+	if (errno != 0) return errno;
+
+	source_process->p_registers.rax = new_process->p_id;
+	return 0;
 }
 
 void init_process (void) {
