@@ -20,7 +20,7 @@ struct limine_memmap_response* memmap_response_ptr;
  * Reads the value of the CR3 register, which contains the physical address of the PML4 table.
  * @return The value of the CR3 register.
  */
-uint64_t read_cr3 () {
+uint64_t read_cr3 (void) {
 	uint64_t cr3;
 	__asm__ volatile ("mov %%cr3, %0" : "=r"(cr3));
 	return cr3;
@@ -131,7 +131,7 @@ paddr_t alloc_ppages (uint64_t count) {
  * Allocate a single physical frame
  * @return base physical address of allocated frame
  */
-paddr_t alloc_ppage () { return alloc_ppages (1); }
+paddr_t alloc_ppage (void) { return alloc_ppages (1); }
 
 /*!
  * Free multiple consecutive physical frames
@@ -666,12 +666,12 @@ LIBALLOC FUNCTION IMPLEMENTATIONS
 
 */
 
-int liballoc_lock () {
+int liballoc_lock (void) {
 	is_locked = true;
 	return 0;
 }
 
-int liballoc_unlock () {
+int liballoc_unlock (void) {
 	is_locked = false;
 	return 0;
 }

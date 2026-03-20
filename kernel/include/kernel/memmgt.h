@@ -101,8 +101,8 @@ void* get_paddr (void* vaddr);
 // LIBALLOC FUNCTION IMPLEMENTATIONS
 
 void* try_assign_pt (pt_entry_t*, size_t);
-int liballoc_lock ();
-int liballoc_unlock ();
+int liballoc_lock (void);
+int liballoc_unlock (void);
 void* liballoc_alloc (size_t);
 int liballoc_free (void*, size_t);
 
