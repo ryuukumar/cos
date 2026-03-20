@@ -1,11 +1,14 @@
 #include <kernel/error.h>
 #include <kernel/memmgt.h>
 #include <kernel/process.h>
+#include <kernel/stack.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>
+#include <kernel/gdt.h>
 
 process_queue ready_queue;
 uint64_t	  next_free_pid;
+process*	  current_process;
 
 process_queue* get_ready_queue (void) { return &ready_queue; }
 
@@ -40,21 +43,60 @@ int enqueue_process (process_queue* queue, process* new_process) {
 	return 0;
 }
 
+process* get_current_process (void) { return current_process; }
+
+registers_t* schedule (registers_t* registers) {
+	process* upcoming_process = NULL;
+	int		 errno = dequeue_process (get_ready_queue (), &upcoming_process);
+
+	// queue probably empty, keep executing current process
+	if (errno != 0 || upcoming_process == NULL) return registers;
+
+	if (current_process != NULL) {
+		current_process->p_registers_ptr = registers;
+		enqueue_process (get_ready_queue (), current_process);
+	}
+
+	current_process = upcoming_process;
+	write_cr3 (current_process->p_cr3);
+	tss_set_stack(current_process->p_kstack);
+	return current_process->p_registers_ptr;
+}
+
 int process_fork (process* source_process, process** dest_ptr) {
 	process* new_process = kmalloc (sizeof (process));
 	if (!new_process) return -ENOMEM;
 
-	new_process->p_registers.rax = 0ll;
-	new_process->p_id = next_free_pid++;
-
 	memcpy ((void*)new_process, (void*)source_process, sizeof (process));
+
+	void* new_kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, false);
+	if (!new_kstack) return -ENOMEM;
+
+	new_process->p_kstack = (uintptr_t)new_kstack + STACK_SIZE;
+	new_process->p_id = next_free_pid++;
+	new_process->next = NULL;
+
+	registers_t* child_frame = (registers_t*)(new_process->p_kstack - sizeof(registers_t));
+	memcpy(child_frame, source_process->p_registers_ptr, sizeof(registers_t));
+	new_process->p_registers_ptr = child_frame;
+	new_process->p_registers_ptr->rax = 0;
+
 	int errno = clone_user_memory (source_process->p_cr3, &new_process->p_cr3);
-	if (errno != 0) return errno;
+	if (errno != 0) {
+		free_vpages (new_kstack, STACK_SIZE / PAGE_SIZE);
+		kfree (new_process);
+		return errno;
+	}
 
 	errno = enqueue_process (get_ready_queue (), new_process);
-	if (errno != 0) return errno;
+	if (errno != 0) {
+		free_vpages (new_kstack, STACK_SIZE / PAGE_SIZE);
+		kfree (new_process);
+		return errno;
+	}
 
-	source_process->p_registers.rax = new_process->p_id;
+	source_process->p_registers_ptr->rax = new_process->p_id;
+	*dest_ptr = new_process;
 	return 0;
 }
 
