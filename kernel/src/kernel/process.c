@@ -80,6 +80,8 @@ int process_fork (process* source_process, process** dest_ptr) {
 	memcpy (child_frame, source_process->p_registers_ptr, sizeof (registers_t));
 	new_process->p_registers_ptr = child_frame;
 	new_process->p_registers_ptr->rax = 0;
+	// fix: ensure child pops its own stack frame correctly
+	new_process->p_registers_ptr->rsp = (uintptr_t)child_frame;
 
 	int errno = clone_user_memory (source_process->p_cr3, &new_process->p_cr3);
 	if (errno != 0) {
