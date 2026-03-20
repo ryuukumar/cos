@@ -15,7 +15,7 @@ typedef enum { TASK_RUNNING, TASK_READY, TASK_BLOCKED, TASK_DEAD } task_state_t;
 struct process {
 	uint64_t	 p_id;
 	uintptr_t	 p_cr3;
-	registers_t*	 p_registers_ptr;
+	registers_t* p_registers_ptr;
 	task_state_t p_state;
 	process*	 next;
 	bool		 p_user;

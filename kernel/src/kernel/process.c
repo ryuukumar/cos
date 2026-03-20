@@ -1,10 +1,10 @@
 #include <kernel/error.h>
+#include <kernel/gdt.h>
 #include <kernel/memmgt.h>
 #include <kernel/process.h>
 #include <kernel/stack.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>
-#include <kernel/gdt.h>
 
 process_queue ready_queue;
 uint64_t	  next_free_pid;
@@ -59,7 +59,7 @@ registers_t* schedule (registers_t* registers) {
 
 	current_process = upcoming_process;
 	write_cr3 (current_process->p_cr3);
-	tss_set_stack(current_process->p_kstack);
+	tss_set_stack (current_process->p_kstack);
 	return current_process->p_registers_ptr;
 }
 
@@ -76,8 +76,8 @@ int process_fork (process* source_process, process** dest_ptr) {
 	new_process->p_id = next_free_pid++;
 	new_process->next = NULL;
 
-	registers_t* child_frame = (registers_t*)(new_process->p_kstack - sizeof(registers_t));
-	memcpy(child_frame, source_process->p_registers_ptr, sizeof(registers_t));
+	registers_t* child_frame = (registers_t*)(new_process->p_kstack - sizeof (registers_t));
+	memcpy (child_frame, source_process->p_registers_ptr, sizeof (registers_t));
 	new_process->p_registers_ptr = child_frame;
 	new_process->p_registers_ptr->rax = 0;
 
