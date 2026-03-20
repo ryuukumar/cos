@@ -87,7 +87,8 @@ typedef struct {
 
 typedef uint64_t* paddr_t;
 
-void write_cr3 (uint64_t new_value);
+uint64_t read_cr3 (void);
+void	 write_cr3 (uint64_t new_value);
 
 vaddr_t get_vaddr_t_from_ptr (void* ptr);
 void*	get_vaddr_hhdm (uint64_t phys_address);

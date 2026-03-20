@@ -27,7 +27,7 @@ registers_t* page_fault_handler (registers_t* registers);
  * Reads the value of the CR3 register, which contains the physical address of the PML4 table.
  * @return The value of the CR3 register.
  */
-static uint64_t read_cr3 (void) {
+uint64_t read_cr3 (void) {
 	uint64_t cr3;
 	__asm__ volatile ("mov %%cr3, %0" : "=r"(cr3));
 	return cr3;
