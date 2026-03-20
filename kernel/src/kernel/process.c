@@ -76,12 +76,24 @@ int process_fork (process* source_process, process** dest_ptr) {
 	new_process->p_id = next_free_pid++;
 	new_process->next = NULL;
 
-	registers_t* child_frame = (registers_t*)(new_process->p_kstack - sizeof (registers_t));
-	memcpy (child_frame, source_process->p_registers_ptr, sizeof (registers_t));
-	new_process->p_registers_ptr = child_frame;
+	if (!source_process->p_user) {
+		// Kernel thread: flush parent state into child's new kernel stack byte-for-byte
+		memcpy (new_kstack, (void*)(source_process->p_kstack - STACK_SIZE), STACK_SIZE);
+		uint64_t offset =
+			(uintptr_t)source_process->p_registers_ptr - (source_process->p_kstack - STACK_SIZE);
+		new_process->p_registers_ptr = (registers_t*)((uintptr_t)new_kstack + offset);
+
+		uint64_t rsp_offset =
+			source_process->p_registers_ptr->rsp - (source_process->p_kstack - STACK_SIZE);
+		new_process->p_registers_ptr->rsp = (uintptr_t)new_kstack + rsp_offset;
+	} else {
+		registers_t* child_frame = (registers_t*)(new_process->p_kstack - sizeof (registers_t));
+		memcpy (child_frame, source_process->p_registers_ptr, sizeof (registers_t));
+		new_process->p_registers_ptr = child_frame;
+		new_process->p_registers_ptr->rsp = source_process->p_registers_ptr->rsp;
+	}
+
 	new_process->p_registers_ptr->rax = 0;
-	// fix: ensure child pops its own stack frame correctly
-	new_process->p_registers_ptr->rsp = (uintptr_t)child_frame;
 
 	int errno = clone_user_memory (source_process->p_cr3, &new_process->p_cr3);
 	if (errno != 0) {
