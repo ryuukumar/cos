@@ -87,17 +87,15 @@ static inode* create_folders_if_noexist (char* arg_abspath) {
 			*next_slash = actual_char;
 			idx = next_slash;
 			continue;
+		} else if (parent->i_iops->mkdir (idx, &child, parent) == 0) {
+			parent = child;
+			child = NULL;
+			*next_slash = actual_char;
+			idx = next_slash;
+			continue;
 		} else {
-			if (parent->i_iops->mkdir (idx, &child, parent) == 0) {
-				parent = child;
-				child = NULL;
-				*next_slash = actual_char;
-				idx = next_slash;
-				continue;
-			} else {
-				parent = NULL;
-				idx = NULL;
-			}
+			parent = NULL;
+			idx = NULL;
 		}
 	}
 

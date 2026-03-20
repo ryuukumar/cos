@@ -74,10 +74,9 @@ Draw a white border around the screen.
 @param	padding pixels to leave around the edges
 */
 void drawBorder (size_t padding) {
-	for (size_t i = 0; i < frmw * frmh; i++) {
+	for (size_t i = 0; i < frmw * frmh; i++)
 		if (i % frmw == padding || i % frmw == frmw - padding)
 			fb_ptr[i] = 0xffffff;
 		else if (i / frmw == padding || i / frmw == frmh - padding)
 			fb_ptr[i] = 0xffffff;
-	}
 }

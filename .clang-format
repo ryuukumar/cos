@@ -5,3 +5,4 @@ PointerAlignment: Left
 SpaceBeforeParens: Always
 ColumnLimit: 100
 BreakBeforeBraces: Attach
+RemoveBracesLLVM: true

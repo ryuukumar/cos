@@ -33,9 +33,8 @@ uint64_t hhdm_base = 0;
 // Halt and catch fire function.
 static void hcf (void) {
 	asm ("cli");
-	for (;;) {
+	for (;;)
 		asm ("hlt");
-	}
 }
 
 __attribute__ ((noreturn)) void jump_to_usermode (uintptr_t entry_point, uintptr_t user_stack) {

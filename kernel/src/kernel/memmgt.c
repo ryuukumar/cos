@@ -603,15 +603,12 @@ void walk_pagetable () {
 			if (k < 512 && is_present_pt[k]) {
 				if (range_start == -1)
 					range_start = k;
-			} else {
-				if (range_start != -1) {
-					if (range_start == k - 1) {
-						printf ("  Present PT: %d\n", range_start);
-					} else {
-						printf ("  Present PTs: %d-%d\n", range_start, k - 1);
-					}
-					range_start = -1;
-				}
+			} else if (range_start != -1) {
+				if (range_start == k - 1)
+					printf ("  Present PT: %d\n", range_start);
+				else
+					printf ("  Present PTs: %d-%d\n", range_start, k - 1);
+				range_start = -1;
 			}
 		}
 	}

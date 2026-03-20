@@ -214,9 +214,8 @@ void* PREFIX (malloc) (size_t req_size) {
 	unsigned long size = req_size;
 
 	// For alignment, we adjust size so there's enough space to align.
-	if (ALIGNMENT > 1) {
+	if (ALIGNMENT > 1)
 		size += ALIGNMENT + ALIGN_INFO;
-	}
 	// So, ideally, we really want an alignment of 0 or 1 in order
 	// to save space.
 
@@ -608,14 +607,12 @@ void PREFIX (free) (void* ptr) {
 		l_allocated -= maj->size;
 
 		liballoc_free (maj, maj->pages);
-	} else {
-		if (l_bestBet != NULL) {
-			int bestSize = l_bestBet->size - l_bestBet->usage;
-			int majSize = maj->size - maj->usage;
+	} else if (l_bestBet != NULL) {
+		int bestSize = l_bestBet->size - l_bestBet->usage;
+		int majSize = maj->size - maj->usage;
 
-			if (majSize > bestSize)
-				l_bestBet = maj;
-		}
+		if (majSize > bestSize)
+			l_bestBet = maj;
 	}
 
 #ifdef DEBUG
