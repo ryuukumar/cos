@@ -6,6 +6,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define PAGE_SIZE 4096ull
+
 typedef struct {
 	uint64_t present : 1;			 // Page present in memory
 	uint64_t read_write : 1;		 // Read-write flag
@@ -84,6 +86,8 @@ typedef struct {
 } vaddr_t;
 
 typedef uint64_t* paddr_t;
+
+void write_cr3 (uint64_t new_value);
 
 vaddr_t get_vaddr_t_from_ptr (void* ptr);
 void*	get_vaddr_hhdm (uint64_t phys_address);
