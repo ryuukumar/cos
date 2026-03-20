@@ -38,6 +38,7 @@ int enqueue_process (process_queue* queue, process* new_process) {
 		if (queue->tail == NULL) return -ECORRQ; // valid head, invalid tail should not happen
 		queue->tail = queue->tail->next = new_process;
 	}
+	return 0;
 }
 
 int create_process (uintptr_t iptr, process** result) { return -ENOIMPL; }
