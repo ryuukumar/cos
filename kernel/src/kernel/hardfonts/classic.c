@@ -1,3 +1,4 @@
+#include <kernel/hardfonts/classic.h>
 #include <stddef.h>
 #include <stdint.h>
 

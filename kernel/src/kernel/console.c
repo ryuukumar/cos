@@ -109,7 +109,7 @@ Register a character to the screen buffer.
 @param	rc character to register
 @param	index position to print it on
 */
-void registerChar (unsigned char rc, int index) {
+static void registerChar (unsigned char rc, int index) {
 	buffer[index] = rc;
 	colorbuffer[index] = color;
 }

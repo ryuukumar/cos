@@ -45,7 +45,7 @@ Place a pixel on the screen.
 @param	x x-position
 @param	y y-position
 */
-void putPixel (uint32_t color, int x, int y) { fb_ptr[postoi (x, y)] = color; }
+static void putPixel (uint32_t color, int x, int y) { fb_ptr[postoi (x, y)] = color; }
 
 /*!
 Place a character on the screen

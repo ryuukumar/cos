@@ -1,4 +1,6 @@
 
+void _start (void);
+
 static inline long syscall3 (long num, long arg1, long arg2, long arg3) {
 	long ret;
 	__asm__ volatile ("int $0x80"

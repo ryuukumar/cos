@@ -30,6 +30,9 @@ struct limine_framebuffer* framebuffer = NULL;
 struct limine_file*		   initramfs = NULL;
 uint64_t				   hhdm_base = 0;
 
+// Declaration of kernel entry point
+void _start (void);
+
 // Halt and catch fire function.
 static void hcf (void) {
 	asm ("cli");
@@ -37,7 +40,8 @@ static void hcf (void) {
 		asm ("hlt");
 }
 
-__attribute__ ((noreturn)) void jump_to_usermode (uintptr_t entry_point, uintptr_t user_stack) {
+__attribute__ ((noreturn)) static void jump_to_usermode (uintptr_t entry_point,
+														 uintptr_t user_stack) {
 	__asm__ volatile (
 		"cli \n\t"			   // 1. Disable interrupts while swapping states
 		"mov $0x3B, %%ax \n\t" // 2. Load User Data Segment descriptor (0x38 | 3 = 0x3B)
@@ -64,7 +68,7 @@ __attribute__ ((noreturn)) void jump_to_usermode (uintptr_t entry_point, uintptr
 		;
 }
 
-void get_limine_requests (void) {
+static void get_limine_requests (void) {
 	// REQUIRED: framebuffer
 	if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1)
 		hcf ();
@@ -81,7 +85,7 @@ void get_limine_requests (void) {
 	initramfs = mod_req.response->modules[0];
 }
 
-void print_info (void) {
+static void print_info (void) {
 	drawBorder (20);
 	set_color (0x44eeaa);
 

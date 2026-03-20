@@ -16,11 +16,14 @@ memmap_bitmap bitmap;
 
 struct limine_memmap_response* memmap_response_ptr;
 
+// Handler definition for internal use only
+void page_fault_handler (registers_t* registers);
+
 /*!
  * Reads the value of the CR3 register, which contains the physical address of the PML4 table.
  * @return The value of the CR3 register.
  */
-uint64_t read_cr3 (void) {
+static uint64_t read_cr3 (void) {
 	uint64_t cr3;
 	__asm__ volatile ("mov %%cr3, %0" : "=r"(cr3));
 	return cr3;
@@ -94,7 +97,7 @@ static inline void bitmap_clear_bit (uint64_t page_idx) {
  * @param count number of consecutive frames to allocate
  * @return base physical address of allocated frames
  */
-paddr_t alloc_ppages (uint64_t count) {
+static paddr_t alloc_ppages (uint64_t count) {
 	if (count == 0) return NULL;
 	if (bitmap.pages_used + count > bitmap.pages_maxlen) return NULL;
 
@@ -127,14 +130,14 @@ paddr_t alloc_ppages (uint64_t count) {
  * Allocate a single physical frame
  * @return base physical address of allocated frame
  */
-paddr_t alloc_ppage (void) { return alloc_ppages (1); }
+static paddr_t alloc_ppage (void) { return alloc_ppages (1); }
 
 /*!
  * Free multiple consecutive physical frames
  * @param paddr base physical address of frames to free
  * @param count number of frames to free
  */
-void free_ppages (void* paddr, uint64_t count) {
+static void free_ppages (void* paddr, uint64_t count) {
 	uint64_t start_idx = (uint64_t)paddr / PAGE_SIZE;
 
 	for (uint64_t i = 0; i < count; i++) {
@@ -169,7 +172,7 @@ void free_ppages (void* paddr, uint64_t count) {
  * Free a single physical frame
  * @param paddr base physical address of frame to free
  */
-void free_ppage (void* paddr) { free_ppages (paddr, 1); }
+static void free_ppage (void* paddr) { free_ppages (paddr, 1); }
 
 static void init_physical_bitmap (struct limine_memmap_response* memmap_response) {
 	uint64_t addr_limit = 0;
