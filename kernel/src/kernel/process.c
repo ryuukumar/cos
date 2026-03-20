@@ -5,10 +5,9 @@
 #include <memory.h>
 
 process_queue ready_queue;
+uint64_t	  next_free_pid;
 
 process_queue* get_ready_queue (void) { return &ready_queue; }
-
-uint64_t next_free_pid;
 
 int dequeue_process (process_queue* queue, process** result) {
 	if (!queue) return -EINVARG;
