@@ -9,6 +9,7 @@
 #include <kernel/idt.h>
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
+#include <kernel/process.h>
 #include <kernel/serial.h>
 #include <kernel/stack.h>
 #include <kernel/syscall.h>
@@ -136,6 +137,7 @@ void _start (void) {
 
 	init_graphics (framebuffer);
 	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
+	init_process ();
 	print_info ();
 
 	void*	 initramfs_addr = initramfs->address;
