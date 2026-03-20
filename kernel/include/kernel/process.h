@@ -2,6 +2,7 @@
 #define PROCESS_H
 
 #include <kernel/fs/vfs.h>
+#include <kernel/idt.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -13,12 +14,11 @@ typedef enum { TASK_RUNNING, TASK_READY, TASK_BLOCKED, TASK_DEAD } task_state_t;
 
 struct process {
 	uint64_t	 p_id;
-	uintptr_t	 p_rsp, p_cr3;
+	uintptr_t	 p_cr3;
+	registers_t	 p_registers;
 	task_state_t p_state;
-	struct file* p_fds[MAX_FDS];
-	inode *		 p_root, p_wd;
 	process*	 next;
-	bool		 user;
+	bool		 p_user;
 };
 
 typedef struct {
@@ -29,7 +29,7 @@ process_queue* get_ready_queue (void);
 
 int dequeue_process (process_queue* queue, process** result);
 int enqueue_process (process_queue* queue, process* new_process);
-int create_process (uintptr_t iptr, process** result);
+int process_fork (process* source_process, process** dest_ptr);
 
 void init_process (void);
 

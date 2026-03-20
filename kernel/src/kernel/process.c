@@ -41,7 +41,20 @@ int enqueue_process (process_queue* queue, process* new_process) {
 	return 0;
 }
 
-int create_process (uintptr_t iptr, process** result) { return -ENOIMPL; }
+int process_fork (process* source_process, process** dest_ptr) {
+	process* new_process = kmalloc(sizeof(process));
+	if (!new_process) return -ENOMEM;
+
+	new_process->p_registers.rax = 0ll;
+	new_process->p_id = next_free_pid++;
+
+	memcpy((void*) new_process, (void*)source_process, sizeof(process));
+	int errno = clone_user_memory (source_process->p_cr3, &new_process->p_cr3);
+	if (errno != 0) return errno;
+
+	errno = enqueue_process (get_ready_queue(), new_process);
+	return errno;
+}
 
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = NULL;
