@@ -42,17 +42,17 @@ int enqueue_process (process_queue* queue, process* new_process) {
 }
 
 int process_fork (process* source_process, process** dest_ptr) {
-	process* new_process = kmalloc(sizeof(process));
+	process* new_process = kmalloc (sizeof (process));
 	if (!new_process) return -ENOMEM;
 
 	new_process->p_registers.rax = 0ll;
 	new_process->p_id = next_free_pid++;
 
-	memcpy((void*) new_process, (void*)source_process, sizeof(process));
+	memcpy ((void*)new_process, (void*)source_process, sizeof (process));
 	int errno = clone_user_memory (source_process->p_cr3, &new_process->p_cr3);
 	if (errno != 0) return errno;
 
-	errno = enqueue_process (get_ready_queue(), new_process);
+	errno = enqueue_process (get_ready_queue (), new_process);
 	return errno;
 }
 
