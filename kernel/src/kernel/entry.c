@@ -26,6 +26,7 @@ extern volatile struct limine_memmap_request memmap_req;
 extern volatile struct limine_module_request mod_req;
 extern volatile struct limine_hhdm_request hhdm_req;
 
+struct limine_framebuffer* framebuffer = NULL;
 uint64_t hhdm_base = 0;
 
 // Halt and catch fire function.
@@ -63,49 +64,25 @@ __attribute__ ((noreturn)) void jump_to_usermode (uintptr_t entry_point, uintptr
 		;
 }
 
-/*!
-Entry point of kernel. Everything is set up here.
-*/
-void _start (void) {
-	// Ensure we got a framebuffer.
-	if (framebuffer_request.response == NULL ||
-		framebuffer_request.response->framebuffer_count < 1) {
+void get_limine_requests (void) {
+	// REQUIRED: framebuffer
+	if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1)
 		hcf ();
-	}
+	framebuffer = framebuffer_request.response->framebuffers[0];
 
-	// Fetch the first framebuffer.
-	// Note: we assume the framebuffer model is RGB with 32-bit pixels.
-	struct limine_framebuffer* framebuffer = framebuffer_request.response->framebuffers[0];
-
-	asm ("cli");
-
-	init_gdt ();
-	init_pic ();
-	init_idt ();
-
-	asm ("sti");
-
-	init_serial ();
-
-	write_serial_str ("Hello from COS!\n");
-
-	init_graphics (framebuffer);
-	drawBorder (20);
-
-	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
-
-	// Check if we got a valid HHDM response.
-	if (hhdm_req.response != NULL) {
+	// REQUIRED: hhdm response
+	if (hhdm_req.response != NULL)
 		hhdm_base = hhdm_req.response->offset;
-	} else {
-		printf ("Error: did not receive HHDM address.\n\n");
+	else
 		hcf ();
-	}
 
-	init_memmgt (hhdm_base, memmap_req.response);
-	init_syscalls ();
-	init_handlers ();
+	// REQUIRED: modules (for initramfs)
+	if (mod_req.response == NULL || mod_req.response->module_count < 1)
+		hcf ();
+}
 
+void print_info (void) {
+	drawBorder (20);
 	set_color (0x44eeaa);
 
 	printf ("COS 0.0%d", 7);
@@ -127,18 +104,33 @@ void _start (void) {
 		printf ("\nSystem booted at time %ld.\n", boottime_req.response->boot_time);
 	} else
 		printf ("\nDid not receive boot time from Limine.\n");
+}
 
-	printf ("\n\n");
-	uint64_t cr3;
-	__asm__ volatile ("mov %%cr3, %0" : "=r"(cr3));
-	cr3 = cr3 & 0xFFFFFFFFFF000;
+/*!
+Entry point of kernel. Everything is set up here.
+*/
+void _start (void) {
 
-	printf ("CR3: %lx\n", cr3);
+	asm ("cli");
 
-	if (mod_req.response == NULL || mod_req.response->module_count < 1) {
-		printf ("Error: no modules loaded.\n");
-		hcf ();
-	}
+	init_gdt ();
+	init_pic ();
+	init_idt ();
+
+	asm ("sti");
+
+	init_serial ();
+	write_serial_str ("Hello from COS!\n");
+
+	get_limine_requests ();
+
+	init_memmgt (hhdm_base, memmap_req.response);
+	init_syscalls ();
+	init_handlers ();
+
+	init_graphics (framebuffer);
+	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
+	print_info ();
 
 	struct limine_file* initramfs = mod_req.response->modules[0];
 	void* initramfs_addr = initramfs->address;
