@@ -99,7 +99,7 @@ void idt_set_flags (int vector, uint8_t gate_type, uint8_t dpl, uint8_t ist) {
 	descriptor->ist = ist;
 }
 
-void __init_idt__ (void) {
+void init_idt (void) {
 	idtr.size = (uint16_t)(sizeof (idt_entry_t) * 256) - 1;
 	idtr.offset = (uint64_t)&idt[0];
 

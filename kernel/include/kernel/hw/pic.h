@@ -18,6 +18,6 @@ void pic_clr_mask (uint8_t irq_line);
 
 void pic_send_eoi (uint8_t irq);
 
-void __init_pic__ (void);
+void init_pic (void);
 
 #endif

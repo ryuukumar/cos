@@ -62,7 +62,7 @@ Initialise the console with the default (classic) font
 @param	y_spc spacing between lines
 @param	font_size font size
 */
-void __init_console__ (size_t x_screen, size_t y_screen, size_t x_pad, size_t y_pad, size_t x_spc,
+void init_console (size_t x_screen, size_t y_screen, size_t x_pad, size_t y_pad, size_t x_spc,
 					   size_t y_spc, size_t font_size) {
 	x = x_screen - 2 * x_pad;
 	y = y_screen - 2 * y_pad;

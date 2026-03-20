@@ -94,7 +94,7 @@ void* alloc_vpage (bool user);
 void free_vpages (void* ptr, size_t count);
 void free_vpage (void* ptr);
 
-void __init_memmgt__ (uint64_t, struct limine_memmap_response*);
+void init_memmgt (uint64_t, struct limine_memmap_response*);
 void walk_pagetable (void);
 void* get_paddr (void* vaddr);
 

@@ -6,7 +6,7 @@
  * Textbook implementation, see: https://wiki.osdev.org/Serial_Ports
  * @return 0 if initialised, 1 if port faulty
  */
-int __init_serial__ (void) {
+int init_serial (void) {
 	outb (SERIAL_COM_1 + 1, 0x00); // Disable all interrupts
 	outb (SERIAL_COM_1 + 3, 0x80); // Enable DLAB (set baud rate divisor)
 	outb (SERIAL_COM_1 + 0, 0x03); // Set divisor to 3 (lo byte) 38400 baud

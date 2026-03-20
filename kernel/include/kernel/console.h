@@ -12,7 +12,7 @@ bool get_update_on_putch ();
 void set_idx (size_t);
 size_t get_idx ();
 
-void __init_console__ (size_t, size_t, size_t, size_t, size_t, size_t, size_t);
+void init_console (size_t, size_t, size_t, size_t, size_t, size_t, size_t);
 void set_color (uint32_t);
 void update ();
 

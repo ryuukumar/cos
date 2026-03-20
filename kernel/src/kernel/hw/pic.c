@@ -73,4 +73,4 @@ void pic_clr_mask (uint8_t irq_line) {
 	}
 }
 
-void __init_pic__ (void) { pic_remap (0x20, 0x28); }
+void init_pic (void) { pic_remap (0x20, 0x28); }

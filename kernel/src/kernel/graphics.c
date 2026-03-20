@@ -11,7 +11,7 @@ Initialise the graphics interface.
 
 @param	buf	pointer to framebuffer passed by lumine
 */
-void __init_graphics__ (struct limine_framebuffer* buf) {
+void init_graphics (struct limine_framebuffer* buf) {
 	framebuffer = buf;
 	frmw = framebuffer->width;
 	frmh = framebuffer->height;

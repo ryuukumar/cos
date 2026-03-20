@@ -82,19 +82,19 @@ void _start (void) {
 	gdt_init ();
 	tss_init ();
 
-	__init_pic__ ();
-	__init_idt__ ();
+	init_pic ();
+	init_idt ();
 
 	asm ("sti");
 
-	__init_serial__ ();
+	init_serial ();
 
 	write_serial_str ("Hello from COS!\n");
 
-	__init_graphics__ (framebuffer);
+	init_graphics (framebuffer);
 	drawBorder (20);
 
-	__init_console__ (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
+	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
 
 	// Check if we got a valid HHDM response.
 	if (hhdm_req.response != NULL) {
@@ -104,9 +104,9 @@ void _start (void) {
 		hcf ();
 	}
 
-	__init_memmgt__ (hhdm_base, memmap_req.response);
-	__init_syscalls__ ();
-	__init_handlers__ ();
+	init_memmgt (hhdm_base, memmap_req.response);
+	init_syscalls ();
+	init_handlers ();
 
 	set_color (0x44eeaa);
 

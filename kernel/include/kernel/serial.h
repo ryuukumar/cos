@@ -8,7 +8,7 @@
 
 #include <kernel/io.h>
 
-int __init_serial__ (void);
+int init_serial (void);
 
 uint8_t read_serial (void);
 void write_serial (uint8_t val);
