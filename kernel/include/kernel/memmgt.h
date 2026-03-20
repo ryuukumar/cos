@@ -94,9 +94,10 @@ void* alloc_vpage (bool user);
 void  free_vpages (void* ptr, size_t count);
 void  free_vpage (void* ptr);
 
-void  init_memmgt (uint64_t, struct limine_memmap_response*);
-void  walk_pagetable (void);
-void* get_paddr (void* vaddr);
+void	  init_memmgt (uint64_t, struct limine_memmap_response*);
+void	  walk_pagetable (void);
+void*	  get_paddr (void* vaddr);
+uintptr_t get_kernel_cr3 (void);
 
 // LIBALLOC FUNCTION IMPLEMENTATIONS
 

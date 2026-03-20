@@ -19,6 +19,8 @@ memmap_bitmap bitmap;
 
 struct limine_memmap_response* memmap_response_ptr;
 
+uintptr_t kernel_cr3 = 0;
+
 // Handler definition for internal use only
 registers_t* page_fault_handler (registers_t* registers);
 
@@ -555,6 +557,7 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	uint64_t pml4_base = read_cr3 () & 0xFFFFFFFFFF000;
 	pml4_base_ptr = (pml4t_entry_t*)(pml4_base + p_hhdm_offset);
 	hhdm_offset = p_hhdm_offset;
+	kernel_cr3 = read_cr3 ();
 
 	// set up bitmap for physical page allocation
 	init_physical_bitmap (memmap_response);
@@ -574,6 +577,12 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	pml4_base_ptr[KRNL_PML4_IDX].read_write = 1;
 	pml4_base_ptr[KRNL_PML4_IDX].pdpt_base_address = ((uint64_t)krnl_pdpt_frame) / PAGE_SIZE;
 }
+
+/*!
+ * Get the CR3 for the kernel
+ * @return kernel CR3
+ */
+uintptr_t get_kernel_cr3 (void) { return kernel_cr3; }
 
 /*!
  * Walks the page table hierarchy and prints present entries and their address ranges.
