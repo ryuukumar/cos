@@ -8,7 +8,7 @@
 #include <string.h>
 
 #define CONSOLE_HEIGHT 80
-#define CONSOLE_WIDTH 140
+#define CONSOLE_WIDTH  140
 
 bool PUTCH_UPDATE = false;
 

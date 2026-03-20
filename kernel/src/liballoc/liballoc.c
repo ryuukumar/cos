@@ -40,7 +40,7 @@
 	}
 
 #define LIBALLOC_MAGIC 0xc001c0de
-#define LIBALLOC_DEAD 0xdeaddead
+#define LIBALLOC_DEAD  0xdeaddead
 
 #if defined DEBUG || defined INFO
 #include <stdio.h>
