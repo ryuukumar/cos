@@ -20,7 +20,7 @@ memmap_bitmap bitmap;
 struct limine_memmap_response* memmap_response_ptr;
 
 // Handler definition for internal use only
-void page_fault_handler (registers_t* registers);
+registers_t* page_fault_handler (registers_t* registers);
 
 /*!
  * Reads the value of the CR3 register, which contains the physical address of the PML4 table.
