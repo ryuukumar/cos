@@ -79,9 +79,7 @@ void _start (void) {
 
 	asm ("cli");
 
-	gdt_init ();
-	tss_init ();
-
+	init_gdt ();
 	init_pic ();
 	init_idt ();
 
