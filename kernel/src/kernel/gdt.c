@@ -18,7 +18,7 @@ gdt_t gdt = {
 };
 
 gdt_pointer_t gdt_pointer;
-tss_t tss;
+tss_t		  tss;
 
 void init_gdt (void) {
 	init_tss ();

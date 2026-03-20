@@ -19,16 +19,16 @@
 
 #define FONT_SIZE 2
 
-extern volatile struct limine_framebuffer_request framebuffer_request;
+extern volatile struct limine_framebuffer_request	  framebuffer_request;
 extern volatile struct limine_bootloader_info_request bootinfo_req;
-extern volatile struct limine_boot_time_request boottime_req;
-extern volatile struct limine_memmap_request memmap_req;
-extern volatile struct limine_module_request mod_req;
-extern volatile struct limine_hhdm_request hhdm_req;
+extern volatile struct limine_boot_time_request		  boottime_req;
+extern volatile struct limine_memmap_request		  memmap_req;
+extern volatile struct limine_module_request		  mod_req;
+extern volatile struct limine_hhdm_request			  hhdm_req;
 
 struct limine_framebuffer* framebuffer = NULL;
-struct limine_file* initramfs = NULL;
-uint64_t hhdm_base = 0;
+struct limine_file*		   initramfs = NULL;
+uint64_t				   hhdm_base = 0;
 
 // Halt and catch fire function.
 static void hcf (void) {
@@ -132,7 +132,7 @@ void _start (void) {
 	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
 	print_info ();
 
-	void* initramfs_addr = initramfs->address;
+	void*	 initramfs_addr = initramfs->address;
 	uint64_t initramfs_size = initramfs->size;
 
 	printf ("\nInitramfs at 0x%llx, size %ld bytes\n", initramfs_addr, initramfs_size);

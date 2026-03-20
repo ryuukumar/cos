@@ -14,12 +14,12 @@ typedef struct __attribute__ ((packed)) {
 typedef struct __attribute__ ((packed)) {
 	uint16_t offset_1;
 	uint16_t selector;
-	uint8_t ist : 3;
-	uint8_t zero_1 : 5;
-	uint8_t gate_type : 4;
-	uint8_t zero_2 : 1;
-	uint8_t dpl : 2;
-	uint8_t present : 1;
+	uint8_t	 ist : 3;
+	uint8_t	 zero_1 : 5;
+	uint8_t	 gate_type : 4;
+	uint8_t	 zero_2 : 1;
+	uint8_t	 dpl : 2;
+	uint8_t	 present : 1;
 	uint16_t offset_2;
 	uint32_t offset_3;
 	uint32_t zero_3;

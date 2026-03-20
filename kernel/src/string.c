@@ -38,7 +38,7 @@ Convert integer to representative string with base b.
 @param  b base
 */
 void itos (int32_t i, char* buf, uint32_t b) {
-	int ctr = 0;
+	int	 ctr = 0;
 	bool negative = false;
 	if (i < 0) {
 		i = -i;
@@ -65,7 +65,7 @@ Convert long integer to representative string with base b.
 @param  b base
 */
 void ulitos (uint64_t i, char* buf, uint32_t b) {
-	int ctr = 0;
+	int	 ctr = 0;
 	bool negative = false;
 	do {
 		if (i % b < 10)
@@ -99,7 +99,7 @@ int strcmp (const char* a, const char* b) {
 char* strdup (const char* s) {
 	if (!s) return NULL;
 	size_t len = strlen (s);
-	char* dup = (char*)kmalloc (len + 1);
+	char*  dup = (char*)kmalloc (len + 1);
 	if (!dup) return NULL;
 	for (size_t i = 0; i <= len; i++)
 		dup[i] = s[i];

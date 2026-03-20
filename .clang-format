@@ -10,3 +10,4 @@ AlignConsecutiveMacros: true
 AllowShortIfStatementsOnASingleLine: WithoutElse
 ReflowComments: true
 SortIncludes: true
+AlignConsecutiveDeclarations: true

@@ -7,9 +7,9 @@
 
 #define TAB_WIDTH 8
 
-void set_update_on_putch (bool);
-bool get_update_on_putch (void);
-void set_idx (size_t);
+void   set_update_on_putch (bool);
+bool   get_update_on_putch (void);
+void   set_idx (size_t);
 size_t get_idx (void);
 
 void init_console (size_t, size_t, size_t, size_t, size_t, size_t, size_t);

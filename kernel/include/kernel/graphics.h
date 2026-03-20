@@ -11,7 +11,7 @@ struct posn {
 
 extern void init_graphics (struct limine_framebuffer*);
 struct posn itopos (int);
-size_t postoi (int, int);
+size_t		postoi (int, int);
 
 void renderGlyph (unsigned char*, int, int, size_t, size_t, int, uint32_t);
 

@@ -8,7 +8,7 @@
 #define PAGE_SIZE 4096ull
 
 pml4t_entry_t* pml4_base_ptr = NULL;
-uint64_t hhdm_offset = 0;
+uint64_t	   hhdm_offset = 0;
 
 bool is_locked = false;
 
@@ -33,7 +33,7 @@ uint64_t read_cr3 (void) {
  */
 vaddr_t get_vaddr_t_from_ptr (void* ptr) {
 	uint64_t ptr_64t = (uint64_t)ptr;
-	vaddr_t ret_vaddr;
+	vaddr_t	 ret_vaddr;
 
 	ret_vaddr.offset = ptr_64t & 0xFFF;
 	ret_vaddr.pt_index = (ptr_64t >> 12) & 0x1FF;
@@ -139,7 +139,7 @@ void free_ppages (void* paddr, uint64_t count) {
 
 	for (uint64_t i = 0; i < count; i++) {
 		uint64_t current_paddr = (uint64_t)paddr + (i * PAGE_SIZE);
-		bool is_valid = false;
+		bool	 is_valid = false;
 
 		if (memmap_response_ptr != NULL) {
 			for (uint64_t j = 0; j < memmap_response_ptr->entry_count; j++) {
@@ -269,7 +269,7 @@ static bool is_vaddr_t_lt (vaddr_t* a, vaddr_t* b) {
  * @param base_addr base address of physical memory of corresponding size
  */
 static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr, bool user) {
-	uint64_t phys_base_track = (uint64_t)base_addr;
+	uint64_t	   phys_base_track = (uint64_t)base_addr;
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[first.pml4_index];
 
 	vaddr_t current = first;
@@ -334,7 +334,7 @@ void* alloc_vpages (size_t req_count, bool user) {
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
 	if (!pml4t_entry->present) return NULL;
 
-	size_t count_so_far = 0;
+	size_t	 count_so_far = 0;
 	uint64_t start_page_idx = 0;
 
 	for (uint64_t i = 0; i < 512ull * 512ull * 512ull;) {

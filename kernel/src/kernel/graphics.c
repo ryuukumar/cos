@@ -3,8 +3,8 @@
 #include <stdint.h>
 
 static struct limine_framebuffer* framebuffer;
-static size_t frmw, frmh;
-uint32_t* fb_ptr;
+static size_t					  frmw, frmh;
+uint32_t*						  fb_ptr;
 
 /*!
 Initialise the graphics interface.

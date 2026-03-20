@@ -23,7 +23,7 @@ typedef struct {
 } cpio_newc_header_t;
 
 typedef struct {
-	char* c_name;
+	char*  c_name;
 	inode* c_inode;
 } child_t;
 

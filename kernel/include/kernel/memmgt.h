@@ -86,24 +86,24 @@ typedef struct {
 typedef uint64_t* paddr_t;
 
 vaddr_t get_vaddr_t_from_ptr (void* ptr);
-void* get_vaddr_hhdm (uint64_t phys_address);
-void* vaddr_t_to_ptr (vaddr_t* virtual_addr);
+void*	get_vaddr_hhdm (uint64_t phys_address);
+void*	vaddr_t_to_ptr (vaddr_t* virtual_addr);
 
 void* alloc_vpages (size_t req_count, bool user);
 void* alloc_vpage (bool user);
-void free_vpages (void* ptr, size_t count);
-void free_vpage (void* ptr);
+void  free_vpages (void* ptr, size_t count);
+void  free_vpage (void* ptr);
 
-void init_memmgt (uint64_t, struct limine_memmap_response*);
-void walk_pagetable (void);
+void  init_memmgt (uint64_t, struct limine_memmap_response*);
+void  walk_pagetable (void);
 void* get_paddr (void* vaddr);
 
 // LIBALLOC FUNCTION IMPLEMENTATIONS
 
 void* try_assign_pt (pt_entry_t*, size_t);
-int liballoc_lock (void);
-int liballoc_unlock (void);
+int	  liballoc_lock (void);
+int	  liballoc_unlock (void);
 void* liballoc_alloc (size_t);
-int liballoc_free (void*, size_t);
+int	  liballoc_free (void*, size_t);
 
 #endif

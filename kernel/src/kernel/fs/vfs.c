@@ -40,7 +40,7 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
 
 	// case dirname already exists
 	inode* lookup_result = NULL;
-	int error = parent->i_iops->lookup (dirname, &lookup_result, parent);
+	int	   error = parent->i_iops->lookup (dirname, &lookup_result, parent);
 	if (error == 0) return -EPEXISTS;
 	if (error != -EPNOEXIST) return error;
 
@@ -73,7 +73,7 @@ int do_create (char* filename, inode** result, inode* parent) {
 
 	// case filename already exists
 	inode* lookup_result = NULL;
-	int error = parent->i_iops->lookup (filename, &lookup_result, parent);
+	int	   error = parent->i_iops->lookup (filename, &lookup_result, parent);
 	if (error == 0) return -EPEXISTS;
 	if (error != -EPNOEXIST) return error;
 
@@ -142,7 +142,7 @@ int do_lookup (char* filename, inode** result, inode* root) {
 
 	// case '/*', root is a directory, * may or may not be a file -- look it up
 	inode* target_inode = NULL;
-	int error = root->i_iops->lookup (target_name, &target_inode, root);
+	int	   error = root->i_iops->lookup (target_name, &target_inode, root);
 
 	kfree (target_name);
 

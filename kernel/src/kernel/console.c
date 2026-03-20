@@ -17,9 +17,9 @@ unsigned char bufferstr[CONSOLE_HEIGHT * CONSOLE_WIDTH] = {
 uint32_t colorbufferstr[CONSOLE_HEIGHT * CONSOLE_WIDTH] = {
 	0xffffff}; // TODO: replace this with malloc when implemented
 unsigned char* buffer = bufferstr;
-uint32_t* colorbuffer = colorbufferstr;
-size_t x, y, xs, ys, xsp, ysp, xc, yc, fs;
-size_t idx = 0;
+uint32_t*	   colorbuffer = colorbufferstr;
+size_t		   x, y, xs, ys, xsp, ysp, xc, yc, fs;
+size_t		   idx = 0;
 
 uint32_t color = 0xeeeeee;
 
