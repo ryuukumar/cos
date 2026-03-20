@@ -99,6 +99,8 @@ void	  walk_pagetable (void);
 void*	  get_paddr (void* vaddr);
 uintptr_t get_kernel_cr3 (void);
 
+int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest);
+
 // LIBALLOC FUNCTION IMPLEMENTATIONS
 
 void* try_assign_pt (pt_entry_t*, size_t);
