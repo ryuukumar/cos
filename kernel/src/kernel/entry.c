@@ -70,12 +70,10 @@ void get_limine_requests (void) {
 		hcf ();
 
 	// REQUIRED: hhdm response
-	if (hhdm_req.response == NULL)
-		hcf ();
+	if (hhdm_req.response == NULL) hcf ();
 
 	// REQUIRED: modules (for initramfs)
-	if (mod_req.response == NULL || mod_req.response->module_count < 1)
-		hcf ();
+	if (mod_req.response == NULL || mod_req.response->module_count < 1) hcf ();
 
 	// set the values received from limine
 	framebuffer = framebuffer_request.response->framebuffers[0];

@@ -169,8 +169,7 @@ static struct liballoc_major* allocate_new_page (unsigned int size) {
 	// No, add the buffer.
 
 	// Make sure it's >= the minimum size.
-	if (st < l_pageCount)
-		st = l_pageCount;
+	if (st < l_pageCount) st = l_pageCount;
 
 	maj = (struct liballoc_major*)liballoc_alloc (st);
 
@@ -214,8 +213,7 @@ void* PREFIX (malloc) (size_t req_size) {
 	unsigned long size = req_size;
 
 	// For alignment, we adjust size so there's enough space to align.
-	if (ALIGNMENT > 1)
-		size += ALIGNMENT + ALIGN_INFO;
+	if (ALIGNMENT > 1) size += ALIGNMENT + ALIGN_INFO;
 	// So, ideally, we really want an alignment of 0 or 1 in order
 	// to save space.
 
@@ -311,8 +309,7 @@ void* PREFIX (malloc) (size_t req_size) {
 
 			// Create a new major block next to this one and...
 			maj->next = allocate_new_page (size); // next one will be okay.
-			if (maj->next == NULL)
-				break; // no more memory.
+			if (maj->next == NULL) break;		  // no more memory.
 			maj->next->prev = maj;
 			maj = maj->next;
 
@@ -492,8 +489,7 @@ void* PREFIX (malloc) (size_t req_size) {
 
 			// we've run out. we need more...
 			maj->next = allocate_new_page (size); // next one guaranteed to be okay
-			if (maj->next == NULL)
-				break; //  uh oh,  no more memory.....
+			if (maj->next == NULL) break;		  //  uh oh,  no more memory.....
 			maj->next->prev = maj;
 		}
 
@@ -582,13 +578,10 @@ void PREFIX (free) (void* ptr) {
 	maj->usage -= (min->size + sizeof (struct liballoc_minor));
 	min->magic = LIBALLOC_DEAD; // No mojo.
 
-	if (min->next != NULL)
-		min->next->prev = min->prev;
-	if (min->prev != NULL)
-		min->prev->next = min->next;
+	if (min->next != NULL) min->next->prev = min->prev;
+	if (min->prev != NULL) min->prev->next = min->next;
 
-	if (min->prev == NULL)
-		maj->first = min->next;
+	if (min->prev == NULL) maj->first = min->next;
 	// Might empty the block. This was the first
 	// minor.
 
@@ -596,14 +589,10 @@ void PREFIX (free) (void* ptr) {
 
 	if (maj->first == NULL) // Block completely unused.
 	{
-		if (l_memRoot == maj)
-			l_memRoot = maj->next;
-		if (l_bestBet == maj)
-			l_bestBet = NULL;
-		if (maj->prev != NULL)
-			maj->prev->next = maj->next;
-		if (maj->next != NULL)
-			maj->next->prev = maj->prev;
+		if (l_memRoot == maj) l_memRoot = maj->next;
+		if (l_bestBet == maj) l_bestBet = NULL;
+		if (maj->prev != NULL) maj->prev->next = maj->next;
+		if (maj->next != NULL) maj->next->prev = maj->prev;
 		l_allocated -= maj->size;
 
 		liballoc_free (maj, maj->pages);
@@ -611,8 +600,7 @@ void PREFIX (free) (void* ptr) {
 		int bestSize = l_bestBet->size - l_bestBet->usage;
 		int majSize = maj->size - maj->usage;
 
-		if (majSize > bestSize)
-			l_bestBet = maj;
+		if (majSize > bestSize) l_bestBet = maj;
 	}
 
 #ifdef DEBUG
@@ -648,8 +636,7 @@ void* PREFIX (realloc) (void* p, size_t size) {
 	}
 
 	// In the case of a NULL pointer, return a simple malloc.
-	if (p == NULL)
-		return PREFIX (malloc) (size);
+	if (p == NULL) return PREFIX (malloc) (size);
 
 	// Unalign the pointer if required.
 	ptr = p;

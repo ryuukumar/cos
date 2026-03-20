@@ -45,15 +45,12 @@ static void* jump_next_file (void* pos) {
 	uint64_t filesize = hex_to_u64 (header->c_filesize);
 
 	pos += sizeof (cpio_newc_header_t);
-	if (memcmp (pos, "TRAILER!!!", 11) == 0)
-		return NULL;
+	if (memcmp (pos, "TRAILER!!!", 11) == 0) return NULL;
 
 	pos += namesize;
-	if ((uint64_t)pos % 4)
-		pos += 4 - ((uint64_t)pos % 4);
+	if ((uint64_t)pos % 4) pos += 4 - ((uint64_t)pos % 4);
 	pos += filesize;
-	if ((uint64_t)pos % 4)
-		pos += 4 - ((uint64_t)pos % 4);
+	if ((uint64_t)pos % 4) pos += 4 - ((uint64_t)pos % 4);
 
 	return pos;
 }
@@ -70,10 +67,8 @@ static inode* create_folders_if_noexist (char* arg_abspath) {
 	while (idx && *idx != 0) {
 		while (*idx == '/')
 			idx++;
-		if (*idx == 0)
-			break;
-		if (parent == NULL)
-			break;
+		if (*idx == 0) break;
+		if (parent == NULL) break;
 		char* next_slash = idx + 1;
 
 		while (*next_slash != 0 && *next_slash != '/')
@@ -104,28 +99,24 @@ static inode* create_folders_if_noexist (char* arg_abspath) {
 }
 
 static void parse_file_to_inode (cpio_newc_header_t* header) {
-	if (header == NULL)
-		return;
+	if (header == NULL) return;
 
 	uint64_t namesize = hex_to_u64 (header->c_namesize);
 	uint64_t filesize = hex_to_u64 (header->c_filesize);
 	uint64_t filemode = hex_to_u64 (header->c_mode);
 	uint64_t filetype = filemode & 0170000;
 
-	if (namesize == 0)
-		return;
+	if (namesize == 0) return;
 
 	char* filename = kmalloc (namesize);
 	memcpy ((void*)filename, (void*)(header + 1), namesize);
 	filename[namesize - 1] = 0; // enforce string in case corrupt
 
-	if (strcmp (filename, "TRAILER!!!") == 0 || strcmp (filename, ".") == 0)
-		goto cleanup;
+	if (strcmp (filename, "TRAILER!!!") == 0 || strcmp (filename, ".") == 0) goto cleanup;
 
 	if (filetype == C_ISDIR) {
 		inode* directory = create_folders_if_noexist (filename);
-		if (!directory)
-			goto cleanup;
+		if (!directory) goto cleanup;
 	}
 
 	if (filetype == C_ISREG) {
@@ -134,28 +125,24 @@ static void parse_file_to_inode (cpio_newc_header_t* header) {
 		while (last_slash >= filename && *last_slash != '/')
 			last_slash--;
 
-		if (last_slash < filename)
-			goto cleanup;
+		if (last_slash < filename) goto cleanup;
 		*last_slash = 0;
 
 		inode* parent_directory = create_folders_if_noexist (filename);
 		inode* new_file = NULL;
 		*last_slash = '/';
 
-		if (!parent_directory)
-			goto cleanup;
+		if (!parent_directory) goto cleanup;
 
 		if (*(last_slash + 1) != 0) {
 			int error = do_create (last_slash + 1, &new_file, parent_directory);
-			if (error != 0)
-				goto cleanup;
+			if (error != 0) goto cleanup;
 		}
 
 		if (new_file) {
 			void* data = (void*)(header + 1);
 			data += namesize;
-			if ((uint64_t)data % 4)
-				data += 4 - ((uint64_t)data % 4);
+			if ((uint64_t)data % 4) data += 4 - ((uint64_t)data % 4);
 
 			new_file->i_pvt = kmalloc (filesize);
 			new_file->i_sz = filesize;
@@ -227,12 +214,9 @@ int create (char* filename, inode** result, inode* root) {
 }
 
 int lookup (char* filename, inode** result, inode* root) {
-	if (!root)
-		return -ENOROOT;
-	if (!filename || filename[0] == '\0')
-		return -EINVARG;
-	if (root->i_type != DIRECTORY)
-		return -EINVPATH;
+	if (!root) return -ENOROOT;
+	if (!filename || filename[0] == '\0') return -EINVARG;
+	if (root->i_type != DIRECTORY) return -EINVPATH;
 
 	// case '.'
 	if (strcmp (filename, ".") == 0) {
@@ -241,20 +225,17 @@ int lookup (char* filename, inode** result, inode* root) {
 	}
 
 	// case '*' , root is empty
-	if (!root->i_pvt)
-		return -EPNOEXIST;
+	if (!root->i_pvt) return -EPNOEXIST;
 
 	dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
 
 	// case '*' , root is empty
-	if (!dir_content->d_children)
-		return -EPNOEXIST;
+	if (!dir_content->d_children) return -EPNOEXIST;
 
 	for (uint64_t i = 0; i < dir_content->d_count; i++) {
 		child_t* d_child = &dir_content->d_children[i];
 		// invalid child ; continue searching
-		if (!d_child->c_inode || !d_child->c_name)
-			continue;
+		if (!d_child->c_inode || !d_child->c_name) continue;
 
 		if (strcmp (d_child->c_name, filename) == 0) {
 			// case '*'

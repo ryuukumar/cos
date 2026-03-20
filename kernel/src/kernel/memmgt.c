@@ -56,8 +56,7 @@ inline void* vaddr_t_to_ptr (vaddr_t* virtual_addr) {
 					   ((uint64_t)virtual_addr->pd_index << 21) |
 					   ((uint64_t)virtual_addr->pt_index << 12) | (uint64_t)virtual_addr->offset;
 
-	if (ptr_64t & (1ULL << 47))
-		ptr_64t |= 0xFFFF000000000000ULL;
+	if (ptr_64t & (1ULL << 47)) ptr_64t |= 0xFFFF000000000000ULL;
 	return (void*)ptr_64t;
 }
 
@@ -96,10 +95,8 @@ static inline void bitmap_clear_bit (uint64_t page_idx) {
  * @return base physical address of allocated frames
  */
 paddr_t alloc_ppages (uint64_t count) {
-	if (count == 0)
-		return NULL;
-	if (bitmap.pages_used + count > bitmap.pages_maxlen)
-		return NULL;
+	if (count == 0) return NULL;
+	if (bitmap.pages_used + count > bitmap.pages_maxlen) return NULL;
 
 	uint64_t current_streak = 0;
 	uint64_t start_idx = 0;
@@ -111,8 +108,7 @@ paddr_t alloc_ppages (uint64_t count) {
 		}
 
 		if ((bitmap.map[i / 8] & (1 << (i % 8))) == 0) {
-			if (current_streak == 0)
-				start_idx = i;
+			if (current_streak == 0) start_idx = i;
 			current_streak++;
 
 			if (current_streak == count) {
@@ -182,8 +178,7 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 		struct limine_memmap_entry* entry = memmap_response->entries[i];
 		if (entry->type == LIMINE_MEMMAP_USABLE) {
 			uint64_t top = entry->base + entry->length;
-			if (top > addr_limit)
-				addr_limit = top;
+			if (top > addr_limit) addr_limit = top;
 		}
 	}
 
@@ -221,8 +216,7 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 		if (entry->type == LIMINE_MEMMAP_USABLE) {
 			for (uint64_t p = entry->base / PAGE_SIZE;
 				 p < (entry->base + entry->length) / PAGE_SIZE; p++) {
-				if (p < bitmap_fst_page || p >= bitmap_lst_page)
-					bitmap_clear_bit (p);
+				if (p < bitmap_fst_page || p >= bitmap_lst_page) bitmap_clear_bit (p);
 			}
 		}
 	}
@@ -258,8 +252,7 @@ static bool is_vaddr_t_lt (vaddr_t* a, vaddr_t* b) {
 	if (a->pml4_index == b->pml4_index) {
 		if (a->pdpt_index == b->pdpt_index) {
 			if (a->pd_index == b->pd_index) {
-				if (a->pt_index == b->pt_index)
-					return a->offset < b->offset;
+				if (a->pt_index == b->pt_index) return a->offset < b->offset;
 				return a->pt_index < b->pt_index;
 			}
 			return a->pd_index < b->pd_index;
@@ -316,8 +309,7 @@ static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base
 		pt_entry->us = user;
 		phys_base_track += PAGE_SIZE;
 
-		if (!is_vaddr_t_lt (&current, &last))
-			break;
+		if (!is_vaddr_t_lt (&current, &last)) break;
 
 		current.pt_index++;
 		if (current.pt_index >= 512) {
@@ -340,8 +332,7 @@ void* alloc_vpages (size_t req_count, bool user) {
 	// all memory allocations are currently under one pml4 entry. this is 512 gb of memory, which
 	// should be plenty for literally any use case of COS.
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
-	if (!pml4t_entry->present)
-		return NULL;
+	if (!pml4t_entry->present) return NULL;
 
 	size_t count_so_far = 0;
 	uint64_t start_page_idx = 0;
@@ -357,8 +348,7 @@ void* alloc_vpages (size_t req_count, bool user) {
 
 		if (!pdpt_entry->present) {
 			// we found 512*512 consecutive free pages!
-			if (count_so_far == 0)
-				start_page_idx = i;
+			if (count_so_far == 0) start_page_idx = i;
 			uint64_t pages_left = 512ull * 512ull - (i % (512ull * 512ull)); // just in case
 
 			if (count_so_far + pages_left >= req_count) {
@@ -376,8 +366,7 @@ void* alloc_vpages (size_t req_count, bool user) {
 
 		if (!pd_entry->present) {
 			// we found 512 consecutive free pages!
-			if (count_so_far == 0)
-				start_page_idx = i;
+			if (count_so_far == 0) start_page_idx = i;
 			uint64_t pages_left = 512ull - (i % 512ull); // just in case
 
 			if (count_so_far + pages_left >= req_count) {
@@ -397,19 +386,16 @@ void* alloc_vpages (size_t req_count, bool user) {
 			count_so_far = 0;
 			i++;
 		} else {
-			if (count_so_far == 0)
-				start_page_idx = i;
+			if (count_so_far == 0) start_page_idx = i;
 			count_so_far++;
-			if (count_so_far == req_count)
-				break;
+			if (count_so_far == req_count) break;
 			i++;
 		}
 	}
 
 	if (count_so_far == req_count) {
 		paddr_t base_physical = alloc_ppages (req_count);
-		if (base_physical == NULL)
-			return NULL; // no more physical memory
+		if (base_physical == NULL) return NULL; // no more physical memory
 
 		vaddr_t first_vaddr = {1, (start_page_idx >> 18) & 0x1FF, (start_page_idx >> 9) & 0x1FF,
 							   start_page_idx & 0x1FF, 0};
@@ -438,8 +424,7 @@ void* alloc_vpage (bool user) { return alloc_vpages (1, user); }
 static bool is_table_empty (void* table_vaddr) {
 	uint64_t* entries = (uint64_t*)table_vaddr;
 	for (int i = 0; i < 512; i++)
-		if (entries[i] & 1)
-			return false;
+		if (entries[i] & 1) return false;
 	return true;
 }
 
@@ -450,8 +435,7 @@ static bool is_table_empty (void* table_vaddr) {
  */
 static void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[first.pml4_index];
-	if (!pml4t_entry->present)
-		return;
+	if (!pml4t_entry->present) return;
 
 	vaddr_t current = first;
 
@@ -495,8 +479,7 @@ static void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 			}
 		}
 
-		if (!is_vaddr_t_lt (&current, &last))
-			break;
+		if (!is_vaddr_t_lt (&current, &last)) break;
 
 		current.pt_index++;
 		if (current.pt_index >= 512) {
@@ -516,8 +499,7 @@ static void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
  * @param count number of consecutive pages to free
  */
 void free_vpages (void* ptr, size_t count) {
-	if (ptr == NULL || count == 0)
-		return;
+	if (ptr == NULL || count == 0) return;
 
 	vaddr_t vaddr = get_vaddr_t_from_ptr (ptr);
 	if (vaddr.pml4_index != 1) {
@@ -526,8 +508,7 @@ void free_vpages (void* ptr, size_t count) {
 	}
 
 	void* phys_base = get_paddr (ptr);
-	if (phys_base == NULL)
-		return;
+	if (phys_base == NULL) return;
 
 	free_ppages (phys_base, count);
 
@@ -576,20 +557,17 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
  */
 void walk_pagetable () {
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
-	if (!pml4t_entry->present)
-		return;
+	if (!pml4t_entry->present) return;
 
 	pdpt_entry_t* pdpt_base_ptr =
 		(pdpt_entry_t*)get_vaddr_from_frame (pml4t_entry->pdpt_base_address);
 	pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[0];
-	if (!pdpt_entry->present)
-		return;
+	if (!pdpt_entry->present) return;
 
 	pd_entry_t* pd_base_ptr = (pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address);
 	for (int k = 0; k < 512; k++) {
 		pd_entry_t* pd_entry = &pd_base_ptr[k];
-		if (!pd_entry->present)
-			continue;
+		if (!pd_entry->present) continue;
 		printf ("PD %d: PT Base Address:   0x%lx\n", k, pd_entry->pt_base_address << 12);
 		pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
 
@@ -601,8 +579,7 @@ void walk_pagetable () {
 		int range_start = -1;
 		for (int k = 0; k <= 512; k++) {
 			if (k < 512 && is_present_pt[k]) {
-				if (range_start == -1)
-					range_start = k;
+				if (range_start == -1) range_start = k;
 			} else if (range_start != -1) {
 				if (range_start == k - 1)
 					printf ("  Present PT: %d\n", range_start);
@@ -623,14 +600,12 @@ void* get_paddr (void* vaddr) {
 	vaddr_t virtual_addr = get_vaddr_t_from_ptr (vaddr);
 
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[virtual_addr.pml4_index];
-	if (!pml4t_entry->present)
-		return NULL;
+	if (!pml4t_entry->present) return NULL;
 
 	pdpt_entry_t* pdpt_base_ptr =
 		(pdpt_entry_t*)get_vaddr_from_frame (pml4t_entry->pdpt_base_address);
 	pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[virtual_addr.pdpt_index];
-	if (!pdpt_entry->present)
-		return NULL;
+	if (!pdpt_entry->present) return NULL;
 
 	if (pdpt_entry->page_size) {
 		uint64_t phys_addr = (pdpt_entry->pd_base_address << 12) |
@@ -641,8 +616,7 @@ void* get_paddr (void* vaddr) {
 
 	pd_entry_t* pd_base_ptr = (pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address);
 	pd_entry_t* pd_entry = &pd_base_ptr[virtual_addr.pd_index];
-	if (!pd_entry->present)
-		return NULL;
+	if (!pd_entry->present) return NULL;
 
 	if (pd_entry->page_size) {
 		uint64_t phys_addr = (pd_entry->pt_base_address << 12) |
@@ -652,8 +626,7 @@ void* get_paddr (void* vaddr) {
 
 	pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
 	pt_entry_t* pt_entry = &pt_base_ptr[virtual_addr.pt_index];
-	if (!pt_entry->present)
-		return NULL;
+	if (!pt_entry->present) return NULL;
 
 	uint64_t phys_addr = (pt_entry->frame_base_address << 12) | virtual_addr.offset;
 
@@ -679,8 +652,7 @@ int liballoc_unlock (void) {
 void* liballoc_alloc (size_t count) { return alloc_vpages (count, false); }
 
 int liballoc_free (void* ptr, size_t count) {
-	if (is_locked)
-		return -7;
+	if (is_locked) return -7;
 
 	free_vpages (ptr, count);
 	return 0;

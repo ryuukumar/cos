@@ -9,8 +9,7 @@
 
 static bool filename_has_invalid_chars (char* filename) {
 	while (*filename != 0) {
-		if (*filename == '/' || *filename < (char)32)
-			return true;
+		if (*filename == '/' || *filename < (char)32) return true;
 		filename++;
 	}
 	return false;
@@ -25,32 +24,25 @@ static bool filename_has_invalid_chars (char* filename) {
  */
 int do_mkdir (char* dirname, inode** result, inode* parent) {
 	// case parent not provided
-	if (!parent)
-		return -EINVARG;
+	if (!parent) return -EINVARG;
 
 	// case parent is not a directory
-	if (parent->i_type != DIRECTORY)
-		return -EINVARG;
+	if (parent->i_type != DIRECTORY) return -EINVARG;
 
 	// case dirname is absent or 0 chars long
-	if (!dirname || *dirname == 0)
-		return -EINVARG;
+	if (!dirname || *dirname == 0) return -EINVARG;
 
 	// case dirname has invalid characters
-	if (filename_has_invalid_chars (dirname))
-		return -EINVARG;
+	if (filename_has_invalid_chars (dirname)) return -EINVARG;
 
 	// case dirname is '.' or '..'
-	if (strcmp (dirname, ".") == 0 || strcmp (dirname, "..") == 0)
-		return -EINVARG;
+	if (strcmp (dirname, ".") == 0 || strcmp (dirname, "..") == 0) return -EINVARG;
 
 	// case dirname already exists
 	inode* lookup_result = NULL;
 	int error = parent->i_iops->lookup (dirname, &lookup_result, parent);
-	if (error == 0)
-		return -EPEXISTS;
-	if (error != -EPNOEXIST)
-		return error;
+	if (error == 0) return -EPEXISTS;
+	if (error != -EPNOEXIST) return error;
 
 	// case dirname valid, parent exists and dirname does not yet
 	return parent->i_iops->mkdir (dirname, result, parent);
@@ -65,32 +57,25 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
  */
 int do_create (char* filename, inode** result, inode* parent) {
 	// case parent not provided
-	if (!parent)
-		return -EINVARG;
+	if (!parent) return -EINVARG;
 
 	// case parent is not a directory
-	if (parent->i_type != DIRECTORY)
-		return -EINVARG;
+	if (parent->i_type != DIRECTORY) return -EINVARG;
 
 	// case filename is absent or 0 chars long
-	if (!filename || *filename == 0)
-		return -EINVARG;
+	if (!filename || *filename == 0) return -EINVARG;
 
 	// case filename has invalid characters
-	if (filename_has_invalid_chars (filename))
-		return -EINVARG;
+	if (filename_has_invalid_chars (filename)) return -EINVARG;
 
 	// case filename is '.' or '..'
-	if (strcmp (filename, ".") == 0 || strcmp (filename, "..") == 0)
-		return -EINVARG;
+	if (strcmp (filename, ".") == 0 || strcmp (filename, "..") == 0) return -EINVARG;
 
 	// case filename already exists
 	inode* lookup_result = NULL;
 	int error = parent->i_iops->lookup (filename, &lookup_result, parent);
-	if (error == 0)
-		return -EPEXISTS;
-	if (error != -EPNOEXIST)
-		return error;
+	if (error == 0) return -EPEXISTS;
+	if (error != -EPNOEXIST) return error;
 
 	// case filename valid, parent exists and dirname does not yet
 	return parent->i_iops->create (filename, result, parent);
@@ -106,21 +91,17 @@ int do_create (char* filename, inode** result, inode* parent) {
  */
 int do_lookup (char* filename, inode** result, inode* root) {
 	// case root not provided
-	if (!root)
-		return -ENOROOT;
+	if (!root) return -ENOROOT;
 
 	// case filename is absent or 0 chars long
-	if (!filename || filename[0] == 0)
-		return -EINVARG;
+	if (!filename || filename[0] == 0) return -EINVARG;
 
 	// case filename is not absolute
 	// TODO: allow relative paths like this?
-	if (filename[0] != '/')
-		return -ENEEDABS;
+	if (filename[0] != '/') return -ENEEDABS;
 
 	// case '/*', root is a file
-	if (root->i_type != DIRECTORY)
-		return -EINVPATH;
+	if (root->i_type != DIRECTORY) return -EINVPATH;
 
 	// case when filename starts with multiple slashes
 	// should not access null because above checks guarantee at least one character
@@ -178,8 +159,7 @@ int do_lookup (char* filename, inode** result, inode* root) {
 	}
 
 	// case '/path/*', 'path' exists but is a file (invalid recursion)
-	if (target_inode->i_type == EFILE)
-		return -EINVPATH;
+	if (target_inode->i_type == EFILE) return -EINVPATH;
 
 	// case '/path/*', 'path' exists and is a directory
 	return do_lookup (next_slash, result, target_inode);

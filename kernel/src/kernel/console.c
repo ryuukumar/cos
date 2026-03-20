@@ -129,8 +129,7 @@ void putchar (unsigned char rc) {
 	}
 	registerChar (rc, idx);
 	idx++;
-	if (PUTCH_UPDATE)
-		update ();
+	if (PUTCH_UPDATE) update ();
 }
 
 /*!
