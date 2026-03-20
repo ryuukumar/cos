@@ -1,3 +1,4 @@
+#include <kernel/hardfonts/classic.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -781,7 +782,6 @@ Return the glyph for a certain character from the classic font
 @return	pointer to 5x8 glyph
 */
 unsigned char* glyph (char index) {
-	if (index < 32)
-		return &__classic_font__[0][0][0];
+	if (index < 32) return &__classic_font__[0][0][0];
 	return &__classic_font__[index - 32][0][0];
 }

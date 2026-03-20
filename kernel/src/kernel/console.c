@@ -8,7 +8,7 @@
 #include <string.h>
 
 #define CONSOLE_HEIGHT 80
-#define CONSOLE_WIDTH 140
+#define CONSOLE_WIDTH  140
 
 bool PUTCH_UPDATE = false;
 
@@ -17,9 +17,9 @@ unsigned char bufferstr[CONSOLE_HEIGHT * CONSOLE_WIDTH] = {
 uint32_t colorbufferstr[CONSOLE_HEIGHT * CONSOLE_WIDTH] = {
 	0xffffff}; // TODO: replace this with malloc when implemented
 unsigned char* buffer = bufferstr;
-uint32_t* colorbuffer = colorbufferstr;
-size_t x, y, xs, ys, xsp, ysp, xc, yc, fs;
-size_t idx = 0;
+uint32_t*	   colorbuffer = colorbufferstr;
+size_t		   x, y, xs, ys, xsp, ysp, xc, yc, fs;
+size_t		   idx = 0;
 
 uint32_t color = 0xeeeeee;
 
@@ -62,8 +62,8 @@ Initialise the console with the default (classic) font
 @param	y_spc spacing between lines
 @param	font_size font size
 */
-void __init_console__ (size_t x_screen, size_t y_screen, size_t x_pad, size_t y_pad, size_t x_spc,
-					   size_t y_spc, size_t font_size) {
+void init_console (size_t x_screen, size_t y_screen, size_t x_pad, size_t y_pad, size_t x_spc,
+				   size_t y_spc, size_t font_size) {
 	x = x_screen - 2 * x_pad;
 	y = y_screen - 2 * y_pad;
 
@@ -109,7 +109,7 @@ Register a character to the screen buffer.
 @param	rc character to register
 @param	index position to print it on
 */
-void registerChar (unsigned char rc, int index) {
+static void registerChar (unsigned char rc, int index) {
 	buffer[index] = rc;
 	colorbuffer[index] = color;
 }
@@ -129,8 +129,7 @@ void putchar (unsigned char rc) {
 	}
 	registerChar (rc, idx);
 	idx++;
-	if (PUTCH_UPDATE)
-		update ();
+	if (PUTCH_UPDATE) update ();
 }
 
 /*!

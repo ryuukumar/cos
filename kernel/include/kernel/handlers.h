@@ -6,6 +6,6 @@
 
 void handle_gpf (registers_t* registers);
 
-void __init_handlers__ ();
+void init_handlers (void);
 
 #endif

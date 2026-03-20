@@ -34,6 +34,9 @@ $(eval $(call DEFAULT_VAR,LDFLAGS,$(DEFAULT_LDFLAGS)))
 override CFLAGS += \
 	-Wall \
 	-Wextra \
+	-Wstrict-prototypes \
+	-Wmissing-prototypes \
+	-Wmissing-declarations \
 	-std=gnu11 \
 	-ffreestanding \
 	-fno-stack-protector \
