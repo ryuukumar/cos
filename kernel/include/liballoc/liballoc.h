@@ -31,7 +31,7 @@ extern "C" {
  * \return 0 if the lock was acquired successfully. Anything else is
  * failure.
  */
-extern int liballoc_lock ();
+extern int liballoc_lock (void);
 
 /** This function unlocks what was previously locked by the liballoc_lock
  * function.  If it disabled interrupts, it enables interrupts. If it
@@ -39,7 +39,7 @@ extern int liballoc_lock ();
  *
  * \return 0 if the lock was successfully released.
  */
-extern int liballoc_unlock ();
+extern int liballoc_unlock (void);
 
 /** This is the hook into the local system which allocates pages. It
  * accepts an integer parameter which is the number of pages
@@ -63,7 +63,7 @@ extern int liballoc_free (void*, size_t);
 extern void* PREFIX (malloc) (size_t);		   ///< The standard function.
 extern void* PREFIX (realloc) (void*, size_t); ///< The standard function.
 extern void* PREFIX (calloc) (size_t, size_t); ///< The standard function.
-extern void PREFIX (free) (void*);			   ///< The standard function.
+extern void	 PREFIX (free) (void*);			   ///< The standard function.
 
 #ifdef __cplusplus
 }

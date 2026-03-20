@@ -5,3 +5,9 @@ PointerAlignment: Left
 SpaceBeforeParens: Always
 ColumnLimit: 100
 BreakBeforeBraces: Attach
+RemoveBracesLLVM: true
+AlignConsecutiveMacros: true
+AllowShortIfStatementsOnASingleLine: WithoutElse
+ReflowComments: true
+SortIncludes: true
+AlignConsecutiveDeclarations: true

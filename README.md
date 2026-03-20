@@ -10,7 +10,8 @@ Documentation is sparse, but you can use doxygen to build it from the in-code co
 
 - It boots up on most modern-day 64-bit systems that support x86_64 (so no ARM)
 - It can print stuff on your screen
-- It can do some basic memory management with paging
+- It can manage upto 512GB of virtual memory
+- It can read an initramfs and enter user mode
 - More to come
 
 ## Setup

@@ -7,7 +7,7 @@
 typedef enum { UNDEF, EFILE, DIRECTORY, LINK } file_type_t;
 
 typedef struct inode inode;
-typedef struct file file;
+typedef struct file	 file;
 
 typedef struct {
 	int (*lookup) (char*, inode**, inode*);
@@ -23,16 +23,15 @@ typedef struct {
 } file_operations;
 
 struct inode {
-	uint64_t i_no, i_sz;
-	void* i_pvt;
+	uint64_t		  i_no, i_sz;
+	void*			  i_pvt;
 	inode_operations* i_iops;
-	file_type_t i_type;
-	char* i_filename;
+	file_type_t		  i_type;
 };
 
 struct file {
-	inode* f_inode;
-	uint64_t f_pos, f_cnt;
+	inode*			 f_inode;
+	uint64_t		 f_pos, f_cnt;
 	file_operations* f_fops;
 };
 
