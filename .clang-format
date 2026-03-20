@@ -9,3 +9,4 @@ RemoveBracesLLVM: true
 AlignConsecutiveMacros: true
 AllowShortIfStatementsOnASingleLine: WithoutElse
 ReflowComments: true
+SortIncludes: true
