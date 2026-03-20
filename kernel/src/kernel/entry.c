@@ -27,6 +27,7 @@ extern volatile struct limine_module_request mod_req;
 extern volatile struct limine_hhdm_request hhdm_req;
 
 struct limine_framebuffer* framebuffer = NULL;
+struct limine_file* initramfs = NULL;
 uint64_t hhdm_base = 0;
 
 // Halt and catch fire function.
@@ -68,17 +69,19 @@ void get_limine_requests (void) {
 	// REQUIRED: framebuffer
 	if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1)
 		hcf ();
-	framebuffer = framebuffer_request.response->framebuffers[0];
 
 	// REQUIRED: hhdm response
-	if (hhdm_req.response != NULL)
-		hhdm_base = hhdm_req.response->offset;
-	else
+	if (hhdm_req.response == NULL)
 		hcf ();
 
 	// REQUIRED: modules (for initramfs)
 	if (mod_req.response == NULL || mod_req.response->module_count < 1)
 		hcf ();
+
+	// set the values received from limine
+	framebuffer = framebuffer_request.response->framebuffers[0];
+	hhdm_base = hhdm_req.response->offset;
+	initramfs = mod_req.response->modules[0];
 }
 
 void print_info (void) {
@@ -132,7 +135,6 @@ void _start (void) {
 	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
 	print_info ();
 
-	struct limine_file* initramfs = mod_req.response->modules[0];
 	void* initramfs_addr = initramfs->address;
 	uint64_t initramfs_size = initramfs->size;
 
