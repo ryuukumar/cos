@@ -41,6 +41,15 @@ registers_t* syscall_handler (registers_t* registers) {
 	return registers;
 }
 
+uint64_t do_syscall (uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+	uint64_t ret;
+	__asm__ volatile ("int $0x80"
+					  : "=a"(ret)
+					  : "a"(syscall), "b"(arg1), "c"(arg2), "d"(arg3)
+					  : "memory");
+	return ret;
+}
+
 void init_syscalls (void) {
 	idt_register_handler (0x80, syscall_handler);
 	idt_set_flags (0x80, 0x0E, 3, 0);
