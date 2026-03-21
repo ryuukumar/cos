@@ -14,7 +14,7 @@ static uint64_t inode_no;
 static inode*	root_inode;
 
 static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
-static file_operations	f_ops = {.open = open};
+static file_operations	f_ops = {.read = read};
 
 static uint64_t hex_to_u64 (const char hex[8]) {
 	uint64_t val = 0;
@@ -253,7 +253,15 @@ int lookup (char* filename, inode** result, inode* root) {
 	return -EPNOEXIST;
 }
 
-int open (inode* node, file* f) { return 0; }
+int read (inode* node, file* f, void* buffer, size_t size) {
+	if (f->f_pos >= node->i_sz) return 0; // EOF
+
+	if (f->f_pos + size > node->i_sz) size = node->i_sz - f->f_pos;
+	memcpy (buffer, (uint8_t*)node->i_pvt + f->f_pos, size);
+	f->f_pos += size;
+
+	return (int)size;
+}
 
 inode* load_initramfs (void* pos) {
 	root_inode = kmalloc (sizeof (inode));

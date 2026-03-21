@@ -20,7 +20,7 @@ typedef struct {
 typedef struct {
 	int (*open) (inode*, file*);
 	int (*close) (inode*, file*);
-	// int (*read) (inode*, file*, void*, size_t);
+	int (*read) (inode*, file*, void*, size_t);
 	// int (*seek) (inode*, file*, int);
 } file_operations;
 

@@ -35,7 +35,7 @@ typedef struct {
 int mkdir (char* dirname, inode** result, inode* root);
 int create (char* filename, inode** result, inode* root);
 int lookup (char* filename, inode** result, inode* root);
-int open (inode* node, file* f);
+int read (inode* node, file* f, void* buffer, size_t size);
 
 inode* load_initramfs (void* pos);
 
