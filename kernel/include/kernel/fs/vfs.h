@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define MAX_FDS 32
+
 typedef enum { UNDEF, EFILE, DIRECTORY, LINK } file_type_t;
 
 typedef struct inode inode;

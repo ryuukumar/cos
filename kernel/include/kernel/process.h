@@ -6,8 +6,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define MAX_FDS 32
-
 typedef struct process process;
 
 typedef enum { TASK_RUNNING, TASK_READY, TASK_BLOCKED, TASK_DEAD } task_state_t;
