@@ -51,6 +51,7 @@ int do_close (struct file* fd);
 int sys_read (int fd, void* buf, size_t size);
 int sys_open (char* filename, int flags, int mode);
 int sys_close (int fd);
+int sys_mkdir (char* path, int mode);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);

@@ -91,6 +91,28 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
 }
 
 /*!
+ * Create a directory at the given path.
+ * @param us_path absolute path for the new directory
+ * @param mode (unused) mode for the new directory
+ * @return 0 if successful, error otherwise
+ */
+int sys_mkdir(char* path, int mode) {
+	process* current = get_current_process ();
+	if (!current) return -EINVARG;
+	
+    inode* parent;
+    char* name;
+    int err = vfs_resolve_parent(path, current->p_root, &parent, &name);
+    if (err) return err;
+
+    inode* result;
+    err = do_mkdir(name, &result, parent);
+    
+    kfree(name);
+    return err;
+}
+
+/*!
  * Create file 'filename' in the supplied 'parent' inode.
  * @param filename name of new file
  * @param result pointer to the inode* where the file's reference will be set

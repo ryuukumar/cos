@@ -24,6 +24,11 @@ registers_t* syscall_handler (registers_t* registers) {
 		int fd = (int)registers->rdi;
 		int error = sys_close (fd);
 		registers->rax = (uint64_t)error;
+	} else if (syscall_number == 39) { // sys_mkdir
+		char* path = (char*)registers->rdi;
+		int	  mode = (int)registers->rsi;
+		int	  error = sys_mkdir (path, mode);
+		registers->rax = (uint64_t)error;
 	} else if (syscall_number == 57) { // sys_fork
 		process* child = NULL;
 		int		 status = process_fork (current, &child);
