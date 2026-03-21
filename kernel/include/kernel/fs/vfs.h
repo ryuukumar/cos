@@ -6,6 +6,10 @@
 
 #define MAX_FDS 32
 
+#define SEEK_SET 0
+#define SEEK_CUR 1
+#define SEEK_END 2
+
 typedef enum { UNDEF, EFILE, DIRECTORY, LINK } file_type_t;
 
 typedef struct inode inode;
@@ -21,7 +25,7 @@ typedef struct {
 	int (*open) (inode*, file*);
 	int (*close) (inode*, file*);
 	int (*read) (inode*, file*, void*, size_t);
-	// int (*seek) (inode*, file*, int);
+	int (*seek) (inode*, file*, size_t, int);
 } file_operations;
 
 struct inode {

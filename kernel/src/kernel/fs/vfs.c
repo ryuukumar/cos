@@ -264,6 +264,12 @@ int do_read (struct file* f, void* buf, size_t size) {
 	return f->f_fops->read (f->f_inode, f, buf, size);
 }
 
+int do_seek (struct file* f, size_t offset, int whence) {
+	if (!f || whence >= 3 || whence < 0) return -EINVARG;
+	if (!f->f_fops || !f->f_fops->seek) return -ENOIMPL;
+	return f->f_fops->seek (f->f_inode, f, offset, whence);
+}
+
 /*!
  * Execute the close routine and free the file structure if applicable.
  * @param fd pointer to the file structure to close
@@ -326,6 +332,12 @@ int sys_read (int fd, void* buf, size_t size) {
 	process* current = get_current_process ();
 	if (fd < 0 || fd >= MAX_FDS || !current->p_fds[fd]) return -EINVARG;
 	return do_read (current->p_fds[fd], buf, size);
+}
+
+int sys_seek (int fd, size_t offset, int whence) {
+	process* current = get_current_process ();
+	if (fd < 0 || fd >= MAX_FDS || !current->p_fds[fd]) return -EINVARG;
+	return do_seek (current->p_fds[fd], offset, whence);
 }
 
 /*!
