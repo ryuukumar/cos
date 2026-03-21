@@ -4,7 +4,7 @@
 
 #include <kernel/idt.h>
 
-void handle_gpf (registers_t* registers);
+registers_t* handle_gpf (registers_t* registers);
 
 void init_handlers (void);
 

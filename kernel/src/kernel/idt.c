@@ -10,7 +10,7 @@ irq_handler_t interrupt_handlers[256];
 extern void*  isr_stub_table[];
 
 // Declaration of handler for internal use only
-void kernel_dispatch_interrupt (registers_t* registers);
+registers_t* kernel_dispatch_interrupt (registers_t* registers);
 
 static void idt_set_gate (uint8_t vector, void* isr, uint8_t gate_type, uint8_t dpl,
 						  uint8_t present) {
@@ -76,12 +76,12 @@ static void log_registers_to_serial (registers_t* registers) {
 	write_serial_str ("----------------------------------\n\n");
 }
 
-void kernel_dispatch_interrupt (registers_t* registers) {
-	log_registers_to_serial (registers);
+registers_t* kernel_dispatch_interrupt (registers_t* registers) {
+	if (registers->interrupt_number != 0x20) log_registers_to_serial (registers);
 
 	irq_handler_t handler = interrupt_handlers[registers->interrupt_number];
 	if (handler)
-		handler (registers);
+		return handler (registers);
 	else {
 		printf ("Unhandled interrupt! Hasta la vista");
 		while (1)

@@ -6,6 +6,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define PAGE_SIZE 4096ull
+
 typedef struct {
 	uint64_t present : 1;			 // Page present in memory
 	uint64_t read_write : 1;		 // Read-write flag
@@ -85,6 +87,9 @@ typedef struct {
 
 typedef uint64_t* paddr_t;
 
+uint64_t read_cr3 (void);
+void	 write_cr3 (uint64_t new_value);
+
 vaddr_t get_vaddr_t_from_ptr (void* ptr);
 void*	get_vaddr_hhdm (uint64_t phys_address);
 void*	vaddr_t_to_ptr (vaddr_t* virtual_addr);
@@ -94,9 +99,12 @@ void* alloc_vpage (bool user);
 void  free_vpages (void* ptr, size_t count);
 void  free_vpage (void* ptr);
 
-void  init_memmgt (uint64_t, struct limine_memmap_response*);
-void  walk_pagetable (void);
-void* get_paddr (void* vaddr);
+void	  init_memmgt (uint64_t, struct limine_memmap_response*);
+void	  walk_pagetable (void);
+void*	  get_paddr (void* vaddr);
+uintptr_t get_kernel_cr3 (void);
+
+int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest);
 
 // LIBALLOC FUNCTION IMPLEMENTATIONS
 
