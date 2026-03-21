@@ -20,6 +20,9 @@ struct process {
 	process*	 next;
 	bool		 p_user;
 	uintptr_t	 p_kstack;
+	inode*		 p_wd;
+	inode*		 p_root;
+	struct file* p_fds[MAX_FDS];
 };
 
 typedef struct {

@@ -39,4 +39,7 @@ int do_mkdir (char* dirname, inode** result, inode* parent);
 int do_create (char* filename, inode** result, inode* parent);
 int do_lookup (char* filename, inode** result, inode* root);
 
+inode* get_absolute_root (void);
+void   init_vfs (inode* absolute_root);
+
 #endif

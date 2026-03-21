@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 
+inode* vfs_absolute_root = NULL;
+
 static bool filename_has_invalid_chars (char* filename) {
 	while (*filename != 0) {
 		if (*filename == '/' || *filename < (char)32) return true;
@@ -164,3 +166,7 @@ int do_lookup (char* filename, inode** result, inode* root) {
 	// case '/path/*', 'path' exists and is a directory
 	return do_lookup (next_slash, result, target_inode);
 }
+
+inode* get_absolute_root (void) { return vfs_absolute_root; }
+
+void init_vfs (inode* absolute_root) { vfs_absolute_root = absolute_root; }

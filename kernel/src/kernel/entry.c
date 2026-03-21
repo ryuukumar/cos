@@ -102,14 +102,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 
 	print_info ();
 
-	void*	 initramfs_addr = initramfs->address;
-	uint64_t initramfs_size = initramfs->size;
-
 	printf ("\n[Stage 2] Running as PID %lld\n", get_current_process ()->p_id);
-	printf ("[Stage 2] Initramfs at 0x%llx, size %ld bytes\n", initramfs_addr, initramfs_size);
-
-	load_initramfs (initramfs_addr);
-
 	printf ("[Stage 2] Current system tick: %lld\n", get_current_tick ());
 
 	// TODO: ELF loading & user jump
@@ -157,12 +150,18 @@ void _start (void) {
 	init_handlers ();
 	init_process ();
 
+	void*	 initramfs_addr = initramfs->address;
+	uint64_t initramfs_size = initramfs->size;
+
+	init_vfs (load_initramfs (initramfs_addr));
+
 	// Launch Stage 2 as the first process (PID 1)
 	process* stage2_proc = kmalloc (sizeof (process));
 	stage2_proc->p_id = 1;
 	stage2_proc->p_cr3 = read_cr3 ();
 	stage2_proc->p_user = false;
 	stage2_proc->p_state = TASK_READY;
+	stage2_proc->p_wd = stage2_proc->p_root = get_absolute_root ();
 
 	void* kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, false);
 	stage2_proc->p_kstack = (uintptr_t)kstack + STACK_SIZE;
