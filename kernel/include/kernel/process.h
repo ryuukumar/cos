@@ -6,8 +6,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define MAX_FDS 32
-
 typedef struct process process;
 
 typedef enum { TASK_RUNNING, TASK_READY, TASK_BLOCKED, TASK_DEAD } task_state_t;
@@ -20,6 +18,9 @@ struct process {
 	process*	 next;
 	bool		 p_user;
 	uintptr_t	 p_kstack;
+	inode*		 p_wd;
+	inode*		 p_root;
+	struct file* p_fds[MAX_FDS];
 };
 
 typedef struct {

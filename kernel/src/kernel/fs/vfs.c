@@ -1,5 +1,6 @@
 #include <kernel/error.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/process.h>
 #include <kernel/serial.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>
@@ -7,12 +8,53 @@
 #include <stdio.h>
 #include <string.h>
 
+inode* vfs_absolute_root = NULL;
+
 static bool filename_has_invalid_chars (char* filename) {
 	while (*filename != 0) {
 		if (*filename == '/' || *filename < (char)32) return true;
 		filename++;
 	}
 	return false;
+}
+
+/**
+ * Resolves a path to its parent directory and returns the trailing component name.
+ * @param path_arg path to resolve
+ * @param root root node for the process
+ * @param r_parent pointer to inode* to store the result parent
+ * @param r_name pointer to char* to store the result component name
+ */
+int vfs_resolve_parent (const char* path_arg, inode* root, inode** r_parent, char** r_name) {
+	if (!path_arg || path_arg[0] != '/') return -ENEEDABS;
+
+	char* path = strdup (path_arg);
+	if (!path) return -ENOMEM;
+
+	char* last_slash = NULL;
+	for (int i = strlen (path) - 1; i >= 0; i--) {
+		if (path[i] == '/') {
+			last_slash = &path[i];
+			break;
+		}
+	}
+
+	*r_name = strdup (last_slash + 1);
+
+	if (last_slash == path) {
+		*r_parent = root;
+	} else {
+		*last_slash = '\0';
+		int err = do_lookup (path, r_parent, root);
+		if (err != 0) {
+			kfree (path);
+			kfree (*r_name);
+			return err;
+		}
+	}
+
+	kfree (path);
+	return 0;
 }
 
 /*!
@@ -46,6 +88,28 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
 
 	// case dirname valid, parent exists and dirname does not yet
 	return parent->i_iops->mkdir (dirname, result, parent);
+}
+
+/*!
+ * Create a directory at the given path.
+ * @param us_path absolute path for the new directory
+ * @param mode (unused) mode for the new directory
+ * @return 0 if successful, error otherwise
+ */
+int sys_mkdir(char* path, int mode) {
+	process* current = get_current_process ();
+	if (!current) return -EINVARG;
+	
+    inode* parent;
+    char* name;
+    int err = vfs_resolve_parent(path, current->p_root, &parent, &name);
+    if (err) return err;
+
+    inode* result;
+    err = do_mkdir(name, &result, parent);
+    
+    kfree(name);
+    return err;
 }
 
 /*!
@@ -164,3 +228,122 @@ int do_lookup (char* filename, inode** result, inode* root) {
 	// case '/path/*', 'path' exists and is a directory
 	return do_lookup (next_slash, result, target_inode);
 }
+
+/*!
+ * Execute the open routine and call the filesystem open handler, if any.
+ * @param filei pointer to the file inode to be opened
+ * @param dest_fd the empty, allocated file entry to be written
+ * @return 0 if successful, error (<0) otherwise
+ */
+int do_open (inode* filei, struct file* dest_fd) {
+	if (!filei) return -EINVARG;
+	if (filei->i_type == DIRECTORY) return -EINVARG;
+	memset (dest_fd, 0, sizeof (struct file));
+
+	filei->i_cnt++;
+
+	dest_fd->f_inode = filei;
+	dest_fd->f_pos = 0;
+	dest_fd->f_cnt = 1;
+	dest_fd->f_fops = filei->i_fops;
+
+	if (dest_fd->f_fops && dest_fd->f_fops->open) return dest_fd->f_fops->open (filei, dest_fd);
+	return 0;
+}
+
+/*!
+ * Execute the read routine.
+ * @param f pointer to file structure to read via
+ * @param buf pointer to allocated memory to write to
+ * @param size desired read size
+ * @return actual bytes read if successful, error (<0) otherwise
+ */
+int do_read (struct file* f, void* buf, size_t size) {
+	if (!f || !buf) return -EINVARG;
+	if (!f->f_fops || !f->f_fops->read) return -ENOIMPL;
+	return f->f_fops->read (f->f_inode, f, buf, size);
+}
+
+/*!
+ * Execute the close routine and free the file structure if applicable.
+ * @param fd pointer to the file structure to close
+ * @return 0 if successful, error (<0) otherwise
+ */
+int do_close (struct file* fd) {
+	if (!fd) return -EINVARG;
+	if (--fd->f_cnt == 0) {
+		if (fd->f_fops && fd->f_fops->close) fd->f_fops->close (fd->f_inode, fd);
+		fd->f_inode->i_cnt--;
+		kfree (fd);
+	}
+	return 0;
+}
+
+/*!
+ * Resolve a filename and allocate a file descriptor, allowing for execution of read
+ * @param filename absolute path to the file
+ * @param flags (unused) flags for the file
+ * @param mode (unused) mode in which to open the file
+ * @return fd if successful, else error
+ */
+int sys_open (char* filename, int flags, int mode) {
+	if (!filename) return -EINVARG;
+
+	process* current = get_current_process ();
+	if (!current) return -EINVARG;
+
+	int fd = -1;
+	for (int i = 0; i < MAX_FDS && fd == -1; i++)
+		if (current->p_fds[i] == NULL) fd = i;
+	if (fd < 0) return -EMFILE;
+
+	current->p_fds[fd] = kmalloc (sizeof (struct file)); // reserve the file entry
+	if (!current->p_fds[fd]) return -ENOMEM;
+
+	inode* target_inode = NULL;
+	int	   error = do_lookup (filename, &target_inode, current->p_root);
+	if (error != 0) goto cleanup;
+
+	error = do_open (target_inode, current->p_fds[fd]);
+	if (error) goto cleanup;
+
+	return fd;
+
+cleanup:
+	kfree (current->p_fds[fd]);
+	current->p_fds[fd] = NULL;
+	return error;
+}
+
+/*!
+ * Read upto `size` bytes of an opened file.
+ * @param fd file descriptor of file to read
+ * @param buf pointer to allocated memory to write to
+ * @param size desired read size
+ * @return actual bytes read if successful, error (<0) otherwise
+ */
+int sys_read (int fd, void* buf, size_t size) {
+	process* current = get_current_process ();
+	if (fd < 0 || fd >= MAX_FDS || !current->p_fds[fd]) return -EINVARG;
+	return do_read (current->p_fds[fd], buf, size);
+}
+
+/*!
+ * Close a file descriptor associated to an fd. If this was the last reference to the file
+ * descriptor, frees the file descriptor.
+ * @param fd file descriptor
+ * @return 0 if successful, else error
+ */
+int sys_close (int fd) {
+	process* current = get_current_process ();
+	if (fd < 0 || fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
+
+	struct file* f = current->p_fds[fd];
+	current->p_fds[fd] = NULL;
+
+	return do_close (f);
+}
+
+inode* get_absolute_root (void) { return vfs_absolute_root; }
+
+void init_vfs (inode* absolute_root) { vfs_absolute_root = absolute_root; }

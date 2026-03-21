@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define MAX_FDS 32
+
 typedef enum { UNDEF, EFILE, DIRECTORY, LINK } file_type_t;
 
 typedef struct inode inode;
@@ -19,13 +21,14 @@ typedef struct {
 	int (*open) (inode*, file*);
 	int (*close) (inode*, file*);
 	int (*read) (inode*, file*, void*, size_t);
-	int (*seek) (inode*, file*, int);
+	// int (*seek) (inode*, file*, int);
 } file_operations;
 
 struct inode {
-	uint64_t		  i_no, i_sz;
+	uint64_t		  i_no, i_sz, i_cnt;
 	void*			  i_pvt;
 	inode_operations* i_iops;
+	file_operations*  i_fops;
 	file_type_t		  i_type;
 };
 
@@ -35,8 +38,22 @@ struct file {
 	file_operations* f_fops;
 };
 
+int vfs_resolve_parent (const char* path_arg, inode* root, inode** r_parent, char** r_name);
+
 int do_mkdir (char* dirname, inode** result, inode* parent);
 int do_create (char* filename, inode** result, inode* parent);
 int do_lookup (char* filename, inode** result, inode* root);
+
+int do_read (struct file* f, void* buf, size_t size);
+int do_open (inode* file, struct file* dest_fd);
+int do_close (struct file* fd);
+
+int sys_read (int fd, void* buf, size_t size);
+int sys_open (char* filename, int flags, int mode);
+int sys_close (int fd);
+int sys_mkdir (char* path, int mode);
+
+inode* get_absolute_root (void);
+void   init_vfs (inode* absolute_root);
 
 #endif

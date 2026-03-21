@@ -18,6 +18,8 @@
 #define EPNOEXIST 504
 // Path already exists
 #define EPEXISTS 505
+// Too many open files
+#define EMFILE 506
 
 // Corrupt queue
 #define ECORRQ 601
