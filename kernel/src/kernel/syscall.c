@@ -14,6 +14,10 @@ registers_t* syscall_handler (registers_t* registers) {
 		int	  mode = (int)registers->rdx;
 		int	  fd = sys_open (filename, flags, mode);
 		registers->rax = (uint64_t)fd;
+	} else if (syscall_number == 6) {
+		int fd = (int)registers->rdi;
+		int error = sys_close (fd);
+		registers->rax = (uint64_t)error;
 	} else if (syscall_number == 57) { // sys_fork
 		process* child = NULL;
 		int		 status = process_fork (current, &child);

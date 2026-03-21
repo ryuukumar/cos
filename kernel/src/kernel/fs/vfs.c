@@ -191,10 +191,26 @@ int do_open (inode* filei, struct file* dest_fd) {
 }
 
 /*!
+ * Execute the close routine and free the file structure if applicable.
+ * @param fd pointer to the file structure to close
+ * @return 0 if successful, error (<0) otherwise
+ */
+int do_close (struct file* fd) {
+	if (!fd) return -EINVARG;
+	if (--fd->f_cnt == 0) {
+		if (fd->f_fops && fd->f_fops->close) fd->f_fops->close (fd->f_inode, fd);
+		fd->f_inode->i_cnt--;
+		kfree (fd);
+	}
+	return 0;
+}
+
+/*!
  * Resolve a filename and allocate a file descriptor, allowing for execution of read
  * @param filename absolute path to the file
  * @param flags (unused) flags for the file
  * @param mode (unused) mode in which to open the file
+ * @return fd if successful, else error
  */
 int sys_open (char* filename, int flags, int mode) {
 	if (!filename) return -EINVARG;
@@ -223,6 +239,21 @@ cleanup:
 	kfree (current->p_fds[fd]);
 	current->p_fds[fd] = NULL;
 	return error;
+}
+
+/*!
+ * Close a file descriptor associated to an fd. If this was the last reference to the file descriptor, frees the file descriptor.
+ * @param fd file descriptor
+ * @return 0 if successful, else error
+ */
+int sys_close (int fd) {
+	process* current = get_current_process ();
+	if (fd < 0 || fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
+
+	struct file* f = current->p_fds[fd];
+	current->p_fds[fd] = NULL;
+
+	return do_close (f);
 }
 
 inode* get_absolute_root (void) { return vfs_absolute_root; }

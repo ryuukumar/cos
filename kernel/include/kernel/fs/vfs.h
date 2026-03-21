@@ -19,7 +19,7 @@ typedef struct {
 
 typedef struct {
 	int (*open) (inode*, file*);
-	// int (*close) (inode*, file*);
+	int (*close) (inode*, file*);
 	// int (*read) (inode*, file*, void*, size_t);
 	// int (*seek) (inode*, file*, int);
 } file_operations;
@@ -43,7 +43,10 @@ int do_create (char* filename, inode** result, inode* parent);
 int do_lookup (char* filename, inode** result, inode* root);
 
 int do_open (inode* file, struct file* dest_fd);
+int do_close (struct file* fd);
+
 int sys_open (char* filename, int flags, int mode);
+int sys_close (int fd);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);
