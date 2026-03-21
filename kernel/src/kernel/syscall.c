@@ -29,7 +29,7 @@ registers_t* syscall_handler (registers_t* registers) {
 		int	  mode = (int)registers->rsi;
 		int	  error = sys_mkdir (path, mode);
 		registers->rax = (uint64_t)error;
-	} else if (syscall_number == 57) { // sys_fork
+	} else if (syscall_number == SYSCALL_SYS_FORK) { // sys_fork
 		process* child = NULL;
 		int		 status = process_fork (current, &child);
 		if (status == 0 && child != NULL)

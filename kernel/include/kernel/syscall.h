@@ -4,6 +4,8 @@
 
 #include <kernel/idt.h>
 
+#define SYSCALL_SYS_FORK 57
+
 registers_t* syscall_handler (registers_t* registers);
 void		 init_syscalls (void);
 

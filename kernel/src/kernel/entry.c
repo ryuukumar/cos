@@ -47,11 +47,11 @@ __attribute__ ((noreturn)) static void jump_to_usermode (uintptr_t entry_point,
 														 uintptr_t user_stack) {
 	__asm__ volatile (
 		"cli \n\t"			   // 1. Disable interrupts while swapping states
-		"mov $0x3B, %%ax \n\t" // 2. Load User Data Segment descriptor (0x38 | 3 = 0x3B)
-		"mov %%ax, %%ds \n\t"
-		"mov %%ax, %%es \n\t"
-		"mov %%ax, %%fs \n\t"
-		"mov %%ax, %%gs \n\t" // (Note: if you use swapgs later, handling GS changes)
+		// "mov $0x3B, %%ax \n\t" // 2. Load User Data Segment descriptor (0x38 | 3 = 0x3B)
+		// "mov %%ax, %%ds \n\t"
+		// "mov %%ax, %%es \n\t"
+		// "mov %%ax, %%fs \n\t"
+		// "mov %%ax, %%gs \n\t" // (Note: if you use swapgs later, handling GS changes)
 
 		// 3. Push the structure for iretq
 		"pushq $0x3B \n\t"	// Push SS (User Data Segment)
@@ -105,8 +105,25 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	printf ("\n[Stage 2] Running as PID %lld\n", get_current_process ()->p_id);
 	printf ("[Stage 2] Current system tick: %lld\n", get_current_tick ());
 
-	// TODO: ELF loading & user jump
-	printf ("\n\nAll execution completed.");
+	write_serial_str ("Trying to load the ELF.\n");
+
+	// to load the elf, we need:
+	// - [ ] allocate kernel memory
+	// - [ ] call syscall to open file and then read file to kmem
+	// - [ ] fork process, then child does the following
+	// - [ ] allocate user memory
+	// - [ ] parse elf and move stuff to wherever they want to be
+	// - [ ] call jump_to_usermode (instead of exec?)
+
+	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
+	// printf ("fork result: %lld\n", fork_result);
+	if (fork_result == 0) {
+		write_serial_str ("I am the child. Continuing execution.\n");
+	} else {
+		// TODO: ELF loading & user jump
+		printf ("\n\nAll execution completed.");
+		write_serial_str ("I am the parent.\n");
+	}
 	for (;;)
 		;
 }
