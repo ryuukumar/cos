@@ -42,9 +42,11 @@ int do_mkdir (char* dirname, inode** result, inode* parent);
 int do_create (char* filename, inode** result, inode* parent);
 int do_lookup (char* filename, inode** result, inode* root);
 
+int do_read (struct file* f, void* buf, size_t size);
 int do_open (inode* file, struct file* dest_fd);
 int do_close (struct file* fd);
 
+int sys_read (int fd, void* buf, size_t size);
 int sys_open (char* filename, int flags, int mode);
 int sys_close (int fd);
 

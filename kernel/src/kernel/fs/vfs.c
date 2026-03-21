@@ -191,6 +191,19 @@ int do_open (inode* filei, struct file* dest_fd) {
 }
 
 /*!
+ * Execute the read routine.
+ * @param f pointer to file structure to read via
+ * @param buf pointer to allocated memory to write to
+ * @param size desired read size
+ * @return actual bytes read if successful, error (<0) otherwise
+ */
+int do_read (struct file* f, void* buf, size_t size) {
+	if (!f || !buf) return -EINVARG;
+	if (!f->f_fops || !f->f_fops->read) return -ENOIMPL;
+	return f->f_fops->read (f->f_inode, f, buf, size);
+}
+
+/*!
  * Execute the close routine and free the file structure if applicable.
  * @param fd pointer to the file structure to close
  * @return 0 if successful, error (<0) otherwise
@@ -239,6 +252,19 @@ cleanup:
 	kfree (current->p_fds[fd]);
 	current->p_fds[fd] = NULL;
 	return error;
+}
+
+/*!
+ * Read upto `size` bytes of an opened file.
+ * @param fd file descriptor of file to read
+ * @param buf pointer to allocated memory to write to
+ * @param size desired read size
+ * @return actual bytes read if successful, error (<0) otherwise
+ */
+int sys_read (int fd, void* buf, size_t size) {
+	process* current = get_current_process ();
+	if (fd < 0 || fd >= MAX_FDS || !current->p_fds[fd]) return -EINVARG;
+	return do_read (current->p_fds[fd], buf, size);
 }
 
 /*!

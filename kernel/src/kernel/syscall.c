@@ -8,7 +8,13 @@ registers_t* syscall_handler (registers_t* registers) {
 	process* current = get_current_process ();
 	if (current) current->p_registers_ptr = registers;
 
-	if (syscall_number == 5) { // sys_open
+	if (syscall_number == 3) { // sys_read
+		int	   fd = (int)registers->rdi;
+		void*  buf = (void*)registers->rsi;
+		size_t size = (size_t)registers->rdx;
+		int	   error = sys_read (fd, buf, size);
+		registers->rax = (uint64_t)error;
+	} else if (syscall_number == 5) { // sys_open
 		char* filename = (char*)registers->rdi;
 		int	  flags = (int)registers->rsi;
 		int	  mode = (int)registers->rdx;
