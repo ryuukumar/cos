@@ -1,0 +1,6 @@
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+HeaderFilterRegex: '^(include/|src/|kernel/)'
+WarningsAsErrors: ''
