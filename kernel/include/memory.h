@@ -4,9 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void* memcpy (void*, const void*, size_t);
-void* memset (void*, int, size_t);
-void* memmove (void*, const void*, size_t);
-int	  memcmp (const void*, const void*, size_t);
+void* kmemcpy (void*, const void*, size_t);
+void* kmemset (void*, int, size_t);
+void* kmemmove (void*, const void*, size_t);
+int	  kmemcmp (const void*, const void*, size_t);
 
 #endif

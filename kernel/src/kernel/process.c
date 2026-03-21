@@ -67,7 +67,7 @@ int process_fork (process* source_process, process** dest_ptr) {
 	process* new_process = kmalloc (sizeof (process));
 	if (!new_process) return -ENOMEM;
 
-	memcpy ((void*)new_process, (void*)source_process, sizeof (process));
+	kmemcpy ((void*)new_process, (void*)source_process, sizeof (process));
 
 	void* new_kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, false);
 	if (!new_kstack) return -ENOMEM;
@@ -78,7 +78,7 @@ int process_fork (process* source_process, process** dest_ptr) {
 
 	if (!source_process->p_user) {
 		// Kernel thread: flush parent state into child's new kernel stack byte-for-byte
-		memcpy (new_kstack, (void*)(source_process->p_kstack - STACK_SIZE), STACK_SIZE);
+		kmemcpy (new_kstack, (void*)(source_process->p_kstack - STACK_SIZE), STACK_SIZE);
 		uint64_t offset =
 			(uintptr_t)source_process->p_registers_ptr - (source_process->p_kstack - STACK_SIZE);
 		new_process->p_registers_ptr = (registers_t*)((uintptr_t)new_kstack + offset);
@@ -88,7 +88,7 @@ int process_fork (process* source_process, process** dest_ptr) {
 		new_process->p_registers_ptr->rsp = (uintptr_t)new_kstack + rsp_offset;
 	} else {
 		registers_t* child_frame = (registers_t*)(new_process->p_kstack - sizeof (registers_t));
-		memcpy (child_frame, source_process->p_registers_ptr, sizeof (registers_t));
+		kmemcpy (child_frame, source_process->p_registers_ptr, sizeof (registers_t));
 		new_process->p_registers_ptr = child_frame;
 		new_process->p_registers_ptr->rsp = source_process->p_registers_ptr->rsp;
 	}

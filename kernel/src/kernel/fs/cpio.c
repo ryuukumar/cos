@@ -35,7 +35,7 @@ static uint64_t hex_to_u64 (const char hex[8]) {
 
 static void* jump_next_file (void* pos) {
 	cpio_newc_header_t* header = pos;
-	if (memcmp (header->c_magic, "070701", 6) != 0) {
+	if (kmemcmp (header->c_magic, "070701", 6) != 0) {
 		write_serial_str (
 			"Caller provided a pointer to cpio header, but it did not have the magic number!\n");
 		return NULL;
@@ -45,7 +45,7 @@ static void* jump_next_file (void* pos) {
 	uint64_t filesize = hex_to_u64 (header->c_filesize);
 
 	pos += sizeof (cpio_newc_header_t);
-	if (memcmp (pos, "TRAILER!!!", 11) == 0) return NULL;
+	if (kmemcmp (pos, "TRAILER!!!", 11) == 0) return NULL;
 
 	pos += namesize;
 	if ((uint64_t)pos % 4) pos += 4 - ((uint64_t)pos % 4);
@@ -57,7 +57,7 @@ static void* jump_next_file (void* pos) {
 
 static inode* create_folders_if_noexist (char* arg_abspath) {
 	char* abspath = kmalloc (strlen (arg_abspath) + 1);
-	memcpy ((void*)abspath, arg_abspath, strlen (arg_abspath));
+	kmemcpy ((void*)abspath, arg_abspath, strlen (arg_abspath));
 	abspath[strlen (arg_abspath)] = 0;
 
 	char*  idx = abspath;
@@ -109,7 +109,7 @@ static void parse_file_to_inode (cpio_newc_header_t* header) {
 	if (namesize == 0) return;
 
 	char* filename = kmalloc (namesize);
-	memcpy ((void*)filename, (void*)(header + 1), namesize);
+	kmemcpy ((void*)filename, (void*)(header + 1), namesize);
 	filename[namesize - 1] = 0; // enforce string in case corrupt
 
 	if (strcmp (filename, "TRAILER!!!") == 0 || strcmp (filename, ".") == 0) goto cleanup;
@@ -146,7 +146,7 @@ static void parse_file_to_inode (cpio_newc_header_t* header) {
 
 			new_file->i_pvt = kmalloc (filesize);
 			new_file->i_sz = filesize;
-			memcpy (new_file->i_pvt, data, new_file->i_sz);
+			kmemcpy (new_file->i_pvt, data, new_file->i_sz);
 		}
 	}
 
@@ -158,7 +158,7 @@ cleanup:
 int mkdir (char* dirname, inode** result, inode* root) {
 	// requires: guarantee that vfs input is valid
 	inode* new_dir = kmalloc (sizeof (inode));
-	memset ((void*)new_dir, 0, sizeof (inode));
+	kmemset ((void*)new_dir, 0, sizeof (inode));
 
 	new_dir->i_type = DIRECTORY;
 	new_dir->i_pvt = kmalloc (sizeof (dir_content_t));
@@ -178,7 +178,7 @@ int mkdir (char* dirname, inode** result, inode* root) {
 	dir_content_t* parent_pvt = (dir_content_t*)root->i_pvt;
 	child_t*	   new_parent_children = kmalloc ((parent_pvt->d_count + 1) * sizeof (child_t));
 
-	memcpy (new_parent_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
+	kmemcpy (new_parent_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
 	new_parent_children[parent_pvt->d_count].c_inode = new_dir;
 	new_parent_children[parent_pvt->d_count].c_name = strdup (dirname);
 
@@ -193,7 +193,7 @@ int mkdir (char* dirname, inode** result, inode* root) {
 
 int create (char* filename, inode** result, inode* root) {
 	inode* new_file = kmalloc (sizeof (inode));
-	memset ((void*)new_file, 0, sizeof (inode));
+	kmemset ((void*)new_file, 0, sizeof (inode));
 
 	new_file->i_type = EFILE;
 	new_file->i_iops = &i_ops;
@@ -202,7 +202,7 @@ int create (char* filename, inode** result, inode* root) {
 	dir_content_t* parent_pvt = (dir_content_t*)root->i_pvt;
 	child_t*	   new_parent_children = kmalloc ((parent_pvt->d_count + 1) * sizeof (child_t));
 
-	memcpy (new_parent_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
+	kmemcpy (new_parent_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
 	new_parent_children[parent_pvt->d_count].c_inode = new_file;
 	new_parent_children[parent_pvt->d_count].c_name = strdup (filename);
 
@@ -252,7 +252,7 @@ int lookup (char* filename, inode** result, inode* root) {
 
 void load_initramfs (void* pos) {
 	root_inode = kmalloc (sizeof (inode));
-	memset ((void*)root_inode, 0, sizeof (inode));
+	kmemset ((void*)root_inode, 0, sizeof (inode));
 	root_inode->i_type = DIRECTORY;
 	root_inode->i_pvt = kmalloc (sizeof (dir_content_t));
 	root_inode->i_iops = &i_ops;

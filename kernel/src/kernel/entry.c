@@ -168,7 +168,7 @@ void _start (void) {
 	stage2_proc->p_kstack = (uintptr_t)kstack + STACK_SIZE;
 
 	registers_t* regs = (registers_t*)(stage2_proc->p_kstack - sizeof (registers_t));
-	memset (regs, 0, sizeof (registers_t));
+	kmemset (regs, 0, sizeof (registers_t));
 	regs->rip = (uintptr_t)_start_stage2;
 	regs->cs = 0x28; // Kernel code segment
 	regs->ss = 0x30; // Kernel data segment
