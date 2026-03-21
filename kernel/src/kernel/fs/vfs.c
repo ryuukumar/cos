@@ -96,20 +96,20 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
  * @param mode (unused) mode for the new directory
  * @return 0 if successful, error otherwise
  */
-int sys_mkdir(char* path, int mode) {
+int sys_mkdir (char* path, int mode) {
 	process* current = get_current_process ();
 	if (!current) return -EINVARG;
-	
-    inode* parent;
-    char* name;
-    int err = vfs_resolve_parent(path, current->p_root, &parent, &name);
-    if (err) return err;
 
-    inode* result;
-    err = do_mkdir(name, &result, parent);
-    
-    kfree(name);
-    return err;
+	inode* parent;
+	char*  name;
+	int	   err = vfs_resolve_parent (path, current->p_root, &parent, &name);
+	if (err) return err;
+
+	inode* result;
+	err = do_mkdir (name, &result, parent);
+
+	kfree (name);
+	return err;
 }
 
 /*!
