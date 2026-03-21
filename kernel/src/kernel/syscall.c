@@ -8,7 +8,13 @@ registers_t* syscall_handler (registers_t* registers) {
 	process* current = get_current_process ();
 	if (current) current->p_registers_ptr = registers;
 
-	if (syscall_number == 57) { // sys_fork
+	if (syscall_number == 5) { // sys_open
+		char* filename = (char*)registers->rdi;
+		int	  flags = (int)registers->rsi;
+		int	  mode = (int)registers->rdx;
+		int	  fd = sys_open (filename, flags, mode);
+		registers->rax = (uint64_t)fd;
+	} else if (syscall_number == 57) { // sys_fork
 		process* child = NULL;
 		int		 status = process_fork (current, &child);
 		if (status == 0 && child != NULL)

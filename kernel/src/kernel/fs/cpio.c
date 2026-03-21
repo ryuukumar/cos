@@ -14,6 +14,7 @@ static uint64_t inode_no;
 static inode*	root_inode;
 
 static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
+static file_operations	f_ops = {.open = open};
 
 static uint64_t hex_to_u64 (const char hex[8]) {
 	uint64_t val = 0;
@@ -163,6 +164,7 @@ int mkdir (char* dirname, inode** result, inode* root) {
 	new_dir->i_type = DIRECTORY;
 	new_dir->i_pvt = kmalloc (sizeof (dir_content_t));
 	new_dir->i_iops = &i_ops;
+	new_dir->i_fops = &f_ops;
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)new_dir->i_pvt)->d_count = 2;
@@ -197,6 +199,7 @@ int create (char* filename, inode** result, inode* root) {
 
 	new_file->i_type = EFILE;
 	new_file->i_iops = &i_ops;
+	new_file->i_fops = &f_ops;
 
 	// construct parent replacement structures
 	dir_content_t* parent_pvt = (dir_content_t*)root->i_pvt;
@@ -250,12 +253,15 @@ int lookup (char* filename, inode** result, inode* root) {
 	return -EPNOEXIST;
 }
 
+int open (inode* node, file* f) { return 0; }
+
 inode* load_initramfs (void* pos) {
 	root_inode = kmalloc (sizeof (inode));
 	memset ((void*)root_inode, 0, sizeof (inode));
 	root_inode->i_type = DIRECTORY;
 	root_inode->i_pvt = kmalloc (sizeof (dir_content_t));
 	root_inode->i_iops = &i_ops;
+	root_inode->i_fops = &f_ops;
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)root_inode->i_pvt)->d_count = 2;

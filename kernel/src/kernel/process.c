@@ -102,6 +102,9 @@ int process_fork (process* source_process, process** dest_ptr) {
 		return errno;
 	}
 
+	for (int i = 0; i < MAX_FDS; i++)
+		if (new_process->p_fds[i]) new_process->p_fds[i]->f_cnt++;
+
 	errno = enqueue_process (get_ready_queue (), new_process);
 	if (errno != 0) {
 		free_vpages (new_kstack, STACK_SIZE / PAGE_SIZE);
