@@ -38,6 +38,8 @@ struct file {
 	file_operations* f_fops;
 };
 
+int vfs_resolve_parent (const char* path_arg, inode* root, inode** r_parent, char** r_name);
+
 int do_mkdir (char* dirname, inode** result, inode* parent);
 int do_create (char* filename, inode** result, inode* parent);
 int do_lookup (char* filename, inode** result, inode* root);
