@@ -242,7 +242,8 @@ cleanup:
 }
 
 /*!
- * Close a file descriptor associated to an fd. If this was the last reference to the file descriptor, frees the file descriptor.
+ * Close a file descriptor associated to an fd. If this was the last reference to the file
+ * descriptor, frees the file descriptor.
  * @param fd file descriptor
  * @return 0 if successful, else error
  */
