@@ -1,4 +1,5 @@
 #include <kernel/console.h>
+#include <kernel/elf.h>
 #include <kernel/fs/cpio.h>
 #include <kernel/gdt.h>
 #include <kernel/graphics.h>
@@ -44,9 +45,11 @@ static void hcf (void) {
 }
 
 __attribute__ ((noreturn)) static void jump_to_usermode (uintptr_t entry_point,
-														 uintptr_t user_stack) {
+														 uintptr_t user_stack, bool* user_flag) {
+	__asm__ volatile ("cli");
+	*user_flag = true;
 	__asm__ volatile (
-		"cli \n\t"			   // 1. Disable interrupts while swapping states
+		// "cli \n\t" // 1. Disable interrupts while swapping states
 		// "mov $0x3B, %%ax \n\t" // 2. Load User Data Segment descriptor (0x38 | 3 = 0x3B)
 		// "mov %%ax, %%ds \n\t"
 		// "mov %%ax, %%es \n\t"
@@ -107,23 +110,29 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 
 	write_serial_str ("Trying to load the ELF.\n");
 
-	// to load the elf, we need:
-	// - [ ] allocate kernel memory
-	// - [ ] call syscall to open file and then read file to kmem
-	// - [ ] fork process, then child does the following
-	// - [ ] allocate user memory
-	// - [ ] parse elf and move stuff to wherever they want to be
-	// - [ ] call jump_to_usermode (instead of exec?)
-
 	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
-	// printf ("fork result: %lld\n", fork_result);
 	if (fork_result == 0) {
-		write_serial_str ("I am the child. Continuing execution.\n");
-	} else {
-		// TODO: ELF loading & user jump
-		printf ("\n\nAll execution completed.");
-		write_serial_str ("I am the parent.\n");
+		write_serial_str ("Spawned child, attempting to start elf file.\n");
+		process* current = get_current_process ();
+
+		uintptr_t entry_point;
+		int		  err = load_elf ("/bin/hello", current, &entry_point);
+		if (err != 0) {
+			printf ("Failed to load /bin/hello : %d\n", err);
+			for (;;)
+				;
+		}
+
+		vaddr_t	  us_base_vaddr = {254, 255, 0, 0, 0};
+		uintptr_t user_stack_base = (uintptr_t)vaddr_t_to_ptr (&us_base_vaddr);
+		size_t	  stack_pages = 4;
+		alloc_by_cr3 (current->p_cr3, user_stack_base - (stack_pages * PAGE_SIZE), stack_pages,
+					  true);
+
+		write_serial_str ("Jumping to ring 3...\n");
+		jump_to_usermode (entry_point, user_stack_base, &current->p_user);
 	}
+
 	for (;;)
 		;
 }
