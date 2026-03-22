@@ -4,6 +4,8 @@
 #include <kernel/fs/vfs.h>
 #include <stddef.h>
 
+#define BUF_ALIGN 0x1000
+
 // Standard defintion of newc cpio header
 typedef struct {
 	char c_magic[6];
@@ -32,10 +34,15 @@ typedef struct {
 	uint64_t d_count;
 } dir_content_t;
 
+typedef struct {
+	uint64_t alloc;
+} fs_info_t;
+
 int mkdir (char* dirname, inode** result, inode* root);
 int create (char* filename, inode** result, inode* root);
 int lookup (char* filename, inode** result, inode* root);
 int read (inode* node, file* f, void* buffer, size_t size);
+int write (inode* node, file* f, void* buffer, size_t size);
 int seek (inode* node, file* f, size_t offset, int whence);
 
 inode* load_initramfs (void* pos);

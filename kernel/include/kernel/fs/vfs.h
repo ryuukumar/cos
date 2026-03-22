@@ -25,6 +25,7 @@ typedef struct {
 	int (*open) (inode*, file*);
 	int (*close) (inode*, file*);
 	int (*read) (inode*, file*, void*, size_t);
+	int (*write) (inode*, file*, void*, size_t);
 	int (*seek) (inode*, file*, size_t, int);
 } file_operations;
 
