@@ -1,5 +1,6 @@
 #include <kernel/console.h>
 #include <kernel/elf.h>
+#include <kernel/fs/chardev.h>
 #include <kernel/fs/cpio.h>
 #include <kernel/gdt.h>
 #include <kernel/graphics.h>
@@ -183,11 +184,21 @@ void _start (void) {
 
 	// Launch Stage 2 as the first process (PID 1)
 	process* stage2_proc = kmalloc (sizeof (process));
+	memset (stage2_proc, 0, sizeof (process));
 	stage2_proc->p_id = 1;
 	stage2_proc->p_cr3 = read_cr3 ();
 	stage2_proc->p_user = false;
 	stage2_proc->p_state = TASK_READY;
 	stage2_proc->p_wd = stage2_proc->p_root = get_absolute_root ();
+
+	for (int i = 0; i < 3; i++) {
+		stage2_proc->p_fds[i] = kmalloc (sizeof (struct file));
+		memset (stage2_proc->p_fds[i], 0, sizeof (struct file));
+	}
+
+	register_stdin (stage2_proc->p_fds[0]);
+	register_stdout (stage2_proc->p_fds[1]);
+	register_stderr (stage2_proc->p_fds[2]);
 
 	void* kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, false);
 	stage2_proc->p_kstack = (uintptr_t)kstack + STACK_SIZE;

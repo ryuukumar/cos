@@ -14,7 +14,8 @@ static uint64_t inode_no;
 static inode*	root_inode;
 
 static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
-static file_operations	f_ops = {.read = read, .seek = seek, .open = NULL, .close = NULL};
+static file_operations	f_ops = {
+	.read = read, .write = write, .seek = seek, .open = NULL, .close = NULL};
 
 static uint64_t hex_to_u64 (const char hex[8]) {
 	uint64_t val = 0;
@@ -145,9 +146,9 @@ static void parse_file_to_inode (cpio_newc_header_t* header) {
 			data += namesize;
 			if ((uint64_t)data % 4) data += 4 - ((uint64_t)data % 4);
 
-			new_file->i_pvt = kmalloc (filesize);
-			new_file->i_sz = filesize;
-			memcpy (new_file->i_pvt, data, new_file->i_sz);
+			struct file tmp = {
+				.f_inode = new_file, .f_pos = 0, .f_cnt = 1, .f_fops = new_file->i_fops};
+			write (new_file, &tmp, data, filesize);
 		}
 	}
 
@@ -261,6 +262,43 @@ int read (inode* node, file* f, void* buffer, size_t size) {
 	f->f_pos += size;
 
 	return (int)size;
+}
+
+int write (inode* node, file* f, void* buffer, size_t size) {
+	size_t pos_after_write = f->f_pos + size;
+	size_t og_eof = node->i_sz;
+
+	// check if we need to expand buffer first
+	if (!node->i_fsinfo) {
+		node->i_fsinfo = kmalloc (sizeof (fs_info_t));
+		if (!node->i_fsinfo) return -ENOMEM;
+		memset (node->i_fsinfo, 0, sizeof (fs_info_t));
+	}
+
+	fs_info_t* fs_info = (fs_info_t*)node->i_fsinfo;
+
+	if (pos_after_write > fs_info->alloc) {
+		size_t new_alloc = ((pos_after_write + BUF_ALIGN - 1) / BUF_ALIGN) * BUF_ALIGN;
+		void*  new_data = kmalloc (new_alloc);
+		memset (new_data, 0, new_alloc);
+
+		if (node->i_pvt) {
+			memcpy (new_data, node->i_pvt, node->i_sz);
+			kfree (node->i_pvt);
+		}
+
+		node->i_pvt = new_data;
+		fs_info->alloc = new_alloc;
+	}
+
+	if (f->f_pos > og_eof) memset ((uint8_t*)node->i_pvt + og_eof, 0, f->f_pos - og_eof);
+
+	memcpy ((uint8_t*)node->i_pvt + f->f_pos, buffer, size);
+
+	f->f_pos += size;
+	if (f->f_pos > node->i_sz) node->i_sz = f->f_pos;
+
+	return size;
 }
 
 int seek (inode* node, file* f, size_t offset, int whence) {

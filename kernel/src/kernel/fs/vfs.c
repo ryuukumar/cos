@@ -273,6 +273,12 @@ int do_seek (struct file* f, size_t offset, int whence) {
 	return f->f_fops->seek (f->f_inode, f, offset, whence);
 }
 
+int do_write (struct file* f, void* buf, size_t size) {
+	if (!f || !buf) return -EINVARG;
+	if (!f->f_fops || !f->f_fops->write) return -ENOIMPL;
+	return f->f_fops->write (f->f_inode, f, buf, size);
+}
+
 /*!
  * Execute the close routine and free the file structure if applicable.
  * @param fd pointer to the file structure to close
@@ -352,6 +358,12 @@ uint64_t sys_seek (uint64_t fd, uint64_t offset, uint64_t whence) {
 	return do_seek (current->p_fds[fd], (size_t)offset, (int)whence);
 }
 
+uint64_t sys_write (uint64_t fd, uint64_t buf, uint64_t size) {
+	process* current = get_current_process ();
+	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
+	return do_write (current->p_fds[fd], (void*)buf, (size_t)size);
+}
+
 /*!
  * Close a file descriptor associated to an fd. If this was the last reference to the file
  * descriptor, frees the file descriptor.
@@ -376,6 +388,7 @@ void init_vfs (inode* absolute_root) {
 	vfs_absolute_root = absolute_root;
 
 	register_syscall (SYSCALL_SYS_READ, sys_read);
+	register_syscall (SYSCALL_SYS_WRITE, sys_write);
 	register_syscall (SYSCALL_SYS_OPEN, sys_open);
 	register_syscall (SYSCALL_SYS_CLOSE, sys_close);
 	register_syscall (SYSCALL_SYS_LSEEK, sys_seek);
