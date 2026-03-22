@@ -1,9 +1,10 @@
-#include <kernel/process.h>
-#include <kernel/syscall.h>
-#include <kernel/serial.h>
 #include <kernel/error.h>
+#include <kernel/process.h>
+#include <kernel/serial.h>
+#include <kernel/syscall.h>
+#include <memory.h>
 
-syscall_handler_t syscall_handlers [SYSCALL_COUNT];
+syscall_handler_t syscall_handlers[SYSCALL_COUNT];
 
 registers_t* syscall_handler (registers_t* registers) {
 	uint64_t vector = registers->rax;
@@ -14,7 +15,7 @@ registers_t* syscall_handler (registers_t* registers) {
 	if (syscall_handlers[vector]) {
 		registers->rax = syscall_handlers[vector](registers->rdi, registers->rsi, registers->rdx);
 	} else {
-		write_serial_str("Unhandled syscall!");
+		write_serial_str ("Unhandled syscall!");
 		registers->rax = -ENOIMPL;
 	}
 
@@ -38,5 +39,5 @@ void register_syscall (syscall_handler_t handler, int vector) {
 void init_syscalls (void) {
 	idt_register_handler (0x80, syscall_handler);
 	idt_set_flags (0x80, 0x0E, 3, 0);
-	memset (syscall_handlers, 0, SYSCALL_COUNT * sizeof(syscall_handler_t));
+	memset (syscall_handlers, 0, SYSCALL_COUNT * sizeof (syscall_handler_t));
 }
