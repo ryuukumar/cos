@@ -2,6 +2,7 @@
 #include <kernel/fs/ramfs.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>
+#include <string.h>
 
 static inode* root_inode;
 
