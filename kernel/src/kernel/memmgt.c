@@ -2,9 +2,13 @@
 #include <kernel/idt.h>
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
+#include <kernel/process.h>
 #include <kernel/serial.h>
+#include <kernel/syscall.h>
 #include <memory.h>
 #include <stdio.h>
+
+#define ALIGNUP(x, o) ((x + o - 1) & ~(o - 1))
 
 #define USER_PML4_IDX 1
 #define KRNL_PML4_IDX 257
@@ -577,6 +581,38 @@ void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, bool write) 
 	pml4_base_ptr = original_ptr;
 }
 
+void dealloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages) {
+	pml4t_entry_t* original_ptr = pml4_base_ptr;
+	pml4_base_ptr = (pml4t_entry_t*)(cr3 + hhdm_offset);
+
+	free_all_vpages_in_range (get_vaddr_t_from_ptr ((void*)start),
+							  get_vaddr_t_from_ptr ((void*)(start + (num_pages * PAGE_SIZE))));
+
+	pml4_base_ptr = original_ptr;
+}
+
+static uint64_t sys_brk (uint64_t addr, uint64_t arg2, uint64_t arg3) {
+	(void)arg2, (void)arg3;
+
+	process* current = get_current_process ();
+	if (!current) return 0;
+	if (addr < current->p_heap_base) return current->p_heap_base + current->p_heap_sz;
+
+	size_t old_pcount = ALIGNUP (current->p_heap_sz, PAGE_SIZE) / PAGE_SIZE;
+	size_t new_pcount = ALIGNUP ((uintptr_t)addr - current->p_heap_base, PAGE_SIZE) / PAGE_SIZE;
+
+	if (new_pcount > old_pcount)
+		alloc_by_cr3 (current->p_cr3, current->p_heap_base + PAGE_SIZE * old_pcount,
+					  new_pcount - old_pcount, true);
+
+	if (new_pcount < old_pcount)
+		dealloc_by_cr3 (current->p_cr3, current->p_heap_base + PAGE_SIZE * new_pcount,
+						old_pcount - new_pcount);
+
+	current->p_heap_sz = addr - current->p_heap_base;
+	return current->p_heap_base + current->p_heap_sz;
+}
+
 /*!
  * Initializes the memory management subsystem.
  * Sets the base pointer for the PML4 table and stores the HHDM offset.
@@ -608,6 +644,8 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	pml4_base_ptr[KRNL_PML4_IDX].present = 1;
 	pml4_base_ptr[KRNL_PML4_IDX].read_write = 1;
 	pml4_base_ptr[KRNL_PML4_IDX].pdpt_base_address = ((uint64_t)krnl_pdpt_frame) / PAGE_SIZE;
+
+	register_syscall (SYSCALL_SYS_BRK, sys_brk);
 }
 
 /*!
@@ -618,6 +656,7 @@ uintptr_t get_kernel_cr3 (void) { return kernel_cr3; }
 
 /*!
  * Walks the page table hierarchy and prints present entries and their address ranges.
+ * @deprecated
  */
 void walk_pagetable () {
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];

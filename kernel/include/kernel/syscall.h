@@ -12,6 +12,7 @@
 #define SYSCALL_SYS_CLOSE 6
 #define SYSCALL_SYS_LSEEK 19
 #define SYSCALL_SYS_MKDIR 39
+#define SYSCALL_SYS_BRK	  45
 #define SYSCALL_SYS_FORK  57
 
 typedef uint64_t (*syscall_handler_t) (uint64_t, uint64_t, uint64_t);
