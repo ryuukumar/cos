@@ -10,7 +10,7 @@
 #define SEEK_CUR 1
 #define SEEK_END 2
 
-typedef enum { UNDEF, EFILE, DIRECTORY, LINK } file_type_t;
+typedef enum { UNDEF, EFILE, DIRECTORY, LINK, CHAR_DEV } file_type_t;
 
 typedef struct inode inode;
 typedef struct file	 file;
