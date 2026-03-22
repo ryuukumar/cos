@@ -31,6 +31,7 @@ typedef struct {
 struct inode {
 	uint64_t		  i_no, i_sz, i_cnt;
 	void*			  i_pvt;
+	void*			  i_fsinfo;
 	inode_operations* i_iops;
 	file_operations*  i_fops;
 	file_type_t		  i_type;
