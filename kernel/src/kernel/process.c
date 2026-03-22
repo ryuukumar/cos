@@ -159,10 +159,16 @@ static uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 }
 
 static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
-	(void) arg2, (void) arg3;
+	(void)arg2, (void)arg3;
 	process* current = get_current_process ();
 	current->p_state = TASK_DEAD;
-	// TODO: actually free the process so it isn't leaking mem
+
+	for (int i = 0; i < MAX_FDS; i++)
+		if (current->p_fds[i]) sys_close (i, 0, 0);
+
+	dealloc_by_cr3 (current->p_cr3, 0, 512ll * 512ll * 512ll * 256ll);
+	free_vpages ((void*)(current->p_kstack - STACK_SIZE), STACK_SIZE / PAGE_SIZE);
+
 	return (uint64_t)schedule (get_latest_r_frame ());
 }
 
