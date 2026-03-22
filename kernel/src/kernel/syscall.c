@@ -15,7 +15,7 @@ registers_t* syscall_handler (registers_t* registers) {
 	if (syscall_handlers[vector]) {
 		registers->rax = syscall_handlers[vector](registers->rdi, registers->rsi, registers->rdx);
 	} else {
-		write_serial_str ("Unhandled syscall!");
+		write_serial_str ("Unhandled syscall!\n");
 		registers->rax = -ENOIMPL;
 	}
 
@@ -26,7 +26,7 @@ uint64_t do_syscall (uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t ar
 	uint64_t ret;
 	__asm__ volatile ("int $0x80"
 					  : "=a"(ret)
-					  : "a"(syscall), "b"(arg1), "c"(arg2), "d"(arg3)
+					  : "a"(syscall), "D"(arg1), "S"(arg2), "d"(arg3)
 					  : "memory");
 	return ret;
 }
