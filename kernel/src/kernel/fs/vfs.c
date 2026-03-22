@@ -359,7 +359,7 @@ uint64_t sys_seek (uint64_t fd, uint64_t offset, uint64_t whence) {
 }
 
 uint64_t sys_write (uint64_t fd, uint64_t buf, uint64_t size) {
-	process* current = get_current_process();
+	process* current = get_current_process ();
 	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
 	return do_write (current->p_fds[fd], (void*)buf, (size_t)size);
 }
