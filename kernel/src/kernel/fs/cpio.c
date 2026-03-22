@@ -1,6 +1,8 @@
 #include <kernel/error.h>
 #include <kernel/fs/cpio.h>
+#include <kernel/process.h>
 #include <kernel/serial.h>
+#include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>
 #include <stdio.h>
@@ -9,13 +11,6 @@
 #define C_ISDIR 0040000
 #define C_ISREG 0100000
 #define C_ISLNK 0120000
-
-static uint64_t inode_no;
-static inode*	root_inode;
-
-static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
-static file_operations	f_ops = {
-	.read = read, .write = write, .seek = seek, .open = NULL, .close = NULL};
 
 static uint64_t hex_to_u64 (const char hex[8]) {
 	uint64_t val = 0;
@@ -57,282 +52,131 @@ static void* jump_next_file (void* pos) {
 	return pos;
 }
 
-static inode* create_folders_if_noexist (char* arg_abspath) {
-	char* abspath = kmalloc (strlen (arg_abspath) + 1);
-	memcpy ((void*)abspath, arg_abspath, strlen (arg_abspath));
-	abspath[strlen (arg_abspath)] = 0;
+static int mkdir_if_required (const char* dir, inode* root) {
+	if (!dir) return -EINVARG;
+	if (dir[0] != '/') return -ENEEDABS;
 
-	char*  idx = abspath;
-	inode* parent = root_inode;
-	inode* child = NULL;
+	char* path = strdup (dir);
+	if (!path) return -ENOMEM;
 
-	while (idx && *idx != 0) {
-		while (*idx == '/')
-			idx++;
-		if (*idx == 0) break;
-		if (parent == NULL) break;
-		char* next_slash = idx + 1;
-
-		while (*next_slash != 0 && *next_slash != '/')
-			next_slash++;
-		char actual_char = *next_slash;
-		*next_slash = 0;
-
-		if (parent->i_iops->lookup (idx, &child, parent) == 0) {
-			parent = child;
-			child = NULL;
-			*next_slash = actual_char;
-			idx = next_slash;
-			continue;
-		} else if (parent->i_iops->mkdir (idx, &child, parent) == 0) {
-			parent = child;
-			child = NULL;
-			*next_slash = actual_char;
-			idx = next_slash;
-			continue;
-		} else {
-			parent = NULL;
-			idx = NULL;
-		}
+	size_t len = strlen (path);
+	while (len > 1 && path[len - 1] == '/') {
+		path[len - 1] = '\0';
+		len--;
 	}
 
-	kfree (abspath);
-	return parent;
+	if (len == 1 && path[0] == '/') {
+		kfree (path);
+		return 0;
+	}
+
+	inode* parent_dir = NULL;
+	char*  child_name = NULL;
+	int	   error = vfs_resolve_parent (path, root, &parent_dir, &child_name);
+
+	if (error == -EPNOEXIST) {
+		child_name = NULL;
+
+		char* last_slash = NULL;
+		for (int i = len - 1; i >= 0; i--) {
+			if (path[i] == '/') {
+				last_slash = &path[i];
+				break;
+			}
+		}
+
+		if (last_slash && last_slash != path) {
+			*last_slash = '\0';
+			error = mkdir_if_required (path, root);
+			*last_slash = '/';
+		}
+
+		if (error == 0) error = vfs_resolve_parent (path, root, &parent_dir, &child_name);
+	} else if (error != 0) {
+		child_name = NULL;
+	}
+
+	if (error == 0 && child_name && strlen (child_name) > 0) {
+		inode* result = NULL;
+		error = do_mkdir (child_name, &result, parent_dir);
+		if (error == -EPEXISTS) error = 0;
+	}
+
+	if (child_name) kfree (child_name);
+	kfree (path);
+	return error;
 }
 
-static void parse_file_to_inode (cpio_newc_header_t* header) {
-	if (header == NULL) return;
+static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_path) {
+	if (!header || !out_path) return -EINVARG;
+
+	inode* root_dir = NULL;
+	int	   error = do_lookup (out_path, &root_dir, get_current_process ()->p_root);
+	if (error || !root_dir) return error;
 
 	uint64_t namesize = hex_to_u64 (header->c_namesize);
 	uint64_t filesize = hex_to_u64 (header->c_filesize);
 	uint64_t filemode = hex_to_u64 (header->c_mode);
 	uint64_t filetype = filemode & 0170000;
 
-	if (namesize == 0) return;
+	if (namesize == 0) return -EINVARG;
 
-	char* filename = kmalloc (namesize);
-	memcpy ((void*)filename, (void*)(header + 1), namesize);
-	filename[namesize - 1] = 0; // enforce string in case corrupt
+	char* filename = kmalloc (namesize + 1);
+	memcpy ((void*)(filename + 1), (void*)(header + 1), namesize);
+	filename[namesize] = 0; // enforce string in case corrupt
+	filename[0] = '/';		// many syscalls require absolute paths, which cpio does not guarantee
 
-	if (strcmp (filename, "TRAILER!!!") == 0 || strcmp (filename, ".") == 0) goto cleanup;
+	if (strcmp (filename, "/TRAILER!!!") == 0 || strcmp (filename, "/.") == 0) goto cleanup;
 
 	if (filetype == C_ISDIR) {
-		inode* directory = create_folders_if_noexist (filename);
-		if (!directory) goto cleanup;
+		error = mkdir_if_required (filename, root_dir);
+		if (error) {
+			printf ("[CPIO] Could not create directory %s : %lld\n", filename, error);
+			goto cleanup;
+		}
 	}
-
 	if (filetype == C_ISREG) {
-		size_t path_len = strlen (filename);
-		char*  last_slash = &filename[path_len - 1];
-		while (last_slash >= filename && *last_slash != '/')
+		char* trailing_slashes = &filename[namesize - 1];
+		while ((uintptr_t)trailing_slashes > (uintptr_t)filename && *trailing_slashes == '/')
+			trailing_slashes--;
+		trailing_slashes[1] = 0;
+
+		char* last_slash = trailing_slashes;
+		while ((uintptr_t)last_slash > (uintptr_t)filename && *last_slash != '/')
 			last_slash--;
 
-		if (last_slash < filename) goto cleanup;
-		*last_slash = 0;
-
-		inode* parent_directory = create_folders_if_noexist (filename);
-		inode* new_file = NULL;
-		*last_slash = '/';
-
-		if (!parent_directory) goto cleanup;
-
-		if (*(last_slash + 1) != 0) {
-			int error = do_create (last_slash + 1, &new_file, parent_directory);
-			if (error != 0) goto cleanup;
+		if (last_slash != filename) { // i.e. there is a prefix
+			*last_slash = 0;
+			mkdir_if_required (filename, root_dir);
+			*last_slash = '/';
 		}
 
-		if (new_file) {
+		int64_t fd =
+			(int64_t)do_syscall (SYSCALL_SYS_OPEN, (uint64_t)filename, O_CREAT | O_WRONLY, 0);
+		if (fd >= 0) {
 			void* data = (void*)(header + 1);
 			data += namesize;
 			if ((uint64_t)data % 4) data += 4 - ((uint64_t)data % 4);
 
-			struct file tmp = {
-				.f_inode = new_file, .f_pos = 0, .f_cnt = 1, .f_fops = new_file->i_fops};
-			write (new_file, &tmp, data, filesize);
+			do_syscall (SYSCALL_SYS_WRITE, fd, (uint64_t)data, filesize);
+			do_syscall (SYSCALL_SYS_CLOSE, fd, 0, 0);
+		} else {
+			printf ("[CPIO] Could not write file %s : %lld\n", filename, fd);
+			goto cleanup;
 		}
 	}
+
+	error = 0;
 
 cleanup:
 	kfree (filename);
-	return;
+	return error;
 }
 
-int mkdir (char* dirname, inode** result, inode* root) {
-	// requires: guarantee that vfs input is valid
-	inode* new_dir = kmalloc (sizeof (inode));
-	memset ((void*)new_dir, 0, sizeof (inode));
-
-	new_dir->i_type = DIRECTORY;
-	new_dir->i_pvt = kmalloc (sizeof (dir_content_t));
-	new_dir->i_iops = &i_ops;
-	new_dir->i_fops = &f_ops;
-
-	// manually add the '.' and '..' entries
-	((dir_content_t*)new_dir->i_pvt)->d_count = 2;
-	((dir_content_t*)new_dir->i_pvt)->d_children = (child_t*)kmalloc (2 * sizeof (child_t));
-	child_t* dir_children = (child_t*)((dir_content_t*)new_dir->i_pvt)->d_children;
-
-	dir_children[0].c_name = strdup (".");
-	dir_children[0].c_inode = new_dir;
-	dir_children[1].c_name = strdup ("..");
-	dir_children[1].c_inode = root;
-
-	// construct parent replacement structures
-	dir_content_t* parent_pvt = (dir_content_t*)root->i_pvt;
-	child_t*	   new_parent_children = kmalloc ((parent_pvt->d_count + 1) * sizeof (child_t));
-
-	memcpy (new_parent_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
-	new_parent_children[parent_pvt->d_count].c_inode = new_dir;
-	new_parent_children[parent_pvt->d_count].c_name = strdup (dirname);
-
-	// replace parent structure and free old one
-	kfree (parent_pvt->d_children);
-	parent_pvt->d_children = new_parent_children;
-	parent_pvt->d_count++;
-
-	*result = new_dir;
-	return 0;
-}
-
-int create (char* filename, inode** result, inode* root) {
-	inode* new_file = kmalloc (sizeof (inode));
-	memset ((void*)new_file, 0, sizeof (inode));
-
-	new_file->i_type = EFILE;
-	new_file->i_iops = &i_ops;
-	new_file->i_fops = &f_ops;
-
-	// construct parent replacement structures
-	dir_content_t* parent_pvt = (dir_content_t*)root->i_pvt;
-	child_t*	   new_parent_children = kmalloc ((parent_pvt->d_count + 1) * sizeof (child_t));
-
-	memcpy (new_parent_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
-	new_parent_children[parent_pvt->d_count].c_inode = new_file;
-	new_parent_children[parent_pvt->d_count].c_name = strdup (filename);
-
-	// replace parent structure and free old one
-	kfree (parent_pvt->d_children);
-	parent_pvt->d_children = new_parent_children;
-	parent_pvt->d_count++;
-
-	*result = new_file;
-	return 0;
-}
-
-int lookup (char* filename, inode** result, inode* root) {
-	if (!root) return -ENOROOT;
-	if (!filename || filename[0] == '\0') return -EINVARG;
-	if (root->i_type != DIRECTORY) return -EINVPATH;
-
-	// case '.'
-	if (strcmp (filename, ".") == 0) {
-		*result = root;
-		return 0;
-	}
-
-	// case '*' , root is empty
-	if (!root->i_pvt) return -EPNOEXIST;
-
-	dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
-
-	// case '*' , root is empty
-	if (!dir_content->d_children) return -EPNOEXIST;
-
-	for (uint64_t i = 0; i < dir_content->d_count; i++) {
-		child_t* d_child = &dir_content->d_children[i];
-		// invalid child ; continue searching
-		if (!d_child->c_inode || !d_child->c_name) continue;
-
-		if (strcmp (d_child->c_name, filename) == 0) {
-			// case '*'
-			*result = d_child->c_inode;
-			return 0;
-		}
-	}
-
-	// case valid path, but object simply does not exist
-	return -EPNOEXIST;
-}
-
-int read (inode* node, file* f, void* buffer, size_t size) {
-	if (f->f_pos >= node->i_sz) return 0; // EOF
-
-	if (f->f_pos + size > node->i_sz) size = node->i_sz - f->f_pos;
-	memcpy (buffer, (uint8_t*)node->i_pvt + f->f_pos, size);
-	f->f_pos += size;
-
-	return (int)size;
-}
-
-int write (inode* node, file* f, void* buffer, size_t size) {
-	size_t pos_after_write = f->f_pos + size;
-	size_t og_eof = node->i_sz;
-
-	// check if we need to expand buffer first
-	if (!node->i_fsinfo) {
-		node->i_fsinfo = kmalloc (sizeof (fs_info_t));
-		if (!node->i_fsinfo) return -ENOMEM;
-		memset (node->i_fsinfo, 0, sizeof (fs_info_t));
-	}
-
-	fs_info_t* fs_info = (fs_info_t*)node->i_fsinfo;
-
-	if (pos_after_write > fs_info->alloc) {
-		size_t new_alloc = ((pos_after_write + BUF_ALIGN - 1) / BUF_ALIGN) * BUF_ALIGN;
-		void*  new_data = kmalloc (new_alloc);
-		memset (new_data, 0, new_alloc);
-
-		if (node->i_pvt) {
-			memcpy (new_data, node->i_pvt, node->i_sz);
-			kfree (node->i_pvt);
-		}
-
-		node->i_pvt = new_data;
-		fs_info->alloc = new_alloc;
-	}
-
-	if (f->f_pos > og_eof) memset ((uint8_t*)node->i_pvt + og_eof, 0, f->f_pos - og_eof);
-
-	memcpy ((uint8_t*)node->i_pvt + f->f_pos, buffer, size);
-
-	f->f_pos += size;
-	if (f->f_pos > node->i_sz) node->i_sz = f->f_pos;
-
-	return size;
-}
-
-int seek (inode* node, file* f, size_t offset, int whence) {
-	if (!node || !f) return -EINVARG;
-	if (whence == SEEK_SET)
-		f->f_pos = offset;
-	else if (whence == SEEK_CUR)
-		f->f_pos += offset;
-	else if (whence == SEEK_END)
-		return -ENOIMPL;
-}
-
-inode* load_initramfs (void* pos) {
-	root_inode = kmalloc (sizeof (inode));
-	memset ((void*)root_inode, 0, sizeof (inode));
-	root_inode->i_type = DIRECTORY;
-	root_inode->i_pvt = kmalloc (sizeof (dir_content_t));
-	root_inode->i_iops = &i_ops;
-	root_inode->i_fops = &f_ops;
-
-	// manually add the '.' and '..' entries
-	((dir_content_t*)root_inode->i_pvt)->d_count = 2;
-	((dir_content_t*)root_inode->i_pvt)->d_children = (child_t*)kmalloc (2 * sizeof (child_t));
-	child_t* root_children = (child_t*)((dir_content_t*)root_inode->i_pvt)->d_children;
-
-	root_children[0].c_name = strdup (".");
-	root_children[0].c_inode = root_inode;
-	root_children[1].c_name = strdup ("..");
-	root_children[1].c_inode = root_inode;
-
+int load_cpio_from_memory (void* pos, const char* out_path) {
 	while (pos) {
-		parse_file_to_inode (pos);
+		parse_entry_to_inode (pos, out_path);
 		pos = jump_next_file (pos);
 	}
-
-	return root_inode;
+	return 0;
 }
