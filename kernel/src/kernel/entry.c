@@ -182,9 +182,6 @@ void _start (void) {
 	init_handlers ();
 	init_process ();
 
-	void* initramfs_addr = initramfs->address;
-	// uint64_t initramfs_size = initramfs->size;
-
 	init_vfs (init_ramfs_root ());
 
 	// Launch Stage 2 as the first process (PID 1)
