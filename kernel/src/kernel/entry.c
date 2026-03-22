@@ -176,8 +176,8 @@ void _start (void) {
 	init_handlers ();
 	init_process ();
 
-	void*	 initramfs_addr = initramfs->address;
-	uint64_t initramfs_size = initramfs->size;
+	void* initramfs_addr = initramfs->address;
+	// uint64_t initramfs_size = initramfs->size;
 
 	init_vfs (load_initramfs (initramfs_addr));
 
