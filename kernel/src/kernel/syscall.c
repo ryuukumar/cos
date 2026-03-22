@@ -31,7 +31,7 @@ uint64_t do_syscall (uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t ar
 	return ret;
 }
 
-void register_syscall (syscall_handler_t handler, int vector) {
+void register_syscall (int vector, syscall_handler_t handler) {
 	if (vector < 0 || vector >= SYSCALL_COUNT) return;
 	syscall_handlers[vector] = handler;
 }

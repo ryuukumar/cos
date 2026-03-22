@@ -3,9 +3,9 @@
 #include <kernel/memmgt.h>
 #include <kernel/process.h>
 #include <kernel/stack.h>
+#include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>
-#include <kernel/syscall.h>
 
 process_queue ready_queue;
 uint64_t	  next_free_pid;
@@ -155,5 +155,5 @@ void init_process (void) {
 	ready_queue.head = ready_queue.tail = NULL;
 	next_free_pid = 2ll;
 
-	register_syscall(sys_fork, SYSCALL_SYS_FORK);
+	register_syscall (SYSCALL_SYS_FORK, sys_fork);
 }
