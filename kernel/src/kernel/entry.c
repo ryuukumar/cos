@@ -116,6 +116,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	printf ("[Stage 2] Trying to load the ELF.\n");
 
 	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
+
 	if (fork_result == 0) {
 		write_serial_str ("Spawned child, attempting to start elf file.\n");
 		process* current = get_current_process ();

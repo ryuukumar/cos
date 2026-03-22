@@ -172,10 +172,17 @@ static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
 	return (uint64_t)schedule (get_latest_r_frame ());
 }
 
+static uint64_t sys_getpid (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+	(void)arg1, (void)arg2, (void)arg3;
+	process* current = get_current_process ();
+	return current ? current->p_id : 0ull;
+}
+
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = NULL;
 	next_free_pid = 2ll;
 
 	register_syscall (SYSCALL_SYS_EXIT, sys_exit);
 	register_syscall (SYSCALL_SYS_FORK, sys_fork);
+	register_syscall (SYSCALL_SYS_GETPID, sys_getpid);
 }
