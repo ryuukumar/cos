@@ -2,6 +2,7 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
 #include <kernel/serial.h>
+#include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>
 #include <stdbool.h>
@@ -92,17 +93,19 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
 
 /*!
  * Create a directory at the given path.
- * @param us_path absolute path for the new directory
+ * @param path absolute path for the new directory
  * @param mode (unused) mode for the new directory
  * @return 0 if successful, error otherwise
  */
-int sys_mkdir (char* path, int mode) {
+uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3) {
+	(void)arg3;
+
 	process* current = get_current_process ();
 	if (!current) return -EINVARG;
 
 	inode* parent;
 	char*  name;
-	int	   err = vfs_resolve_parent (path, current->p_root, &parent, &name);
+	int	   err = vfs_resolve_parent ((const char*)path, current->p_root, &parent, &name);
 	if (err) return err;
 
 	inode* result;
@@ -287,12 +290,13 @@ int do_close (struct file* fd) {
 
 /*!
  * Resolve a filename and allocate a file descriptor, allowing for execution of read
- * @param filename absolute path to the file
+ * @param filename_ptr absolute path to the file
  * @param flags (unused) flags for the file
  * @param mode (unused) mode in which to open the file
  * @return fd if successful, else error
  */
-int sys_open (char* filename, int flags, int mode) {
+uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
+	char* filename = (char*)filename_ptr;
 	if (!filename) return -EINVARG;
 
 	process* current = get_current_process ();
@@ -328,16 +332,24 @@ cleanup:
  * @param size desired read size
  * @return actual bytes read if successful, error (<0) otherwise
  */
-int sys_read (int fd, void* buf, size_t size) {
+uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size) {
 	process* current = get_current_process ();
-	if (fd < 0 || fd >= MAX_FDS || !current->p_fds[fd]) return -EINVARG;
-	return do_read (current->p_fds[fd], buf, size);
+	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
+	return do_read (current->p_fds[fd], (void*)buf, (size_t)size);
 }
 
-int sys_seek (int fd, size_t offset, int whence) {
+/*!
+ * Seek to an offset in an open file. Behavior depends on whence: SEEK_SET -> seek exactly offset,
+ * SEEK_CUR -> seek current offset plus given offset, SEEK_END -> seek end of file plus given offset
+ * @param fd file descriptor
+ * @param offset offset value
+ * @param whence SEEK_SET, SEEK_CUR or SEEK_END
+ * @return 0 if successful, else error
+ */
+uint64_t sys_seek (uint64_t fd, uint64_t offset, uint64_t whence) {
 	process* current = get_current_process ();
-	if (fd < 0 || fd >= MAX_FDS || !current->p_fds[fd]) return -EINVARG;
-	return do_seek (current->p_fds[fd], offset, whence);
+	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
+	return do_seek (current->p_fds[fd], (size_t)offset, (int)whence);
 }
 
 /*!
@@ -346,16 +358,27 @@ int sys_seek (int fd, size_t offset, int whence) {
  * @param fd file descriptor
  * @return 0 if successful, else error
  */
-int sys_close (int fd) {
+uint64_t sys_close (uint64_t fd, uint64_t arg2, uint64_t arg3) {
+	(void)arg2, (void)arg3; // unused args
+
 	process* current = get_current_process ();
-	if (fd < 0 || fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
+	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
 
 	struct file* f = current->p_fds[fd];
 	current->p_fds[fd] = NULL;
 
-	return do_close (f);
+	return (uint64_t)do_close (f);
 }
 
 inode* get_absolute_root (void) { return vfs_absolute_root; }
 
-void init_vfs (inode* absolute_root) { vfs_absolute_root = absolute_root; }
+void init_vfs (inode* absolute_root) {
+	vfs_absolute_root = absolute_root;
+
+	register_syscall (SYSCALL_SYS_READ, sys_read);
+	register_syscall (SYSCALL_SYS_OPEN, sys_open);
+	register_syscall (SYSCALL_SYS_CLOSE, sys_close);
+	register_syscall (SYSCALL_SYS_LSEEK, sys_seek);
+	register_syscall (SYSCALL_SYS_MKDIR, sys_mkdir);
+	register_syscall (SYSCALL_SYS_OPEN, sys_open);
+}

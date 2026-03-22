@@ -3,6 +3,7 @@
 #include <kernel/memmgt.h>
 #include <kernel/process.h>
 #include <kernel/stack.h>
+#include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
 #include <memory.h>
 
@@ -141,10 +142,18 @@ int process_fork (process* source_process, process** dest_ptr) {
 
 	source_process->p_registers_ptr->rax = new_process->p_id;
 	*dest_ptr = new_process;
-	return 0;
+	return new_process->p_id;
+}
+
+uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+	(void)arg1, (void)arg2, (void)arg3; // fork does not use any args
+	process* child = NULL;
+	return process_fork (get_current_process (), &child);
 }
 
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = NULL;
 	next_free_pid = 2ll;
+
+	register_syscall (SYSCALL_SYS_FORK, sys_fork);
 }

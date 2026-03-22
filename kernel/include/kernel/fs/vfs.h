@@ -53,11 +53,11 @@ int do_seek (struct file* f, size_t offset, int whence);
 int do_open (inode* file, struct file* dest_fd);
 int do_close (struct file* fd);
 
-int sys_read (int fd, void* buf, size_t size);
-int sys_seek (int fd, size_t offset, int whence);
-int sys_open (char* filename, int flags, int mode);
-int sys_close (int fd);
-int sys_mkdir (char* path, int mode);
+uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size);
+uint64_t sys_seek (uint64_t fd, uint64_t offset, uint64_t whence);
+uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode);
+uint64_t sys_close (uint64_t fd, uint64_t arg2, uint64_t arg3);
+uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);
