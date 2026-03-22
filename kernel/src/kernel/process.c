@@ -50,15 +50,22 @@ registers_t* schedule (registers_t* registers) {
 	process* upcoming_process = NULL;
 	int		 errno = dequeue_process (get_ready_queue (), &upcoming_process);
 
-	// queue probably empty, keep executing current process
-	if (errno != 0 || upcoming_process == NULL) return registers;
+	if (errno != 0) return registers; // issue with queue
 
-	if (current_process != NULL) {
+	if (upcoming_process == NULL) {
+		if (current_process != NULL && current_process->p_state == TASK_RUNNING) return registers;
+		for (;;)
+			; // if nothing to run, game over
+	}
+
+	if (current_process != NULL && current_process->p_state == TASK_RUNNING) {
 		current_process->p_registers_ptr = registers;
+		current_process->p_state = TASK_READY;
 		enqueue_process (get_ready_queue (), current_process);
 	}
 
 	current_process = upcoming_process;
+	current_process->p_state = TASK_RUNNING;
 	write_cr3 (current_process->p_cr3);
 	tss_set_stack (current_process->p_kstack);
 	return current_process->p_registers_ptr;
@@ -145,15 +152,24 @@ int process_fork (process* source_process, process** dest_ptr) {
 	return new_process->p_id;
 }
 
-uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+static uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 	(void)arg1, (void)arg2, (void)arg3; // fork does not use any args
 	process* child = NULL;
 	return process_fork (get_current_process (), &child);
+}
+
+static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
+	(void) arg2, (void) arg3;
+	process* current = get_current_process ();
+	current->p_state = TASK_DEAD;
+	// TODO: actually free the process so it isn't leaking mem
+	return (uint64_t)schedule (get_latest_r_frame ());
 }
 
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = NULL;
 	next_free_pid = 2ll;
 
+	register_syscall (SYSCALL_SYS_EXIT, sys_exit);
 	register_syscall (SYSCALL_SYS_FORK, sys_fork);
 }
