@@ -40,7 +40,7 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 	elf64_header_t elf_header;
 
 	int64_t bytes_read = (int64_t)do_syscall (SYSCALL_SYS_READ, (uint64_t)fd, (uint64_t)&elf_header,
-								 (uint64_t)sizeof (elf64_header_t));
+											  (uint64_t)sizeof (elf64_header_t));
 	if (bytes_read != sizeof (elf64_header_t) || !verify_elf_loadable (&elf_header)) {
 		do_syscall (SYSCALL_SYS_CLOSE, fd, 0, 0);
 		return -ENOEXEC;
