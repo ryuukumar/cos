@@ -4,7 +4,11 @@
 
 #include <kernel/idt.h>
 
+#define SYSCALL_COUNT 256
+
 #define SYSCALL_SYS_FORK 57
+
+typedef uint64_t (*syscall_handler_t) (uint64_t, uint64_t, uint64_t);
 
 registers_t* syscall_handler (registers_t* registers);
 void		 init_syscalls (void);
