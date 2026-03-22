@@ -76,16 +76,43 @@ int process_fork (process* source_process, process** dest_ptr) {
 	new_process->p_id = next_free_pid++;
 	new_process->next = NULL;
 
+	// Kernel thread forking requires a bunch of extra considerations because there could be no
+	// privilege shift, messing up rbp and stuff
 	if (!source_process->p_user) {
 		// Kernel thread: flush parent state into child's new kernel stack byte-for-byte
 		memcpy (new_kstack, (void*)(source_process->p_kstack - STACK_SIZE), STACK_SIZE);
-		uint64_t offset =
-			(uintptr_t)source_process->p_registers_ptr - (source_process->p_kstack - STACK_SIZE);
-		new_process->p_registers_ptr = (registers_t*)((uintptr_t)new_kstack + offset);
 
-		uint64_t rsp_offset =
-			source_process->p_registers_ptr->rsp - (source_process->p_kstack - STACK_SIZE);
-		new_process->p_registers_ptr->rsp = (uintptr_t)new_kstack + rsp_offset;
+		uintptr_t parent_stack_base = source_process->p_kstack - STACK_SIZE;
+		uintptr_t child_stack_base = (uintptr_t)new_kstack;
+		uint64_t  stack_shift = child_stack_base - parent_stack_base;
+
+		uint64_t offset = (uintptr_t)source_process->p_registers_ptr - parent_stack_base;
+		new_process->p_registers_ptr = (registers_t*)(child_stack_base + offset);
+
+		// 1. Shift RSP to the new stack
+		new_process->p_registers_ptr->rsp += stack_shift;
+
+		// 2. Shift the current Base Pointer
+		if (new_process->p_registers_ptr->rbp >= parent_stack_base &&
+			new_process->p_registers_ptr->rbp < source_process->p_kstack) {
+			new_process->p_registers_ptr->rbp += stack_shift;
+		}
+
+		// 3. Walk the copied stack and fix the RBP chain linked list!
+		uint64_t* current_rbp = (uint64_t*)new_process->p_registers_ptr->rbp;
+		while ((uintptr_t)current_rbp >= child_stack_base &&
+			   (uintptr_t)current_rbp < child_stack_base + STACK_SIZE) {
+			uint64_t parent_rbp = *current_rbp;
+
+			// If the stored frame pointer points inside the parent stack, shift it to the child
+			// stack
+			if (parent_rbp >= parent_stack_base && parent_rbp < source_process->p_kstack) {
+				*current_rbp = parent_rbp + stack_shift;
+				current_rbp = (uint64_t*)*current_rbp; // Move to the next frame
+			} else {
+				break; // Hit the end of the frame chain
+			}
+		}
 	} else {
 		registers_t* child_frame = (registers_t*)(new_process->p_kstack - sizeof (registers_t));
 		memcpy (child_frame, source_process->p_registers_ptr, sizeof (registers_t));
@@ -119,5 +146,5 @@ int process_fork (process* source_process, process** dest_ptr) {
 
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = NULL;
-	next_free_pid = 1ll;
+	next_free_pid = 2ll;
 }

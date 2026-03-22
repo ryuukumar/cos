@@ -289,17 +289,27 @@ static bool is_vaddr_t_lt (vaddr_t* a, vaddr_t* b) {
 
 /*!
  * Allocate all virtual pages in given range (inclusive). Needs physical memory to be allocated.
+ * Potential bug when first and last are part of different PML4 entries.
  * @param first first virtual address in range
  * @param last last virtual address in range
  * @param base_addr base address of physical memory of corresponding size
  */
-static void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr) {
-	uint64_t	   phys_base_track = (uint64_t)base_addr;
-	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[first.pml4_index];
-
-	vaddr_t current = first;
+void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr) {
+	uint64_t phys_base_track = (uint64_t)base_addr;
+	vaddr_t	 current = first;
 
 	while (true) {
+		pml4t_entry_t* pml4t_entry = &pml4_base_ptr[current.pml4_index];
+
+		if (!pml4t_entry->present) {
+			paddr_t new_table = alloc_ppage ();
+			pml4t_entry->present = 1;
+			pml4t_entry->read_write = 1;
+			pml4t_entry->user_supervisor = is_vaddr_t_user (&current);
+			pml4t_entry->pdpt_base_address = (uint64_t)new_table / PAGE_SIZE;
+			memset (get_vaddr_from_frame ((uint64_t)new_table / PAGE_SIZE), 0, PAGE_SIZE);
+		}
+
 		pdpt_entry_t* pdpt_base =
 			(pdpt_entry_t*)get_vaddr_from_frame (pml4t_entry->pdpt_base_address);
 		pdpt_entry_t* pdpt_entry = &pdpt_base[current.pdpt_index];
@@ -459,7 +469,7 @@ static bool is_table_empty (void* table_vaddr) {
  * @param first first virtual page in range
  * @param last last virtual page in range
  */
-static void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
+void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[first.pml4_index];
 	if (!pml4t_entry->present) return;
 
@@ -552,6 +562,20 @@ void free_vpages (void* ptr, size_t count) {
  * @param ptr virtual address of the page to free
  */
 void free_vpage (void* ptr) { free_vpages (ptr, 1); }
+
+void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, bool write) {
+	pml4t_entry_t* original_ptr = pml4_base_ptr;
+	pml4_base_ptr = (pml4t_entry_t*)(cr3 + hhdm_offset);
+
+	paddr_t physmem = alloc_ppages (num_pages);
+	alloc_all_vpages_in_range (get_vaddr_t_from_ptr ((void*)start),
+							   get_vaddr_t_from_ptr ((void*)(start + (num_pages * PAGE_SIZE))),
+							   physmem);
+
+	(void)write; // TODO: set rw flag
+
+	pml4_base_ptr = original_ptr;
+}
 
 /*!
  * Initializes the memory management subsystem.

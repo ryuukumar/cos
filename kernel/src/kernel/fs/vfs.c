@@ -96,20 +96,20 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
  * @param mode (unused) mode for the new directory
  * @return 0 if successful, error otherwise
  */
-int sys_mkdir(char* path, int mode) {
+int sys_mkdir (char* path, int mode) {
 	process* current = get_current_process ();
 	if (!current) return -EINVARG;
-	
-    inode* parent;
-    char* name;
-    int err = vfs_resolve_parent(path, current->p_root, &parent, &name);
-    if (err) return err;
 
-    inode* result;
-    err = do_mkdir(name, &result, parent);
-    
-    kfree(name);
-    return err;
+	inode* parent;
+	char*  name;
+	int	   err = vfs_resolve_parent (path, current->p_root, &parent, &name);
+	if (err) return err;
+
+	inode* result;
+	err = do_mkdir (name, &result, parent);
+
+	kfree (name);
+	return err;
 }
 
 /*!
@@ -264,6 +264,12 @@ int do_read (struct file* f, void* buf, size_t size) {
 	return f->f_fops->read (f->f_inode, f, buf, size);
 }
 
+int do_seek (struct file* f, size_t offset, int whence) {
+	if (!f || whence >= 3 || whence < 0) return -EINVARG;
+	if (!f->f_fops || !f->f_fops->seek) return -ENOIMPL;
+	return f->f_fops->seek (f->f_inode, f, offset, whence);
+}
+
 /*!
  * Execute the close routine and free the file structure if applicable.
  * @param fd pointer to the file structure to close
@@ -326,6 +332,12 @@ int sys_read (int fd, void* buf, size_t size) {
 	process* current = get_current_process ();
 	if (fd < 0 || fd >= MAX_FDS || !current->p_fds[fd]) return -EINVARG;
 	return do_read (current->p_fds[fd], buf, size);
+}
+
+int sys_seek (int fd, size_t offset, int whence) {
+	process* current = get_current_process ();
+	if (fd < 0 || fd >= MAX_FDS || !current->p_fds[fd]) return -EINVARG;
+	return do_seek (current->p_fds[fd], offset, whence);
 }
 
 /*!

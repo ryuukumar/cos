@@ -24,4 +24,7 @@
 // Corrupt queue
 #define ECORRQ 601
 
+// Cannot execute
+#define ENOEXEC 701
+
 #endif

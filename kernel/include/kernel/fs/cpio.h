@@ -36,6 +36,7 @@ int mkdir (char* dirname, inode** result, inode* root);
 int create (char* filename, inode** result, inode* root);
 int lookup (char* filename, inode** result, inode* root);
 int read (inode* node, file* f, void* buffer, size_t size);
+int seek (inode* node, file* f, size_t offset, int whence);
 
 inode* load_initramfs (void* pos);
 

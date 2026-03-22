@@ -1,6 +1,6 @@
 #include <kernel/process.h>
-#include <kernel/serial.h>
 #include <kernel/syscall.h>
+#include <stdio.h>
 
 registers_t* syscall_handler (registers_t* registers) {
 	uint64_t syscall_number = registers->rax;
@@ -14,6 +14,12 @@ registers_t* syscall_handler (registers_t* registers) {
 		size_t size = (size_t)registers->rdx;
 		int	   error = sys_read (fd, buf, size);
 		registers->rax = (uint64_t)error;
+	} else if (syscall_number == 4) { // sys_write
+		int	   fd = (int)registers->rdi;
+		void*  buf = (void*)registers->rsi;
+		size_t size = (size_t)registers->rdx;
+		if (fd == 1) // temporary
+			printf (buf);
 	} else if (syscall_number == 5) { // sys_open
 		char* filename = (char*)registers->rdi;
 		int	  flags = (int)registers->rsi;
@@ -29,7 +35,7 @@ registers_t* syscall_handler (registers_t* registers) {
 		int	  mode = (int)registers->rsi;
 		int	  error = sys_mkdir (path, mode);
 		registers->rax = (uint64_t)error;
-	} else if (syscall_number == 57) { // sys_fork
+	} else if (syscall_number == SYSCALL_SYS_FORK) { // sys_fork
 		process* child = NULL;
 		int		 status = process_fork (current, &child);
 		if (status == 0 && child != NULL)
@@ -39,6 +45,15 @@ registers_t* syscall_handler (registers_t* registers) {
 	}
 
 	return registers;
+}
+
+uint64_t do_syscall (uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+	uint64_t ret;
+	__asm__ volatile ("int $0x80"
+					  : "=a"(ret)
+					  : "a"(syscall), "b"(arg1), "c"(arg2), "d"(arg3)
+					  : "memory");
+	return ret;
 }
 
 void init_syscalls (void) {

@@ -14,7 +14,7 @@ static uint64_t inode_no;
 static inode*	root_inode;
 
 static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
-static file_operations	f_ops = {.read = read, .open = NULL, .close = NULL};
+static file_operations	f_ops = {.read = read, .seek = seek, .open = NULL, .close = NULL};
 
 static uint64_t hex_to_u64 (const char hex[8]) {
 	uint64_t val = 0;
@@ -261,6 +261,16 @@ int read (inode* node, file* f, void* buffer, size_t size) {
 	f->f_pos += size;
 
 	return (int)size;
+}
+
+int seek (inode* node, file* f, size_t offset, int whence) {
+	if (!node || !f) return -EINVARG;
+	if (whence == SEEK_SET)
+		f->f_pos = offset;
+	else if (whence == SEEK_CUR)
+		f->f_pos += offset;
+	else if (whence == SEEK_END)
+		return -ENOIMPL;
 }
 
 inode* load_initramfs (void* pos) {
