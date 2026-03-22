@@ -1,6 +1,6 @@
 #include <kernel/process.h>
-#include <kernel/serial.h>
 #include <kernel/syscall.h>
+#include <stdio.h>
 
 registers_t* syscall_handler (registers_t* registers) {
 	uint64_t syscall_number = registers->rax;
@@ -14,6 +14,12 @@ registers_t* syscall_handler (registers_t* registers) {
 		size_t size = (size_t)registers->rdx;
 		int	   error = sys_read (fd, buf, size);
 		registers->rax = (uint64_t)error;
+	} else if (syscall_number == 4) { // sys_write
+		int	   fd = (int)registers->rdi;
+		void*  buf = (void*)registers->rsi;
+		size_t size = (size_t)registers->rdx;
+		if (fd == 1) // temporary
+			printf (buf);
 	} else if (syscall_number == 5) { // sys_open
 		char* filename = (char*)registers->rdi;
 		int	  flags = (int)registers->rsi;
