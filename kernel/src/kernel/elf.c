@@ -55,7 +55,7 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 	do_syscall (SYSCALL_SYS_LSEEK, fd, elf_header.elf_phoff, SEEK_SET);
 	do_syscall (SYSCALL_SYS_READ, fd, (uint64_t)program_headers, ph_size);
 
-	uintptr_t init_break = NULL;
+	uintptr_t init_break = 0;
 
 	for (int i = 0; i < elf_header.elf_phnum; i++) {
 		elf64_pheader_t* ph = &program_headers[i];
