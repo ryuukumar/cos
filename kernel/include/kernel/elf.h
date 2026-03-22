@@ -18,19 +18,6 @@ typedef struct __attribute__ ((packed)) {
 	uint16_t elf_type;
 	uint16_t elf_iset;
 	uint32_t elf_vern2;
-} elf_scanner_t;
-
-typedef struct __attribute__ ((packed)) {
-	char	 elf_magic[4];
-	char	 elf_class[1];
-	char	 elf_data[1];
-	uint8_t	 elf_vern1;
-	char	 elf_osabi[1];
-	char	 elf_osabivern[1];
-	char	 elf_zero[7];
-	uint16_t elf_type;
-	uint16_t elf_iset;
-	uint32_t elf_vern2;
 	uint64_t elf_entry;
 	uint64_t elf_phoff;
 	uint64_t elf_shoff;
