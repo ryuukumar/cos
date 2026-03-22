@@ -13,6 +13,7 @@ typedef uint64_t (*syscall_handler_t) (uint64_t, uint64_t, uint64_t);
 registers_t* syscall_handler (registers_t* registers);
 void		 init_syscalls (void);
 
+void	 register_syscall (syscall_handler_t handler, int vector);
 uint64_t do_syscall (uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 
 #endif
