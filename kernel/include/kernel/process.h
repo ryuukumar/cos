@@ -21,6 +21,8 @@ struct process {
 	inode*		 p_wd;
 	inode*		 p_root;
 	struct file* p_fds[MAX_FDS];
+	uintptr_t	 p_heap_base;
+	uintptr_t	 p_heap_sz;
 };
 
 typedef struct {

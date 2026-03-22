@@ -55,11 +55,15 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 	do_syscall (SYSCALL_SYS_LSEEK, fd, elf_header.elf_phoff, SEEK_SET);
 	do_syscall (SYSCALL_SYS_READ, fd, (uint64_t)program_headers, ph_size);
 
+	uintptr_t init_break = NULL;
+
 	for (int i = 0; i < elf_header.elf_phnum; i++) {
 		elf64_pheader_t* ph = &program_headers[i];
 
 		if (ph->p_type != PT_LOAD) continue;
 		if (ph->p_memsz == 0) continue;
+
+		if (ph->p_vaddr + ph->p_memsz > init_break) init_break = ph->p_vaddr + ph->p_memsz;
 
 		uintptr_t start = (uintptr_t)(ph->p_vaddr & ~(PAGE_SIZE - 1));
 		uintptr_t end = (uintptr_t)((ph->p_vaddr + ph->p_memsz + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
@@ -74,6 +78,10 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 		if (ph->p_memsz > ph->p_filesz)
 			memset ((void*)(ph->p_vaddr + ph->p_filesz), 0, ph->p_memsz - ph->p_filesz);
 	}
+
+	init_break = ((init_break + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
+	target_process->p_heap_base = init_break;
+	target_process->p_heap_sz = 0;
 
 	kfree (program_headers);
 	do_syscall (SYSCALL_SYS_CLOSE, fd, 0, 0);
