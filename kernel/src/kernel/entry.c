@@ -2,6 +2,7 @@
 #include <kernel/elf.h>
 #include <kernel/fs/chardev.h>
 #include <kernel/fs/cpio.h>
+#include <kernel/fs/ramfs.h>
 #include <kernel/gdt.h>
 #include <kernel/graphics.h>
 #include <kernel/handlers.h>
@@ -109,7 +110,10 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	printf ("\n[Stage 2] Running as PID %lld\n", get_current_process ()->p_id);
 	printf ("[Stage 2] Current system tick: %lld\n", get_current_tick ());
 
-	write_serial_str ("Trying to load the ELF.\n");
+	printf ("[Stage 2] Extracting initramfs...\n");
+	load_cpio_from_memory (initramfs->address, "/");
+
+	printf ("[Stage 2] Trying to load the ELF.\n");
 
 	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
 	if (fork_result == 0) {
@@ -180,7 +184,7 @@ void _start (void) {
 	void* initramfs_addr = initramfs->address;
 	// uint64_t initramfs_size = initramfs->size;
 
-	init_vfs (load_initramfs (initramfs_addr));
+	init_vfs (init_ramfs_root ());
 
 	// Launch Stage 2 as the first process (PID 1)
 	process* stage2_proc = kmalloc (sizeof (process));
