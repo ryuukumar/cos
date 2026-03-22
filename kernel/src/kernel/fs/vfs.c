@@ -318,6 +318,15 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
 
 	inode* target_inode = NULL;
 	int	   error = do_lookup (filename, &target_inode, current->p_root);
+	if (error == -EPNOEXIST && (flags & O_CREAT)) {
+		inode* parent;
+		char*  name;
+		error = vfs_resolve_parent (filename, current->p_root, &parent, &name);
+		if (error == 0) {
+			error = do_create (name, &target_inode, parent);
+			kfree (name);
+		}
+	}
 	if (error != 0) goto cleanup;
 
 	error = do_open (target_inode, current->p_fds[fd]);
@@ -393,5 +402,4 @@ void init_vfs (inode* absolute_root) {
 	register_syscall (SYSCALL_SYS_CLOSE, sys_close);
 	register_syscall (SYSCALL_SYS_LSEEK, sys_seek);
 	register_syscall (SYSCALL_SYS_MKDIR, sys_mkdir);
-	register_syscall (SYSCALL_SYS_OPEN, sys_open);
 }

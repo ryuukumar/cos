@@ -1,3 +1,4 @@
+#include <kernel/console.h>
 #include <kernel/error.h>
 #include <kernel/fs/chardev.h>
 #include <liballoc/liballoc.h>
@@ -5,14 +6,26 @@
 #include <stdio.h>
 
 static int stdout_write (inode* node, file* f, void* buf, size_t len) {
+	bool stdio_buf = get_update_on_putch ();
+	set_update_on_putch (false);
+
 	for (size_t i = 0; i < len; i++)
 		putchar (((char*)buf)[i]);
+
+	update ();
+	set_update_on_putch (stdio_buf);
 	return len;
 }
 
 static int stderr_write (inode* node, file* f, void* buf, size_t len) {
+	bool stdio_buf = get_update_on_putch ();
+	set_update_on_putch (false);
+
 	for (size_t i = 0; i < len; i++)
 		putchar (((char*)buf)[i]);
+
+	update ();
+	set_update_on_putch (stdio_buf);
 	return len;
 }
 
