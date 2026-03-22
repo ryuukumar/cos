@@ -1,8 +1,11 @@
 #ifndef ELF_H
 #define ELF_H
 
+#include <kernel/process.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+#define PT_LOAD 0x00000001
 
 typedef struct __attribute__ ((packed)) {
 	char	 elf_magic[4];
@@ -41,6 +44,7 @@ typedef struct __attribute__ ((packed)) {
 } elf64_header_t;
 
 typedef struct __attribute__ ((packed)) {
+	uint32_t p_type;
 	uint32_t p_flags;
 	uint64_t p_offset;
 	uint64_t p_vaddr;
@@ -63,6 +67,7 @@ typedef struct __attribute__ ((packed)) {
 	uint64_t s_entsize;
 } elf64_sheader_t;
 
-bool verify_elf_loadable (elf_scanner_t* elf);
+bool verify_elf_loadable (elf64_header_t* elf);
+int	 load_elf (const char* filepath, process* target_process, uintptr_t* entry_point_r);
 
 #endif
