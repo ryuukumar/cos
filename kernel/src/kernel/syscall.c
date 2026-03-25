@@ -48,5 +48,5 @@ void init_syscalls (void) {
 	latest_frame = nullptr;
 	idt_register_handler (0x80, syscall_handler);
 	idt_set_flags (0x80, 0x0E, 3, 0);
-	memset (syscall_handlers, 0, SYSCALL_COUNT * sizeof (syscall_handler_t));
+	kmemset (syscall_handlers, 0, SYSCALL_COUNT * sizeof (syscall_handler_t));
 }

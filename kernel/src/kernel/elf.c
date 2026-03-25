@@ -75,7 +75,7 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 		do_syscall (SYSCALL_SYS_READ, fd, ph->p_vaddr, ph->p_filesz);
 
 		if (ph->p_memsz > ph->p_filesz)
-			memset ((void*)(ph->p_vaddr + ph->p_filesz), 0, ph->p_memsz - ph->p_filesz);
+			kmemset ((void*)(ph->p_vaddr + ph->p_filesz), 0, ph->p_memsz - ph->p_filesz);
 	}
 
 	init_break = ((init_break + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));

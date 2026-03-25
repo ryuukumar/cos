@@ -187,7 +187,7 @@ void _start (void) {
 
 	// Launch Stage 2 as the first process (PID 1)
 	process* stage2_proc = kmalloc (sizeof (process));
-	memset (stage2_proc, 0, sizeof (process));
+	kmemset (stage2_proc, 0, sizeof (process));
 	stage2_proc->p_id = 1;
 	stage2_proc->p_cr3 = read_cr3 ();
 	stage2_proc->p_user = false;
@@ -196,7 +196,7 @@ void _start (void) {
 
 	for (int i = 0; i < 3; i++) {
 		stage2_proc->p_fds[i] = kmalloc (sizeof (struct file));
-		memset (stage2_proc->p_fds[i], 0, sizeof (struct file));
+		kmemset (stage2_proc->p_fds[i], 0, sizeof (struct file));
 	}
 
 	register_stdin (stage2_proc->p_fds[0]);
@@ -207,7 +207,7 @@ void _start (void) {
 	stage2_proc->p_kstack = (uintptr_t)kstack + STACK_SIZE;
 
 	registers_t* regs = (registers_t*)(stage2_proc->p_kstack - sizeof (registers_t));
-	memset (regs, 0, sizeof (registers_t));
+	kmemset (regs, 0, sizeof (registers_t));
 	regs->rip = (uintptr_t)_start_stage2;
 	regs->cs = 0x28; // Kernel code segment
 	regs->ss = 0x30; // Kernel data segment

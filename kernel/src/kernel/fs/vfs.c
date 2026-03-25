@@ -187,7 +187,7 @@ int do_lookup (char* filename, inode** result, inode* root) {
 
 	// get the target_name
 	char* target_name = (char*)kmalloc ((size_t)(next_slash - filename));
-	memcpy ((void*)target_name, (void*)(filename + 1), (size_t)(next_slash - filename) - 1);
+	kmemcpy ((void*)target_name, (void*)(filename + 1), (size_t)(next_slash - filename) - 1);
 	target_name[(size_t)(next_slash - filename) - 1] = 0;
 
 	if (strcmp (target_name, ".") == 0) {
@@ -240,7 +240,7 @@ int do_lookup (char* filename, inode** result, inode* root) {
 int do_open (inode* filei, struct file* dest_fd) {
 	if (!filei) return -EINVARG;
 	if (filei->i_type == DIRECTORY) return -EINVARG;
-	memset (dest_fd, 0, sizeof (struct file));
+	kmemset (dest_fd, 0, sizeof (struct file));
 
 	filei->i_cnt++;
 

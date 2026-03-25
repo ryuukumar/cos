@@ -32,7 +32,7 @@ static uint64_t hex_to_u64 (const char hex[8]) [[unsequenced]] {
 
 static void* jump_next_file (void* pos) {
 	cpio_newc_header_t* header = pos;
-	if (memcmp (header->c_magic, "070701", 6) != 0) {
+	if (kmemcmp (header->c_magic, "070701", 6) != 0) {
 		write_serial_str (
 			"Caller provided a pointer to cpio header, but it did not have the magic number!\n");
 		return nullptr;
@@ -42,7 +42,7 @@ static void* jump_next_file (void* pos) {
 	uint64_t filesize = hex_to_u64 (header->c_filesize);
 
 	pos += sizeof (cpio_newc_header_t);
-	if (memcmp (pos, "TRAILER!!!", 11) == 0) return nullptr;
+	if (kmemcmp (pos, "TRAILER!!!", 11) == 0) return nullptr;
 
 	pos += namesize;
 	if ((uint64_t)pos % 4) pos += 4 - ((uint64_t)pos % 4);
@@ -122,7 +122,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	if (namesize == 0) return -EINVARG;
 
 	char* filename = kmalloc (namesize + 1);
-	memcpy ((void*)(filename + 1), (void*)(header + 1), namesize);
+	kmemcpy ((void*)(filename + 1), (void*)(header + 1), namesize);
 	filename[namesize] = 0; // enforce string in case corrupt
 	filename[0] = '/';		// many syscalls require absolute paths, which cpio does not guarantee
 

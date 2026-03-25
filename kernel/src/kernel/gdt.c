@@ -31,7 +31,7 @@ void init_gdt (void) {
 }
 
 void init_tss (void) {
-	memset (&tss, 0, sizeof (tss));
+	kmemset (&tss, 0, sizeof (tss));
 
 	tss.rsp[0] = (uintptr_t)stack;
 	tss.ist[1] = 0;
