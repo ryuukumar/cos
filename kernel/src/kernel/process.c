@@ -159,6 +159,7 @@ static uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 }
 
 static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
+	(void)status; // TODO: do something with the status
 	(void)arg2, (void)arg3;
 	process* current = get_current_process ();
 	current->p_state = TASK_DEAD;

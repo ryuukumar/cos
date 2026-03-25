@@ -98,6 +98,7 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
  * @return 0 if successful, error otherwise
  */
 uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3) {
+	(void)mode; // TODO: consider mode when opening dirs
 	(void)arg3;
 
 	process* current = get_current_process ();
@@ -302,6 +303,8 @@ int do_close (struct file* fd) {
  * @return fd if successful, else error
  */
 uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
+	(void)mode; // TODO: consider mode when opening file
+
 	char* filename = (char*)filename_ptr;
 	if (!filename) return -EINVARG;
 

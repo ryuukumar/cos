@@ -162,6 +162,7 @@ int seek (inode* node, file* f, size_t offset, int whence) {
 		f->f_pos += offset;
 	else if (whence == SEEK_END)
 		return -ENOIMPL;
+	return f->f_pos;
 }
 
 inode* init_ramfs_root (void) {

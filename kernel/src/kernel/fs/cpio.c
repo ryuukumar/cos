@@ -109,7 +109,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	if (!header || !out_path) return -EINVARG;
 
 	inode* root_dir = NULL;
-	int	   error = do_lookup (out_path, &root_dir, get_current_process ()->p_root);
+	int	   error = do_lookup ((char*)out_path, &root_dir, get_current_process ()->p_root);
 	if (error || !root_dir) return error;
 
 	uint64_t namesize = hex_to_u64 (header->c_namesize);
