@@ -1,8 +1,8 @@
+#include <kclib/memory.h>
+#include <kclib/string.h>
 #include <kernel/gdt.h>
 #include <kernel/stack.h>
-#include <memory.h>
 #include <stdint.h>
-#include <string.h>
 
 gdt_t gdt = {
 	{0, 0, 0, 0, 0, 0},				  // null
@@ -31,7 +31,7 @@ void init_gdt (void) {
 }
 
 void init_tss (void) {
-	memset (&tss, 0, sizeof (tss));
+	kmemset (&tss, 0, sizeof (tss));
 
 	tss.rsp[0] = (uintptr_t)stack;
 	tss.ist[1] = 0;

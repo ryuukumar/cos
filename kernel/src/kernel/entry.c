@@ -1,3 +1,5 @@
+#include <kclib/memory.h>
+#include <kclib/stdio.h>
 #include <kernel/console.h>
 #include <kernel/elf.h>
 #include <kernel/fs/chardev.h>
@@ -17,10 +19,8 @@
 #include <kernel/stack.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
-#include <memory.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #define FONT_SIZE 2
 
@@ -80,25 +80,25 @@ static void print_info (void) {
 	drawBorder (20);
 	set_color (0x44eeaa);
 
-	printf ("COS 0.0%d", 7);
+	kprintf ("COS 0.0%d", 7);
 
 	set_color (0xddeecc);
 
-	printf ("\n\nHello, World!\n\n");
+	kprintf ("\n\nHello, World!\n\n");
 
 	set_color (0x88aaee);
-	printf ("System info:\n");
+	kprintf ("System info:\n");
 	if (bootinfo_req.response != nullptr) {
 		set_color (0x888888);
-		printf ("Bootloader: %s %s", bootinfo_req.response->name, bootinfo_req.response->version);
+		kprintf ("Bootloader: %s %s", bootinfo_req.response->name, bootinfo_req.response->version);
 	} else
-		printf ("\nDid not receive bootloader info from bootloader.\n");
+		kprintf ("\nDid not receive bootloader info from bootloader.\n");
 
 	if (boottime_req.response != nullptr) {
 		set_color (0x888888);
-		printf ("\nSystem booted at time %ld.\n", boottime_req.response->boot_time);
+		kprintf ("\nSystem booted at time %ld.\n", boottime_req.response->boot_time);
 	} else
-		printf ("\nDid not receive boot time from Limine.\n");
+		kprintf ("\nDid not receive boot time from Limine.\n");
 }
 
 __attribute__ ((noreturn)) void _start_stage2 (void) {
@@ -107,13 +107,13 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 
 	print_info ();
 
-	printf ("\n[Stage 2] Running as PID %lld\n", get_current_process ()->p_id);
-	printf ("[Stage 2] Current system tick: %lld\n", get_current_tick ());
+	kprintf ("\n[Stage 2] Running as PID %lld\n", get_current_process ()->p_id);
+	kprintf ("[Stage 2] Current system tick: %lld\n", get_current_tick ());
 
-	printf ("[Stage 2] Extracting initramfs...\n");
+	kprintf ("[Stage 2] Extracting initramfs...\n");
 	load_cpio_from_memory (initramfs->address, "/");
 
-	printf ("[Stage 2] Trying to load the ELF.\n");
+	kprintf ("[Stage 2] Trying to load the ELF.\n");
 
 	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
 
@@ -124,7 +124,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 		uintptr_t entry_point;
 		int		  err = load_elf ("/bin/hello", current, &entry_point);
 		if (err != 0) {
-			printf ("Failed to load /bin/hello : %d\n", err);
+			kprintf ("Failed to load /bin/hello : %d\n", err);
 			for (;;)
 				;
 		}
@@ -187,7 +187,7 @@ void _start (void) {
 
 	// Launch Stage 2 as the first process (PID 1)
 	process* stage2_proc = kmalloc (sizeof (process));
-	memset (stage2_proc, 0, sizeof (process));
+	kmemset (stage2_proc, 0, sizeof (process));
 	stage2_proc->p_id = 1;
 	stage2_proc->p_cr3 = read_cr3 ();
 	stage2_proc->p_user = false;
@@ -196,7 +196,7 @@ void _start (void) {
 
 	for (int i = 0; i < 3; i++) {
 		stage2_proc->p_fds[i] = kmalloc (sizeof (struct file));
-		memset (stage2_proc->p_fds[i], 0, sizeof (struct file));
+		kmemset (stage2_proc->p_fds[i], 0, sizeof (struct file));
 	}
 
 	register_stdin (stage2_proc->p_fds[0]);
@@ -207,7 +207,7 @@ void _start (void) {
 	stage2_proc->p_kstack = (uintptr_t)kstack + STACK_SIZE;
 
 	registers_t* regs = (registers_t*)(stage2_proc->p_kstack - sizeof (registers_t));
-	memset (regs, 0, sizeof (registers_t));
+	kmemset (regs, 0, sizeof (registers_t));
 	regs->rip = (uintptr_t)_start_stage2;
 	regs->cs = 0x28; // Kernel code segment
 	regs->ss = 0x30; // Kernel data segment

@@ -1,9 +1,9 @@
+#include <kclib/memory.h>
+#include <kclib/stdio.h>
 #include <kernel/console.h>
 #include <kernel/error.h>
 #include <kernel/fs/chardev.h>
 #include <liballoc/liballoc.h>
-#include <memory.h>
-#include <stdio.h>
 
 static int stdout_write (inode* node, file* f, void* buf, size_t len) {
 	(void)node, (void)f; // args not used
@@ -37,7 +37,7 @@ int register_stdin (struct file* f) {
 	inode* new_inode = kmalloc (sizeof (inode));
 	if (!new_inode) return -ENOMEM;
 
-	memset (new_inode, 0, sizeof (inode));
+	kmemset (new_inode, 0, sizeof (inode));
 
 	new_inode->i_cnt = 1;
 	new_inode->i_type = CHAR_DEV;
@@ -59,8 +59,8 @@ int register_stdout (struct file* f) {
 		return -ENOMEM;
 	}
 
-	memset (new_inode, 0, sizeof (inode));
-	memset (stdout_fops, 0, sizeof (file_operations));
+	kmemset (new_inode, 0, sizeof (inode));
+	kmemset (stdout_fops, 0, sizeof (file_operations));
 
 	stdout_fops->write = stdout_write;
 
@@ -85,8 +85,8 @@ int register_stderr (struct file* f) {
 		return -ENOMEM;
 	}
 
-	memset (new_inode, 0, sizeof (inode));
-	memset (stdout_fops, 0, sizeof (file_operations));
+	kmemset (new_inode, 0, sizeof (inode));
+	kmemset (stdout_fops, 0, sizeof (file_operations));
 
 	stdout_fops->write = stderr_write;
 

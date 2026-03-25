@@ -1,6 +1,6 @@
+#include <kclib/stdio.h>
+#include <kclib/string.h>
 #include <kernel/console.h>
-#include <stdio.h>
-#include <string.h>
 
 /*!
 Handle the different cases of %-- in printf
@@ -10,39 +10,39 @@ Handle the different cases of %-- in printf
 @param	args	pointer to the arguments printf received
 @param	ul	whether the format prints an unsigned/long character
 */
-static void fmtprintf (const char* format, size_t* i, va_list* args, bool ul) {
+static void kfmtprintf (const char* format, size_t* i, va_list* args, bool ul) {
 	switch (format[*i]) {
 	case 's': {
 		const char* str = va_arg (*args, const char*);
-		putstr (str, strlen (str));
+		putstr (str, kstrlen (str));
 	} break;
 	case 'd':
 	case 'i': {
 		if (ul) {
 			char buf[65] = {0};
-			ulitos (va_arg (*args, uint64_t), buf, 10);
-			putstr (buf, strlen (buf));
+			kulitos (va_arg (*args, uint64_t), buf, 10);
+			putstr (buf, kstrlen (buf));
 		} else {
 			char buf[33] = {0};
-			itos (va_arg (*args, int32_t), buf, 10);
-			putstr (buf, strlen (buf));
+			kitos (va_arg (*args, int32_t), buf, 10);
+			putstr (buf, kstrlen (buf));
 		}
 	} break;
 	case 'x': {
 		if (ul) {
 			char buf[65] = {0};
-			ulitos (va_arg (*args, uint64_t), buf, 16);
-			putstr (buf, strlen (buf));
+			kulitos (va_arg (*args, uint64_t), buf, 16);
+			putstr (buf, kstrlen (buf));
 		} else {
 			char buf[33] = {0};
-			itos (va_arg (*args, int32_t), buf, 16);
-			putstr (buf, strlen (buf));
+			kitos (va_arg (*args, int32_t), buf, 16);
+			putstr (buf, kstrlen (buf));
 		}
 	} break;
 	case 'u':
 	case 'l': {
 		(*i)++;
-		fmtprintf (format, i, args, true);
+		kfmtprintf (format, i, args, true);
 	} break;
 	default: {
 		putchar ('%');
@@ -56,17 +56,17 @@ Print a formatted string to the screen.
 
 @param	format formatted string to print
 */
-void printf (const char* format, ...) {
+void kprintf (const char* format, ...) {
 	va_list args;
 	va_start (args, format);
 
 	bool buf = get_update_on_putch ();
 	set_update_on_putch (false);
-	for (size_t i = 0; i < strlen (format); i++) {
+	for (size_t i = 0; i < kstrlen (format); i++) {
 		switch (format[i]) {
 		case '%': {
 			i++;
-			fmtprintf (format, &i, &args, false);
+			kfmtprintf (format, &i, &args, false);
 		} break;
 		case '\t':
 			size_t idx = get_idx ();
