@@ -7,7 +7,7 @@ Get the length of a standard string (terminating with 0).
 @param  str pointer to string
 @return string size
 */
-size_t strlen (const char* str) {
+size_t kstrlen (const char* str) {
 	size_t ret = 0;
 	while (str[ret] != 0)
 		ret++;
@@ -19,8 +19,8 @@ Reverse a standard string (terminating with 0).
 
 @param  str string to reverse
 */
-void reverse (char* str) {
-	int len = strlen (str), start = 0, end = len - 1;
+void kreverse (char* str) {
+	int len = kstrlen (str), start = 0, end = len - 1;
 	while (start < end) {
 		char temp = str[start];
 		str[start] = str[end];
@@ -37,7 +37,7 @@ Convert integer to representative string with base b.
 @param  buf memory to save integer
 @param  b base
 */
-void itos (int32_t i, char* buf, uint32_t b) {
+void kitos (int32_t i, char* buf, uint32_t b) {
 	int	 ctr = 0;
 	bool negative = false;
 	if (i < 0) {
@@ -54,7 +54,7 @@ void itos (int32_t i, char* buf, uint32_t b) {
 	if (ctr == 0) buf[0] = '0';
 	if (negative) buf[ctr++] = '-';
 	buf[ctr + 1] = 0;
-	reverse (buf);
+	kreverse (buf);
 }
 
 /*!
@@ -64,7 +64,7 @@ Convert long integer to representative string with base b.
 @param  buf memory to save integer
 @param  b base
 */
-void ulitos (uint64_t i, char* buf, uint32_t b) {
+void kulitos (uint64_t i, char* buf, uint32_t b) {
 	int	 ctr = 0;
 	bool negative = false;
 	do {
@@ -77,7 +77,7 @@ void ulitos (uint64_t i, char* buf, uint32_t b) {
 	if (ctr == 0) buf[0] = '0';
 	if (negative) buf[ctr++] = '-';
 	buf[ctr++] = 0;
-	reverse (buf);
+	kreverse (buf);
 }
 
 /*!
@@ -86,7 +86,7 @@ void ulitos (uint64_t i, char* buf, uint32_t b) {
  * @param b second string
  * @return whether strings are equal
  */
-int strcmp (const char* a, const char* b) {
+int kstrcmp (const char* a, const char* b) {
 	for (int i = 0; a[i] != 0 && b[i] != 0; i++)
 		if (a[i] != b[i]) return 1;
 	return 0;
@@ -96,9 +96,9 @@ int strcmp (const char* a, const char* b) {
  * Duplicate a string using the kernel allocator.
  * Returns a newly allocated copy or nullptr on failure.
  */
-char* strdup (const char* s) {
+char* kstrdup (const char* s) {
 	if (!s) return nullptr;
-	size_t len = strlen (s);
+	size_t len = kstrlen (s);
 	char*  dup = (char*)kmalloc (len + 1);
 	if (!dup) return nullptr;
 	for (size_t i = 0; i <= len; i++)

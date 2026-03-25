@@ -14,29 +14,29 @@ static void kfmtprintf (const char* format, size_t* i, va_list* args, bool ul) {
 	switch (format[*i]) {
 	case 's': {
 		const char* str = va_arg (*args, const char*);
-		putstr (str, strlen (str));
+		putstr (str, kstrlen (str));
 	} break;
 	case 'd':
 	case 'i': {
 		if (ul) {
 			char buf[65] = {0};
-			ulitos (va_arg (*args, uint64_t), buf, 10);
-			putstr (buf, strlen (buf));
+			kulitos (va_arg (*args, uint64_t), buf, 10);
+			putstr (buf, kstrlen (buf));
 		} else {
 			char buf[33] = {0};
-			itos (va_arg (*args, int32_t), buf, 10);
-			putstr (buf, strlen (buf));
+			kitos (va_arg (*args, int32_t), buf, 10);
+			putstr (buf, kstrlen (buf));
 		}
 	} break;
 	case 'x': {
 		if (ul) {
 			char buf[65] = {0};
-			ulitos (va_arg (*args, uint64_t), buf, 16);
-			putstr (buf, strlen (buf));
+			kulitos (va_arg (*args, uint64_t), buf, 16);
+			putstr (buf, kstrlen (buf));
 		} else {
 			char buf[33] = {0};
-			itos (va_arg (*args, int32_t), buf, 16);
-			putstr (buf, strlen (buf));
+			kitos (va_arg (*args, int32_t), buf, 16);
+			putstr (buf, kstrlen (buf));
 		}
 	} break;
 	case 'u':
@@ -62,7 +62,7 @@ void kprintf (const char* format, ...) {
 
 	bool buf = get_update_on_putch ();
 	set_update_on_putch (false);
-	for (size_t i = 0; i < strlen (format); i++) {
+	for (size_t i = 0; i < kstrlen (format); i++) {
 		switch (format[i]) {
 		case '%': {
 			i++;

@@ -36,7 +36,7 @@ static inline void log_reg (const char* name, uint64_t value) {
 	char buf[32];
 	write_serial_str (name);
 	write_serial_str (": 0x");
-	ulitos (value, buf, 16);
+	kulitos (value, buf, 16);
 	write_serial_str (buf);
 	write_serial_str ("\n");
 }

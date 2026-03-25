@@ -27,18 +27,18 @@ static bool filename_has_invalid_chars (char* filename) {
 int vfs_resolve_parent (const char* path_arg, inode* root, inode** r_parent, char** r_name) {
 	if (!path_arg || path_arg[0] != '/') return -ENEEDABS;
 
-	char* path = strdup (path_arg);
+	char* path = kstrdup (path_arg);
 	if (!path) return -ENOMEM;
 
 	char* last_slash = nullptr;
-	for (int i = strlen (path) - 1; i >= 0; i--) {
+	for (int i = kstrlen (path) - 1; i >= 0; i--) {
 		if (path[i] == '/') {
 			last_slash = &path[i];
 			break;
 		}
 	}
 
-	*r_name = strdup (last_slash + 1);
+	*r_name = kstrdup (last_slash + 1);
 
 	if (last_slash == path) {
 		*r_parent = root;
@@ -77,7 +77,7 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
 	if (filename_has_invalid_chars (dirname)) return -EINVARG;
 
 	// case dirname is '.' or '..'
-	if (strcmp (dirname, ".") == 0 || strcmp (dirname, "..") == 0) return -EINVARG;
+	if (kstrcmp (dirname, ".") == 0 || kstrcmp (dirname, "..") == 0) return -EINVARG;
 
 	// case dirname already exists
 	inode* lookup_result = nullptr;
@@ -135,7 +135,7 @@ int do_create (char* filename, inode** result, inode* parent) {
 	if (filename_has_invalid_chars (filename)) return -EINVARG;
 
 	// case filename is '.' or '..'
-	if (strcmp (filename, ".") == 0 || strcmp (filename, "..") == 0) return -EINVARG;
+	if (kstrcmp (filename, ".") == 0 || kstrcmp (filename, "..") == 0) return -EINVARG;
 
 	// case filename already exists
 	inode* lookup_result = nullptr;
@@ -190,7 +190,7 @@ int do_lookup (char* filename, inode** result, inode* root) {
 	kmemcpy ((void*)target_name, (void*)(filename + 1), (size_t)(next_slash - filename) - 1);
 	target_name[(size_t)(next_slash - filename) - 1] = 0;
 
-	if (strcmp (target_name, ".") == 0) {
+	if (kstrcmp (target_name, ".") == 0) {
 		kfree (target_name);
 
 		// case '/.'

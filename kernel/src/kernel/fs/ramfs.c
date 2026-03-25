@@ -25,9 +25,9 @@ int mkdir (char* dirname, inode** result, inode* root) {
 	((dir_content_t*)new_dir->i_pvt)->d_children = (child_t*)kmalloc (2 * sizeof (child_t));
 	child_t* dir_children = (child_t*)((dir_content_t*)new_dir->i_pvt)->d_children;
 
-	dir_children[0].c_name = strdup (".");
+	dir_children[0].c_name = kstrdup (".");
 	dir_children[0].c_inode = new_dir;
-	dir_children[1].c_name = strdup ("..");
+	dir_children[1].c_name = kstrdup ("..");
 	dir_children[1].c_inode = root;
 
 	// construct parent replacement structures
@@ -36,7 +36,7 @@ int mkdir (char* dirname, inode** result, inode* root) {
 
 	kmemcpy (new_parent_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
 	new_parent_children[parent_pvt->d_count].c_inode = new_dir;
-	new_parent_children[parent_pvt->d_count].c_name = strdup (dirname);
+	new_parent_children[parent_pvt->d_count].c_name = kstrdup (dirname);
 
 	// replace parent structure and free old one
 	kfree (parent_pvt->d_children);
@@ -61,7 +61,7 @@ int create (char* filename, inode** result, inode* root) {
 
 	kmemcpy (new_parent_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
 	new_parent_children[parent_pvt->d_count].c_inode = new_file;
-	new_parent_children[parent_pvt->d_count].c_name = strdup (filename);
+	new_parent_children[parent_pvt->d_count].c_name = kstrdup (filename);
 
 	// replace parent structure and free old one
 	kfree (parent_pvt->d_children);
@@ -78,7 +78,7 @@ int lookup (char* filename, inode** result, inode* root) {
 	if (root->i_type != DIRECTORY) return -EINVPATH;
 
 	// case '.'
-	if (strcmp (filename, ".") == 0) {
+	if (kstrcmp (filename, ".") == 0) {
 		*result = root;
 		return 0;
 	}
@@ -96,7 +96,7 @@ int lookup (char* filename, inode** result, inode* root) {
 		// invalid child ; continue searching
 		if (!d_child->c_inode || !d_child->c_name) continue;
 
-		if (strcmp (d_child->c_name, filename) == 0) {
+		if (kstrcmp (d_child->c_name, filename) == 0) {
 			// case '*'
 			*result = d_child->c_inode;
 			return 0;
@@ -178,9 +178,9 @@ inode* init_ramfs_root (void) {
 	((dir_content_t*)root_inode->i_pvt)->d_children = (child_t*)kmalloc (2 * sizeof (child_t));
 	child_t* root_children = (child_t*)((dir_content_t*)root_inode->i_pvt)->d_children;
 
-	root_children[0].c_name = strdup (".");
+	root_children[0].c_name = kstrdup (".");
 	root_children[0].c_inode = root_inode;
-	root_children[1].c_name = strdup ("..");
+	root_children[1].c_name = kstrdup ("..");
 	root_children[1].c_inode = root_inode;
 
 	return root_inode;

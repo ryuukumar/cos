@@ -174,7 +174,7 @@ static void free_ppages (void* paddr, uint64_t count) {
 
 		if (!is_valid) {
 			char buffer[16];
-			ulitos ((uint64_t)paddr, buffer, 16);
+			kulitos ((uint64_t)paddr, buffer, 16);
 			write_serial_str ("Tried to free reserved memory! Address: 0x");
 			write_serial_str (buffer);
 			write_serial_str ("\nHalting.\n");
@@ -251,7 +251,7 @@ registers_t* page_fault_handler (registers_t* registers) {
 	__asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
 
 	char buffer[16];
-	ulitos (cr2, buffer, 16);
+	kulitos (cr2, buffer, 16);
 
 	write_serial_str ("\nEncountered a page fault!\n");
 	write_serial_str ("Faulting address: 0x");

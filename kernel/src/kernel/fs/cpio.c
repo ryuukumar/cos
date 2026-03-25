@@ -56,10 +56,10 @@ static int mkdir_if_required (const char* dir, inode* root) {
 	if (!dir) return -EINVARG;
 	if (dir[0] != '/') return -ENEEDABS;
 
-	char* path = strdup (dir);
+	char* path = kstrdup (dir);
 	if (!path) return -ENOMEM;
 
-	size_t len = strlen (path);
+	size_t len = kstrlen (path);
 	while (len > 1 && path[len - 1] == '/') {
 		path[len - 1] = '\0';
 		len--;
@@ -96,7 +96,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 		child_name = nullptr;
 	}
 
-	if (error == 0 && child_name && strlen (child_name) > 0) {
+	if (error == 0 && child_name && kstrlen (child_name) > 0) {
 		inode* result = nullptr;
 		error = do_mkdir (child_name, &result, parent_dir);
 		if (error == -EPEXISTS) error = 0;
@@ -126,7 +126,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	filename[namesize] = 0; // enforce string in case corrupt
 	filename[0] = '/';		// many syscalls require absolute paths, which cpio does not guarantee
 
-	if (strcmp (filename, "/TRAILER!!!") == 0 || strcmp (filename, "/.") == 0) goto cleanup;
+	if (kstrcmp (filename, "/TRAILER!!!") == 0 || kstrcmp (filename, "/.") == 0) goto cleanup;
 
 	if (filetype == C_ISDIR) {
 		error = mkdir_if_required (filename, root_dir);
