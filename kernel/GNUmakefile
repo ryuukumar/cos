@@ -44,7 +44,7 @@ override CFLAGS += \
 	-Wstrict-prototypes \
 	-Wmissing-prototypes \
 	-Wmissing-declarations \
-	-std=gnu11 \
+	-std=gnu23 \
 	-ffreestanding \
 	-fno-stack-protector \
 	-fno-stack-check \
