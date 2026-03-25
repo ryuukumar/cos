@@ -1,6 +1,6 @@
+#include <kclib/stdio.h>
+#include <kclib/string.h>
 #include <kernel/console.h>
-#include <stdio.h>
-#include <string.h>
 
 /*!
 Handle the different cases of %-- in printf

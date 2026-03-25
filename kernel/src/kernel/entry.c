@@ -1,3 +1,5 @@
+#include <kclib/memory.h>
+#include <kclib/stdio.h>
 #include <kernel/console.h>
 #include <kernel/elf.h>
 #include <kernel/fs/chardev.h>
@@ -17,10 +19,8 @@
 #include <kernel/stack.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
-#include <memory.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #define FONT_SIZE 2
 

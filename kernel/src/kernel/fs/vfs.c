@@ -1,13 +1,11 @@
+#include <kclib/memory.h>
+#include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
 #include <kernel/serial.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
-#include <memory.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
 
 inode* vfs_absolute_root = nullptr;
 

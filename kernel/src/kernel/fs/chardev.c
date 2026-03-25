@@ -1,9 +1,9 @@
+#include <kclib/memory.h>
+#include <kclib/stdio.h>
 #include <kernel/console.h>
 #include <kernel/error.h>
 #include <kernel/fs/chardev.h>
 #include <liballoc/liballoc.h>
-#include <memory.h>
-#include <stdio.h>
 
 static int stdout_write (inode* node, file* f, void* buf, size_t len) {
 	(void)node, (void)f; // args not used

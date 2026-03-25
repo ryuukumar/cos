@@ -1,5 +1,5 @@
+#include <kclib/string.h>
 #include <liballoc/liballoc.h>
-#include <string.h>
 
 /*!
 Get the length of a standard string (terminating with 0).

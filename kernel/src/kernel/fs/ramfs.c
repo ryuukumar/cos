@@ -1,8 +1,8 @@
+#include <kclib/memory.h>
+#include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/ramfs.h>
 #include <liballoc/liballoc.h>
-#include <memory.h>
-#include <string.h>
 
 static inode* root_inode;
 

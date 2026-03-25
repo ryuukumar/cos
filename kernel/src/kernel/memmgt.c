@@ -1,3 +1,6 @@
+#include <kclib/memory.h>
+#include <kclib/stdio.h>
+#include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/idt.h>
 #include <kernel/limine.h>
@@ -5,8 +8,6 @@
 #include <kernel/process.h>
 #include <kernel/serial.h>
 #include <kernel/syscall.h>
-#include <memory.h>
-#include <stdio.h>
 
 #define ALIGNUP(x, o) ((x + o - 1) & ~(o - 1))
 

@@ -1,7 +1,7 @@
 
+#include <kclib/string.h>
 #include <kernel/idt.h>
-
-#include <stdio.h>
+#include <kernel/serial.h>
 
 __attribute__ ((aligned (0x10))) static idt_entry_t idt[256];
 
@@ -81,7 +81,7 @@ registers_t* kernel_dispatch_interrupt (registers_t* registers) {
 	if (handler)
 		return handler (registers);
 	else {
-		printf ("Unhandled interrupt! Hasta la vista");
+		write_serial_str ("Unhandled interrupt! Hasta la vista");
 		log_registers_to_serial (registers);
 		while (1)
 			;

@@ -1,3 +1,4 @@
+#include <kclib/memory.h>
 #include <kernel/error.h>
 #include <kernel/gdt.h>
 #include <kernel/memmgt.h>
@@ -5,7 +6,6 @@
 #include <kernel/stack.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
-#include <memory.h>
 
 process_queue ready_queue;
 uint64_t	  next_free_pid;

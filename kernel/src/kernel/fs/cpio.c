@@ -1,10 +1,12 @@
+#include <kclib/memory.h>
+#include <kclib/stdio.h>
+#include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/cpio.h>
 #include <kernel/process.h>
+#include <kernel/serial.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
-#include <memory.h>
-#include <stdio.h>
 
 #define C_ISDIR 0040000
 #define C_ISREG 0100000

@@ -1,8 +1,8 @@
+#include <kclib/memory.h>
 #include <kernel/error.h>
 #include <kernel/process.h>
 #include <kernel/serial.h>
 #include <kernel/syscall.h>
-#include <memory.h>
 
 syscall_handler_t syscall_handlers[SYSCALL_COUNT];
 registers_t*	  latest_frame;
