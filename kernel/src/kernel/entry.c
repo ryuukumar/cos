@@ -31,8 +31,8 @@ extern volatile struct limine_memmap_request		  memmap_req;
 extern volatile struct limine_module_request		  mod_req;
 extern volatile struct limine_hhdm_request			  hhdm_req;
 
-struct limine_framebuffer* framebuffer = NULL;
-struct limine_file*		   initramfs = NULL;
+struct limine_framebuffer* framebuffer = nullptr;
+struct limine_file*		   initramfs = nullptr;
 uint64_t				   hhdm_base = 0;
 
 // Declaration of kernel entry points
@@ -88,13 +88,13 @@ static void print_info (void) {
 
 	set_color (0x88aaee);
 	printf ("System info:\n");
-	if (bootinfo_req.response != NULL) {
+	if (bootinfo_req.response != nullptr) {
 		set_color (0x888888);
 		printf ("Bootloader: %s %s", bootinfo_req.response->name, bootinfo_req.response->version);
 	} else
 		printf ("\nDid not receive bootloader info from bootloader.\n");
 
-	if (boottime_req.response != NULL) {
+	if (boottime_req.response != nullptr) {
 		set_color (0x888888);
 		printf ("\nSystem booted at time %ld.\n", boottime_req.response->boot_time);
 	} else
@@ -145,14 +145,15 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 
 static void get_limine_requests (void) {
 	// REQUIRED: framebuffer
-	if (framebuffer_request.response == NULL || framebuffer_request.response->framebuffer_count < 1)
+	if (framebuffer_request.response == nullptr ||
+		framebuffer_request.response->framebuffer_count < 1)
 		hcf ();
 
 	// REQUIRED: hhdm response
-	if (hhdm_req.response == NULL) hcf ();
+	if (hhdm_req.response == nullptr) hcf ();
 
 	// REQUIRED: modules (for initramfs)
-	if (mod_req.response == NULL || mod_req.response->module_count < 1) hcf ();
+	if (mod_req.response == nullptr || mod_req.response->module_count < 1) hcf ();
 
 	// set the values received from limine
 	framebuffer = framebuffer_request.response->framebuffers[0];

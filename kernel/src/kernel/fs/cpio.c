@@ -33,14 +33,14 @@ static void* jump_next_file (void* pos) {
 	if (memcmp (header->c_magic, "070701", 6) != 0) {
 		write_serial_str (
 			"Caller provided a pointer to cpio header, but it did not have the magic number!\n");
-		return NULL;
+		return nullptr;
 	}
 
 	uint64_t namesize = hex_to_u64 (header->c_namesize);
 	uint64_t filesize = hex_to_u64 (header->c_filesize);
 
 	pos += sizeof (cpio_newc_header_t);
-	if (memcmp (pos, "TRAILER!!!", 11) == 0) return NULL;
+	if (memcmp (pos, "TRAILER!!!", 11) == 0) return nullptr;
 
 	pos += namesize;
 	if ((uint64_t)pos % 4) pos += 4 - ((uint64_t)pos % 4);
@@ -68,14 +68,14 @@ static int mkdir_if_required (const char* dir, inode* root) {
 		return 0;
 	}
 
-	inode* parent_dir = NULL;
-	char*  child_name = NULL;
+	inode* parent_dir = nullptr;
+	char*  child_name = nullptr;
 	int	   error = vfs_resolve_parent (path, root, &parent_dir, &child_name);
 
 	if (error == -EPNOEXIST) {
-		child_name = NULL;
+		child_name = nullptr;
 
-		char* last_slash = NULL;
+		char* last_slash = nullptr;
 		for (int i = len - 1; i >= 0; i--) {
 			if (path[i] == '/') {
 				last_slash = &path[i];
@@ -91,11 +91,11 @@ static int mkdir_if_required (const char* dir, inode* root) {
 
 		if (error == 0) error = vfs_resolve_parent (path, root, &parent_dir, &child_name);
 	} else if (error != 0) {
-		child_name = NULL;
+		child_name = nullptr;
 	}
 
 	if (error == 0 && child_name && strlen (child_name) > 0) {
-		inode* result = NULL;
+		inode* result = nullptr;
 		error = do_mkdir (child_name, &result, parent_dir);
 		if (error == -EPEXISTS) error = 0;
 	}
@@ -108,7 +108,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_path) {
 	if (!header || !out_path) return -EINVARG;
 
-	inode* root_dir = NULL;
+	inode* root_dir = nullptr;
 	int	   error = do_lookup ((char*)out_path, &root_dir, get_current_process ()->p_root);
 	if (error || !root_dir) return error;
 

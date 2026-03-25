@@ -94,13 +94,13 @@ int strcmp (const char* a, const char* b) {
 
 /*
  * Duplicate a string using the kernel allocator.
- * Returns a newly allocated copy or NULL on failure.
+ * Returns a newly allocated copy or nullptr on failure.
  */
 char* strdup (const char* s) {
-	if (!s) return NULL;
+	if (!s) return nullptr;
 	size_t len = strlen (s);
 	char*  dup = (char*)kmalloc (len + 1);
-	if (!dup) return NULL;
+	if (!dup) return nullptr;
 	for (size_t i = 0; i <= len; i++)
 		dup[i] = s[i];
 	return dup;

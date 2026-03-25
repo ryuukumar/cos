@@ -8,7 +8,7 @@ static inode* root_inode;
 
 static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
 static file_operations	f_ops = {
-	.read = read, .write = write, .seek = seek, .open = NULL, .close = NULL};
+	.read = read, .write = write, .seek = seek, .open = nullptr, .close = nullptr};
 
 int mkdir (char* dirname, inode** result, inode* root) {
 	// requires: guarantee that vfs input is valid

@@ -16,16 +16,16 @@ process_queue* get_ready_queue (void) { return &ready_queue; }
 int dequeue_process (process_queue* queue, process** result) {
 	if (!queue) return -EINVARG;
 	if (queue->head == queue->tail) {
-		if (queue->head == NULL) { // empty queue
-			*result = NULL;
+		if (queue->head == nullptr) { // empty queue
+			*result = nullptr;
 			return 0;
 		} else { // queue with 1 entry
 			*result = queue->head;
-			queue->head = queue->tail = NULL;
+			queue->head = queue->tail = nullptr;
 			return 0;
 		}
 	}
-	if (queue->head == NULL) return -ECORRQ; // invalid head, valid tail should not happen
+	if (queue->head == nullptr) return -ECORRQ; // invalid head, valid tail should not happen
 
 	*result = queue->head;
 	queue->head = queue->head->next;
@@ -34,11 +34,11 @@ int dequeue_process (process_queue* queue, process** result) {
 
 int enqueue_process (process_queue* queue, process* new_process) {
 	if (!queue || !new_process) return -EINVARG;
-	new_process->next = NULL;
-	if (queue->head == NULL) // queue is empty
+	new_process->next = nullptr;
+	if (queue->head == nullptr) // queue is empty
 		queue->head = queue->tail = new_process;
 	else {
-		if (queue->tail == NULL) return -ECORRQ; // valid head, invalid tail should not happen
+		if (queue->tail == nullptr) return -ECORRQ; // valid head, invalid tail should not happen
 		queue->tail = queue->tail->next = new_process;
 	}
 	return 0;
@@ -47,18 +47,19 @@ int enqueue_process (process_queue* queue, process* new_process) {
 process* get_current_process (void) { return current_process; }
 
 registers_t* schedule (registers_t* registers) {
-	process* upcoming_process = NULL;
+	process* upcoming_process = nullptr;
 	int		 errno = dequeue_process (get_ready_queue (), &upcoming_process);
 
 	if (errno != 0) return registers; // issue with queue
 
-	if (upcoming_process == NULL) {
-		if (current_process != NULL && current_process->p_state == TASK_RUNNING) return registers;
+	if (upcoming_process == nullptr) {
+		if (current_process != nullptr && current_process->p_state == TASK_RUNNING)
+			return registers;
 		for (;;)
 			; // if nothing to run, game over
 	}
 
-	if (current_process != NULL && current_process->p_state == TASK_RUNNING) {
+	if (current_process != nullptr && current_process->p_state == TASK_RUNNING) {
 		current_process->p_registers_ptr = registers;
 		current_process->p_state = TASK_READY;
 		enqueue_process (get_ready_queue (), current_process);
@@ -82,7 +83,7 @@ int process_fork (process* source_process, process** dest_ptr) {
 
 	new_process->p_kstack = (uintptr_t)new_kstack + STACK_SIZE;
 	new_process->p_id = next_free_pid++;
-	new_process->next = NULL;
+	new_process->next = nullptr;
 
 	// Kernel thread forking requires a bunch of extra considerations because there could be no
 	// privilege shift, messing up rbp and stuff
@@ -154,7 +155,7 @@ int process_fork (process* source_process, process** dest_ptr) {
 
 static uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 	(void)arg1, (void)arg2, (void)arg3; // fork does not use any args
-	process* child = NULL;
+	process* child = nullptr;
 	return process_fork (get_current_process (), &child);
 }
 
@@ -180,7 +181,7 @@ static uint64_t sys_getpid (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 }
 
 void init_process (void) {
-	ready_queue.head = ready_queue.tail = NULL;
+	ready_queue.head = ready_queue.tail = nullptr;
 	next_free_pid = 2ll;
 
 	register_syscall (SYSCALL_SYS_EXIT, sys_exit);
