@@ -13,7 +13,7 @@
 #define USER_PML4_IDX 1
 #define KRNL_PML4_IDX 257
 
-pml4t_entry_t* pml4_base_ptr = NULL;
+pml4t_entry_t* pml4_base_ptr = nullptr;
 uint64_t	   hhdm_offset = 0;
 
 bool is_locked = false;
@@ -114,8 +114,8 @@ static inline void bitmap_clear_bit (uint64_t page_idx) {
  * @return base physical address of allocated frames
  */
 static paddr_t alloc_ppages (uint64_t count) {
-	if (count == 0) return NULL;
-	if (bitmap.pages_used + count > bitmap.pages_maxlen) return NULL;
+	if (count == 0) return nullptr;
+	if (bitmap.pages_used + count > bitmap.pages_maxlen) return nullptr;
 
 	uint64_t current_streak = 0;
 	uint64_t start_idx = 0;
@@ -139,7 +139,7 @@ static paddr_t alloc_ppages (uint64_t count) {
 			current_streak = 0;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /*!
@@ -160,7 +160,7 @@ static void free_ppages (void* paddr, uint64_t count) {
 		uint64_t current_paddr = (uint64_t)paddr + (i * PAGE_SIZE);
 		bool	 is_valid = false;
 
-		if (memmap_response_ptr != NULL) {
+		if (memmap_response_ptr != nullptr) {
 			for (uint64_t j = 0; j < memmap_response_ptr->entry_count; j++) {
 				struct limine_memmap_entry* entry = memmap_response_ptr->entries[j];
 				if (entry->type == LIMINE_MEMMAP_USABLE && current_paddr >= entry->base &&
@@ -204,7 +204,7 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 	uint64_t total_pages = addr_limit / PAGE_SIZE;
 	uint64_t bitmap_size = (total_pages + 7) / 8;
 
-	void* bitmap_phys_addr = NULL;
+	void* bitmap_phys_addr = nullptr;
 	for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
 		struct limine_memmap_entry* entry = memmap_response->entries[i];
 		if (entry->type == LIMINE_MEMMAP_USABLE && entry->length >= bitmap_size) {
@@ -213,7 +213,7 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 		}
 	}
 
-	if (bitmap_phys_addr == NULL) {
+	if (bitmap_phys_addr == nullptr) {
 		write_serial_str (
 			"Not enough contiguous memory for bitmap setup!! Please download some RAM.\n");
 		printf ("Not enough contiguous memory for bitmap setup!! Please download some RAM.\n");
@@ -371,7 +371,7 @@ void* alloc_vpages (size_t req_count, bool user) {
 	// all memory allocations are currently under 2 pml4 entries. this is 512 gb of memory for
 	// kernel and user each, which should be plenty for literally any use case of COS.
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[user ? USER_PML4_IDX : KRNL_PML4_IDX];
-	if (!pml4t_entry->present) return NULL;
+	if (!pml4t_entry->present) return nullptr;
 
 	size_t	 count_so_far = 0;
 	uint64_t start_page_idx = 0;
@@ -434,7 +434,7 @@ void* alloc_vpages (size_t req_count, bool user) {
 
 	if (count_so_far == req_count) {
 		paddr_t base_physical = alloc_ppages (req_count);
-		if (base_physical == NULL) return NULL; // no more physical memory
+		if (base_physical == nullptr) return nullptr; // no more physical memory
 
 		vaddr_t first_vaddr = {user ? USER_PML4_IDX : KRNL_PML4_IDX, (start_page_idx >> 18) & 0x1FF,
 							   (start_page_idx >> 9) & 0x1FF, start_page_idx & 0x1FF, 0};
@@ -447,7 +447,7 @@ void* alloc_vpages (size_t req_count, bool user) {
 		return vaddr_t_to_ptr (&first_vaddr);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /*!
@@ -539,7 +539,7 @@ void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
  * @param count number of consecutive pages to free
  */
 void free_vpages (void* ptr, size_t count) {
-	if (ptr == NULL || count == 0) return;
+	if (ptr == nullptr || count == 0) return;
 
 	vaddr_t vaddr = get_vaddr_t_from_ptr (ptr);
 	if (vaddr.pml4_index != 1) {
@@ -548,7 +548,7 @@ void free_vpages (void* ptr, size_t count) {
 	}
 
 	void* phys_base = get_paddr (ptr);
-	if (phys_base == NULL) return;
+	if (phys_base == nullptr) return;
 
 	free_ppages (phys_base, count);
 
@@ -697,18 +697,18 @@ void walk_pagetable () {
 /*!
  * Finds the physical address mapped to a given virtual address.
  * @param vaddr The virtual address to look up.
- * @return The corresponding physical address, or NULL if not mapped.
+ * @return The corresponding physical address, or nullptr if not mapped.
  */
 void* get_paddr (void* vaddr) {
 	vaddr_t virtual_addr = get_vaddr_t_from_ptr (vaddr);
 
 	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[virtual_addr.pml4_index];
-	if (!pml4t_entry->present) return NULL;
+	if (!pml4t_entry->present) return nullptr;
 
 	pdpt_entry_t* pdpt_base_ptr =
 		(pdpt_entry_t*)get_vaddr_from_frame (pml4t_entry->pdpt_base_address);
 	pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[virtual_addr.pdpt_index];
-	if (!pdpt_entry->present) return NULL;
+	if (!pdpt_entry->present) return nullptr;
 
 	if (pdpt_entry->page_size) {
 		uint64_t phys_addr = (pdpt_entry->pd_base_address << 12) |
@@ -719,7 +719,7 @@ void* get_paddr (void* vaddr) {
 
 	pd_entry_t* pd_base_ptr = (pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address);
 	pd_entry_t* pd_entry = &pd_base_ptr[virtual_addr.pd_index];
-	if (!pd_entry->present) return NULL;
+	if (!pd_entry->present) return nullptr;
 
 	if (pd_entry->page_size) {
 		uint64_t phys_addr = (pd_entry->pt_base_address << 12) |
@@ -729,7 +729,7 @@ void* get_paddr (void* vaddr) {
 
 	pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
 	pt_entry_t* pt_entry = &pt_base_ptr[virtual_addr.pt_index];
-	if (!pt_entry->present) return NULL;
+	if (!pt_entry->present) return nullptr;
 
 	uint64_t phys_addr = (pt_entry->frame_base_address << 12) | virtual_addr.offset;
 
@@ -738,7 +738,7 @@ void* get_paddr (void* vaddr) {
 
 static paddr_t clone_pframes (paddr_t p_src, uint64_t page_count) {
 	paddr_t p_dest = alloc_ppages (page_count);
-	if (!p_dest) return NULL;
+	if (!p_dest) return nullptr;
 
 	void* v_dest = (void*)((uint64_t)p_dest + hhdm_offset);
 	void* v_src = (void*)((uint64_t)p_src + hhdm_offset);

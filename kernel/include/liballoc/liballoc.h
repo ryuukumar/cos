@@ -45,7 +45,7 @@ extern int liballoc_unlock (void);
  * accepts an integer parameter which is the number of pages
  * required.  The page size was set up in the liballoc_init function.
  *
- * \return NULL if the pages were not allocated.
+ * \return nullptr if the pages were not allocated.
  * \return A pointer to the allocated memory.
  */
 extern void* liballoc_alloc (size_t);

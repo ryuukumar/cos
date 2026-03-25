@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
-inode* vfs_absolute_root = NULL;
+inode* vfs_absolute_root = nullptr;
 
 static bool filename_has_invalid_chars (char* filename) {
 	while (*filename != 0) {
@@ -32,7 +32,7 @@ int vfs_resolve_parent (const char* path_arg, inode* root, inode** r_parent, cha
 	char* path = strdup (path_arg);
 	if (!path) return -ENOMEM;
 
-	char* last_slash = NULL;
+	char* last_slash = nullptr;
 	for (int i = strlen (path) - 1; i >= 0; i--) {
 		if (path[i] == '/') {
 			last_slash = &path[i];
@@ -82,7 +82,7 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
 	if (strcmp (dirname, ".") == 0 || strcmp (dirname, "..") == 0) return -EINVARG;
 
 	// case dirname already exists
-	inode* lookup_result = NULL;
+	inode* lookup_result = nullptr;
 	int	   error = parent->i_iops->lookup (dirname, &lookup_result, parent);
 	if (error == 0) return -EPEXISTS;
 	if (error != -EPNOEXIST) return error;
@@ -98,6 +98,7 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
  * @return 0 if successful, error otherwise
  */
 uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3) {
+	(void)mode; // TODO: consider mode when opening dirs
 	(void)arg3;
 
 	process* current = get_current_process ();
@@ -139,7 +140,7 @@ int do_create (char* filename, inode** result, inode* parent) {
 	if (strcmp (filename, ".") == 0 || strcmp (filename, "..") == 0) return -EINVARG;
 
 	// case filename already exists
-	inode* lookup_result = NULL;
+	inode* lookup_result = nullptr;
 	int	   error = parent->i_iops->lookup (filename, &lookup_result, parent);
 	if (error == 0) return -EPEXISTS;
 	if (error != -EPNOEXIST) return error;
@@ -208,14 +209,14 @@ int do_lookup (char* filename, inode** result, inode* root) {
 	// TODO: handle .. in vfs when process roots are established
 
 	// case '/*', root is a directory, * may or may not be a file -- look it up
-	inode* target_inode = NULL;
+	inode* target_inode = nullptr;
 	int	   error = root->i_iops->lookup (target_name, &target_inode, root);
 
 	kfree (target_name);
 
 	// case '/*', but the '*' component did not resolve
 	if (error) {
-		*result = NULL;
+		*result = nullptr;
 		return error;
 	}
 
@@ -302,6 +303,8 @@ int do_close (struct file* fd) {
  * @return fd if successful, else error
  */
 uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
+	(void)mode; // TODO: consider mode when opening file
+
 	char* filename = (char*)filename_ptr;
 	if (!filename) return -EINVARG;
 
@@ -310,13 +313,13 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
 
 	int fd = -1;
 	for (int i = 0; i < MAX_FDS && fd == -1; i++)
-		if (current->p_fds[i] == NULL) fd = i;
+		if (current->p_fds[i] == nullptr) fd = i;
 	if (fd < 0) return -EMFILE;
 
 	current->p_fds[fd] = kmalloc (sizeof (struct file)); // reserve the file entry
 	if (!current->p_fds[fd]) return -ENOMEM;
 
-	inode* target_inode = NULL;
+	inode* target_inode = nullptr;
 	int	   error = do_lookup (filename, &target_inode, current->p_root);
 	if (error == -EPNOEXIST && (flags & O_CREAT)) {
 		inode* parent;
@@ -336,7 +339,7 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
 
 cleanup:
 	kfree (current->p_fds[fd]);
-	current->p_fds[fd] = NULL;
+	current->p_fds[fd] = nullptr;
 	return error;
 }
 
@@ -386,7 +389,7 @@ uint64_t sys_close (uint64_t fd, uint64_t arg2, uint64_t arg3) {
 	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
 
 	struct file* f = current->p_fds[fd];
-	current->p_fds[fd] = NULL;
+	current->p_fds[fd] = nullptr;
 
 	return (uint64_t)do_close (f);
 }

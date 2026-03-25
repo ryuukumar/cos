@@ -8,7 +8,7 @@ static inode* root_inode;
 
 static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
 static file_operations	f_ops = {
-	.read = read, .write = write, .seek = seek, .open = NULL, .close = NULL};
+	.read = read, .write = write, .seek = seek, .open = nullptr, .close = nullptr};
 
 int mkdir (char* dirname, inode** result, inode* root) {
 	// requires: guarantee that vfs input is valid
@@ -162,6 +162,7 @@ int seek (inode* node, file* f, size_t offset, int whence) {
 		f->f_pos += offset;
 	else if (whence == SEEK_END)
 		return -ENOIMPL;
+	return f->f_pos;
 }
 
 inode* init_ramfs_root (void) {

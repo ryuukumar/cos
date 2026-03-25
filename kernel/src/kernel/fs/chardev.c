@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 static int stdout_write (inode* node, file* f, void* buf, size_t len) {
+	(void)node, (void)f; // args not used
 	bool stdio_buf = get_update_on_putch ();
 	set_update_on_putch (false);
 
@@ -18,6 +19,7 @@ static int stdout_write (inode* node, file* f, void* buf, size_t len) {
 }
 
 static int stderr_write (inode* node, file* f, void* buf, size_t len) {
+	(void)node, (void)f; // args not used
 	bool stdio_buf = get_update_on_putch ();
 	set_update_on_putch (false);
 
