@@ -19,7 +19,10 @@ void register_test (test_t t_handler, const char* t_failmessage) {
 	new_test->description = strdup (t_failmessage);
 	new_test->next = nullptr;
 
-	if (tests_tail) tests_tail->next = new_test;
+	if (tests_tail)
+		tests_tail->next = new_test;
+	else
+		tests_head = new_test;
 
 	tests_tail = new_test;
 }
