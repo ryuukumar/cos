@@ -10,7 +10,7 @@
 #define C_ISREG 0100000
 #define C_ISLNK 0120000
 
-static uint64_t hex_to_u64 (const char hex[8]) {
+static uint64_t hex_to_u64 (const char hex[8]) [[unsequenced]] {
 	uint64_t val = 0;
 	for (int i = 0; i < 8; i++) {
 		char	c = hex[i];
