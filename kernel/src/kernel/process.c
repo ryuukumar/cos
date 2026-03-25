@@ -48,22 +48,19 @@ process* get_current_process (void) { return current_process; }
 
 registers_t* schedule (registers_t* registers) {
 	process* upcoming_process = nullptr;
-	int		 errno = dequeue_process (get_ready_queue (), &upcoming_process);
-
-	if (errno != 0) return registers; // issue with queue
-
-	if (upcoming_process == nullptr) {
-		if (current_process != nullptr && current_process->p_state == TASK_RUNNING)
-			return registers;
-		for (;;)
-			; // if nothing to run, game over
-	}
 
 	if (current_process != nullptr && current_process->p_state == TASK_RUNNING) {
 		current_process->p_registers_ptr = registers;
 		current_process->p_state = TASK_READY;
 		enqueue_process (get_ready_queue (), current_process);
 	}
+
+	int errno = dequeue_process (get_ready_queue (), &upcoming_process);
+
+	if (upcoming_process == nullptr)
+		for (;;)
+			;						  // if nothing to run, game over
+	if (errno != 0) return registers; // issue with queue
 
 	current_process = upcoming_process;
 	current_process->p_state = TASK_RUNNING;
@@ -168,8 +165,7 @@ static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
 	for (int i = 0; i < MAX_FDS; i++)
 		if (current->p_fds[i]) sys_close (i, 0, 0);
 
-	dealloc_by_cr3 (current->p_cr3, 0, 512ll * 512ll * 512ll * 256ll);
-	free_vpages ((void*)(current->p_kstack - STACK_SIZE), STACK_SIZE / PAGE_SIZE);
+	// TODO: memory should not be freed here. set up a reaper for dead tasks
 
 	return (uint64_t)schedule (get_latest_r_frame ());
 }
