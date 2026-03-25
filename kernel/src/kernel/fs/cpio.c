@@ -131,7 +131,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	if (filetype == C_ISDIR) {
 		error = mkdir_if_required (filename, root_dir);
 		if (error) {
-			printf ("[CPIO] Could not create directory %s : %lld\n", filename, error);
+			kprintf ("[CPIO] Could not create directory %s : %lld\n", filename, error);
 			goto cleanup;
 		}
 	}
@@ -161,7 +161,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 			do_syscall (SYSCALL_SYS_WRITE, fd, (uint64_t)data, filesize);
 			do_syscall (SYSCALL_SYS_CLOSE, fd, 0, 0);
 		} else {
-			printf ("[CPIO] Could not write file %s : %lld\n", filename, fd);
+			kprintf ("[CPIO] Could not write file %s : %lld\n", filename, fd);
 			goto cleanup;
 		}
 	}

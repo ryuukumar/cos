@@ -80,25 +80,25 @@ static void print_info (void) {
 	drawBorder (20);
 	set_color (0x44eeaa);
 
-	printf ("COS 0.0%d", 7);
+	kprintf ("COS 0.0%d", 7);
 
 	set_color (0xddeecc);
 
-	printf ("\n\nHello, World!\n\n");
+	kprintf ("\n\nHello, World!\n\n");
 
 	set_color (0x88aaee);
-	printf ("System info:\n");
+	kprintf ("System info:\n");
 	if (bootinfo_req.response != nullptr) {
 		set_color (0x888888);
-		printf ("Bootloader: %s %s", bootinfo_req.response->name, bootinfo_req.response->version);
+		kprintf ("Bootloader: %s %s", bootinfo_req.response->name, bootinfo_req.response->version);
 	} else
-		printf ("\nDid not receive bootloader info from bootloader.\n");
+		kprintf ("\nDid not receive bootloader info from bootloader.\n");
 
 	if (boottime_req.response != nullptr) {
 		set_color (0x888888);
-		printf ("\nSystem booted at time %ld.\n", boottime_req.response->boot_time);
+		kprintf ("\nSystem booted at time %ld.\n", boottime_req.response->boot_time);
 	} else
-		printf ("\nDid not receive boot time from Limine.\n");
+		kprintf ("\nDid not receive boot time from Limine.\n");
 }
 
 __attribute__ ((noreturn)) void _start_stage2 (void) {
@@ -107,13 +107,13 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 
 	print_info ();
 
-	printf ("\n[Stage 2] Running as PID %lld\n", get_current_process ()->p_id);
-	printf ("[Stage 2] Current system tick: %lld\n", get_current_tick ());
+	kprintf ("\n[Stage 2] Running as PID %lld\n", get_current_process ()->p_id);
+	kprintf ("[Stage 2] Current system tick: %lld\n", get_current_tick ());
 
-	printf ("[Stage 2] Extracting initramfs...\n");
+	kprintf ("[Stage 2] Extracting initramfs...\n");
 	load_cpio_from_memory (initramfs->address, "/");
 
-	printf ("[Stage 2] Trying to load the ELF.\n");
+	kprintf ("[Stage 2] Trying to load the ELF.\n");
 
 	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
 
@@ -124,7 +124,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 		uintptr_t entry_point;
 		int		  err = load_elf ("/bin/hello", current, &entry_point);
 		if (err != 0) {
-			printf ("Failed to load /bin/hello : %d\n", err);
+			kprintf ("Failed to load /bin/hello : %d\n", err);
 			for (;;)
 				;
 		}

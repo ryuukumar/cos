@@ -10,7 +10,7 @@ Handle the different cases of %-- in printf
 @param	args	pointer to the arguments printf received
 @param	ul	whether the format prints an unsigned/long character
 */
-static void fmtprintf (const char* format, size_t* i, va_list* args, bool ul) {
+static void kfmtprintf (const char* format, size_t* i, va_list* args, bool ul) {
 	switch (format[*i]) {
 	case 's': {
 		const char* str = va_arg (*args, const char*);
@@ -42,7 +42,7 @@ static void fmtprintf (const char* format, size_t* i, va_list* args, bool ul) {
 	case 'u':
 	case 'l': {
 		(*i)++;
-		fmtprintf (format, i, args, true);
+		kfmtprintf (format, i, args, true);
 	} break;
 	default: {
 		putchar ('%');
@@ -56,7 +56,7 @@ Print a formatted string to the screen.
 
 @param	format formatted string to print
 */
-void printf (const char* format, ...) {
+void kprintf (const char* format, ...) {
 	va_list args;
 	va_start (args, format);
 
@@ -66,7 +66,7 @@ void printf (const char* format, ...) {
 		switch (format[i]) {
 		case '%': {
 			i++;
-			fmtprintf (format, &i, &args, false);
+			kfmtprintf (format, &i, &args, false);
 		} break;
 		case '\t':
 			size_t idx = get_idx ();

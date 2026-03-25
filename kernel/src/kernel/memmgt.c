@@ -217,7 +217,7 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 	if (bitmap_phys_addr == nullptr) {
 		write_serial_str (
 			"Not enough contiguous memory for bitmap setup!! Please download some RAM.\n");
-		printf ("Not enough contiguous memory for bitmap setup!! Please download some RAM.\n");
+		kprintf ("Not enough contiguous memory for bitmap setup!! Please download some RAM.\n");
 		__asm__ ("hlt");
 	}
 
@@ -672,7 +672,7 @@ void walk_pagetable () {
 	for (int k = 0; k < 512; k++) {
 		pd_entry_t* pd_entry = &pd_base_ptr[k];
 		if (!pd_entry->present) continue;
-		printf ("PD %d: PT Base Address:   0x%lx\n", k, pd_entry->pt_base_address << 12);
+		kprintf ("PD %d: PT Base Address:   0x%lx\n", k, pd_entry->pt_base_address << 12);
 		pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
 
 		bool is_present_pt[512] = {false};
@@ -686,9 +686,9 @@ void walk_pagetable () {
 				if (range_start == -1) range_start = k;
 			} else if (range_start != -1) {
 				if (range_start == k - 1)
-					printf ("  Present PT: %d\n", range_start);
+					kprintf ("  Present PT: %d\n", range_start);
 				else
-					printf ("  Present PTs: %d-%d\n", range_start, k - 1);
+					kprintf ("  Present PTs: %d-%d\n", range_start, k - 1);
 				range_start = -1;
 			}
 		}
