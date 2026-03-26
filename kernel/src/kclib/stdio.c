@@ -136,6 +136,6 @@ static void kvserial_printf (const char* fmt, va_list* list) {
 void kserial_printf (const char* fmt, ...) {
 	va_list ap;
 	va_start (ap, fmt);
-	kvprintf (fmt, &ap);
+	kvserial_printf (fmt, &ap);
 	va_end (ap);
 }
