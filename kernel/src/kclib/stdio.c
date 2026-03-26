@@ -97,3 +97,34 @@ static void kv_core_printf (const char* fmt, va_list* list, void (*putchar_call)
 			putchar_call (fmt[input_idx++]);
 	}
 }
+
+static char*  kvsprintf_buf;
+static size_t kvsprintf_idx;
+
+static void kvsprintf_putc (unsigned char c) { kvsprintf_buf[kvsprintf_idx++] = c; }
+
+static void kvsprintf (char* buf, const char* fmt, va_list* list) {
+	kvsprintf_buf = buf;
+	kvsprintf_idx = 0;
+	kv_core_printf (fmt, list, kvsprintf_putc);
+	buf[kvsprintf_idx] = '\0';
+}
+
+static void kvprintf (const char* fmt, va_list* list) {
+	kv_core_printf (fmt, list, putchar);
+	update ();
+}
+
+void ksprintf (char* buf, const char* fmt, ...) {
+	va_list ap;
+	va_start (ap, fmt);
+	kvsprintf (buf, fmt, &ap);
+	va_end (ap);
+}
+
+void kprintf (const char* fmt, ...) {
+	va_list ap;
+	va_start (ap, fmt);
+	kvprintf (fmt, &ap);
+	va_end (ap);
+}
