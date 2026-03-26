@@ -128,3 +128,14 @@ void kprintf (const char* fmt, ...) {
 	kvprintf (fmt, &ap);
 	va_end (ap);
 }
+
+static void kvserial_printf (const char* fmt, va_list* list) {
+	kv_core_printf (fmt, list, write_serial);
+}
+
+void kserial_printf (const char* fmt, ...) {
+	va_list ap;
+	va_start (ap, fmt);
+	kvprintf (fmt, &ap);
+	va_end (ap);
+}
