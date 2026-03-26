@@ -118,7 +118,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
 
 	if (fork_result == 0) {
-		write_serial_str ("Spawned child, attempting to start elf file.\n");
+		kserial_printf ("Spawned child, attempting to start elf file.\n");
 		process* current = get_current_process ();
 
 		uintptr_t entry_point;
@@ -135,7 +135,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 		alloc_by_cr3 (current->p_cr3, user_stack_base - (stack_pages * PAGE_SIZE), stack_pages,
 					  true);
 
-		write_serial_str ("Jumping to ring 3...\n");
+		kserial_printf ("Jumping to ring 3...\n");
 		jump_to_usermode (entry_point, user_stack_base, &current->p_user);
 	}
 
@@ -174,7 +174,7 @@ void _start (void) {
 	init_timer ();
 
 	init_serial ();
-	write_serial_str ("Hello from COS!\n");
+	kserial_printf ("Hello from COS!\n");
 
 	get_limine_requests ();
 
@@ -217,7 +217,7 @@ void _start (void) {
 	stage2_proc->p_registers_ptr = regs;
 	enqueue_process (get_ready_queue (), stage2_proc);
 
-	write_serial_str ("\n[Stage 1] Hands off to scheduler.\n");
+	kserial_printf ("\n[Stage 1] Hands off to scheduler.\n");
 	asm ("sti");
 	for (;;)
 		;

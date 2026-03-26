@@ -1,7 +1,7 @@
 
+#include <kclib/stdio.h>
 #include <kclib/string.h>
 #include <kernel/idt.h>
-#include <kernel/serial.h>
 
 __attribute__ ((aligned (0x10))) static idt_entry_t idt[256];
 
@@ -33,16 +33,11 @@ static void idt_set_gate (uint8_t vector, void* isr, uint8_t gate_type, uint8_t 
 }
 
 static inline void log_reg (const char* name, uint64_t value) {
-	char buf[32];
-	write_serial_str (name);
-	write_serial_str (": 0x");
-	kulitos (value, buf, 16);
-	write_serial_str (buf);
-	write_serial_str ("\n");
+	kserial_printf ("%s: 0x%x\n", name, value);
 }
 
 static void log_registers_to_serial (registers_t* registers) {
-	write_serial_str ("\n--- Interrupt/Exception Caught ---\n");
+	kserial_printf ("\n--- Interrupt/Exception Caught ---\n");
 
 	log_reg ("interrupt_number", registers->interrupt_number);
 	log_reg ("error_code", registers->error_code);
@@ -52,7 +47,7 @@ static void log_registers_to_serial (registers_t* registers) {
 	log_reg ("rsp", registers->rsp);
 	log_reg ("ss", registers->ss);
 
-	write_serial_str ("\n");
+	kserial_printf ("\n");
 
 	log_reg ("rax", registers->rax);
 	log_reg ("rbx", registers->rbx);
@@ -62,7 +57,7 @@ static void log_registers_to_serial (registers_t* registers) {
 	log_reg ("rdi", registers->rdi);
 	log_reg ("rbp", registers->rbp);
 
-	write_serial_str ("\n");
+	kserial_printf ("\n");
 
 	log_reg ("r8", registers->r8);
 	log_reg ("r9", registers->r9);
@@ -73,7 +68,7 @@ static void log_registers_to_serial (registers_t* registers) {
 	log_reg ("r14", registers->r14);
 	log_reg ("r15", registers->r15);
 
-	write_serial_str ("----------------------------------\n\n");
+	kserial_printf ("----------------------------------\n\n");
 }
 
 registers_t* kernel_dispatch_interrupt (registers_t* registers) {
@@ -81,7 +76,7 @@ registers_t* kernel_dispatch_interrupt (registers_t* registers) {
 	if (handler)
 		return handler (registers);
 	else {
-		write_serial_str ("Unhandled interrupt! Hasta la vista");
+		kserial_printf ("Unhandled interrupt! Hasta la vista");
 		log_registers_to_serial (registers);
 		while (1)
 			;
