@@ -1,6 +1,6 @@
+#include <kclib/assert.h>
 #include <kclib/stdio.h>
 #include <kclib/string.h>
-#include <kernel/kassert.h>
 #include <kernel/tests.h>
 #include <liballoc/liballoc.h>
 #include <stdint.h>

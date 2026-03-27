@@ -1,5 +1,5 @@
-#ifndef KASSERT_H
-#define KASSERT_H
+#ifndef ASSERT_H
+#define ASSERT_H
 
 typedef bool (*kassert_handler) (bool, const char*);
 

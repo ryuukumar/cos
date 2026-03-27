@@ -1,5 +1,5 @@
+#include <kclib/assert.h>
 #include <kclib/stdio.h>
-#include <kernel/kassert.h>
 
 /*!
  * Assert condition is true, if not, then busy wait
