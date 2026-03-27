@@ -26,15 +26,3 @@ size_t kstrnlen (const char* s, size_t n) {
 		ret++;
 	return ret;
 }
-
-/*!
- * Get the length of a standard string (terminating with 0). Stops search at strsz, if 0 character
- * is not yet encountered.
- * @param s string to check
- * @param strsz max length to scan
- * @return min of string size and strsz
- */
-size_t kstrnlen_s (const char* s, size_t strsz) {
-	if (s == nullptr) return 0;
-	return kstrnlen (s, strsz);
-}

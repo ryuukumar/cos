@@ -33,17 +33,6 @@ char*  kstrerror (int errnum);
 size_t kstrlen (const char* s);
 size_t kstrnlen (const char* s, size_t n);
 
-void*  kmemcpy_s (void* restrict s1, size_t s1max, const void* restrict s2, size_t n);
-void*  kmemmove_s (void* s1, size_t s1max, const void* s2, size_t n);
-char*  kstrcpy_s (char* restrict s1, size_t s1max, const char* restrict s2);
-char*  kstrncpy_s (char* restrict s1, size_t s1max, const char* restrict s2, size_t n);
-char*  kstrcat_s (char* restrict s1, size_t s1max, const char* restrict s2);
-char*  kstrncat_s (char* restrict s1, size_t s1max, const char* restrict s2, size_t n);
-char*  kstrtok_s (char* restrict s1, size_t* restrict s1max, const char* restrict s2,
-				  char** restrict ptr);
-void*  kmemset_s (void* s, size_t smax, int c, size_t n);
-size_t kstrnlen_s (const char* s, size_t maxsize);
-
 // TODO: these should be moved to some other lib
 
 void kitos (int32_t i, char* buf, uint32_t b);
