@@ -1,5 +1,4 @@
 #include <kclib/string.h>
-#include <liballoc/liballoc.h>
 
 /*!
 Reverse a standard string (terminating with 0).
@@ -65,18 +64,4 @@ void kulitos (uint64_t i, char* buf, uint32_t b) {
 	if (negative) buf[ctr++] = '-';
 	buf[ctr++] = 0;
 	kreverse (buf);
-}
-
-/*
- * Duplicate a string using the kernel allocator.
- * Returns a newly allocated copy or nullptr on failure.
- */
-char* kstrdup (const char* s) {
-	if (!s) return nullptr;
-	size_t len = kstrlen (s);
-	char*  dup = (char*)kmalloc (len + 1);
-	if (!dup) return nullptr;
-	for (size_t i = 0; i <= len; i++)
-		dup[i] = s[i];
-	return dup;
 }
