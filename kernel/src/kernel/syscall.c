@@ -1,7 +1,7 @@
 #include <kclib/memory.h>
+#include <kclib/stdio.h>
 #include <kernel/error.h>
 #include <kernel/process.h>
-#include <kernel/serial.h>
 #include <kernel/syscall.h>
 
 syscall_handler_t syscall_handlers[SYSCALL_COUNT];
@@ -21,7 +21,7 @@ registers_t* syscall_handler (registers_t* registers) {
 	if (syscall_handlers[vector]) {
 		registers->rax = syscall_handlers[vector](registers->rdi, registers->rsi, registers->rdx);
 	} else {
-		write_serial_str ("Unhandled syscall!\n");
+		kserial_printf ("Unhandled syscall 0x%x!\n", vector);
 		registers->rax = -ENOIMPL;
 	}
 

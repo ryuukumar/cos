@@ -3,7 +3,6 @@
 #include <kernel/console.h>
 #include <kernel/graphics.h>
 #include <kernel/hardfonts/classic.h>
-#include <kernel/serial.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -120,7 +119,6 @@ Print a single character to the screen.
 @param	rc character to print
 */
 void putchar (unsigned char rc) {
-	write_serial (rc);
 	switch (rc) {
 	case '\n':
 		idx = xc * ((idx / xc) + 1);
