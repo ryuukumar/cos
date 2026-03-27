@@ -33,4 +33,17 @@ char* kstrerror(int errnum);
 size_t kstrlen(const char* s);
 size_t kstrnlen(const char* s, size_t n);
 
+void* kmemcpy_s(void* restrict s1, rsize_t s1max, const void* restrict s2, rsize_t n);
+void* kmemmove_s(void* s1, rsize_t s1max, const void* s2, rsize_t n);
+char* kstrcpy_s(char* restrict s1, rsize_t s1max, const char* restrict s2);
+char* kstrncpy_s(char* restrict s1, rsize_t s1max, const char* restrict s2, rsize_t n);
+char* kstrcat_s(char* restrict s1, rsize_t s1max, const char* restrict s2);
+char* kstrncat_s(char* restrict s1, rsize_t s1max, const char* restrict s2, rsize_t n);
+char* kstrtok_s(char* restrict s1, rsize_t* restrict s1max,
+               const char* restrict s2, char** restrict ptr);
+void* kmemset_s(void* s, rsize_t smax, int c, rsize_t n)
+char* kstrerror_s(char* s, rsize_t maxsize, errno_t errnum);
+size_t kstrerrorlen_s(errno_t errnum);
+size_t kstrnlen_s(const char* s, size_t maxsize);
+
 #endif
