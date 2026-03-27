@@ -19,7 +19,7 @@ size_t kstrlen (const char* s) {
  * @param strsz max length to scan
  * @return min of string size and strsz
  */
-size_t kstrlen_s (const char* s, size_t strsz) {
+size_t kstrnlen_s (const char* s, size_t strsz) {
 	size_t ret = 0;
 	while (ret < strsz && s[ret] != 0)
 		ret++;
