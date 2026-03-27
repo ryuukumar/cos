@@ -2,7 +2,8 @@
 #include <kernel/error.h>
 
 /*!
- * Copy a string from s2 to s1.
+ * Copies the null-terminated byte string pointed to by s2, including the null terminator, to the
+ * character array whose first element is pointed to by s1.
  * @param s1 destination string
  * @param s2 source string
  * @return s1
@@ -15,8 +16,16 @@ char* kstrcpy (char* restrict s1, const char* restrict s2) {
 }
 
 /*!
- * Copy a string from s2 to s1. Will limit to n characters, and does not guarantee s1 to be
- * 0-terminated. If s2 does not fill up n bytes in s1, the remaining bytes are set to 0.
+ * Copies at most n characters of the character array pointed to by s2 (including the terminating
+ * null character, but not any of the characters that follow the null character) to character array
+ * pointed to by s1.
+ *
+ * If n is reached before the entire array s2 was copied, the resulting character array is not
+ * null-terminated.
+ *
+ * If, after copying the terminating null character from s2, n is not reached, additional null
+ * characters are written to s1 until the total of n characters have been written.
+ *
  * @param s1 destination string
  * @param s2 source string
  * @return s1
