@@ -40,7 +40,8 @@ static size_t format_handler (const char* input, size_t idx, va_list* list, char
 	char* buf = NULL;
 	switch (spec) {
 	case 's':
-		buf = kstrdup (va_arg (*list, const char*));
+		char* str = kstrdup (va_arg (*list, const char*));
+		if (str) buf = str;
 		break;
 	case '%':
 		buf = kmalloc (2);
@@ -90,6 +91,7 @@ static void kv_core_printf (const char* fmt, va_list* list, void (*putchar_call)
 	for (size_t input_idx = 0; input_idx < kstrlen (fmt);) {
 		if (fmt[input_idx] == '%') {
 			input_idx += format_handler (fmt, input_idx, list, &tmpbuf);
+			if (!tmpbuf) continue;
 			for (size_t tmp_idx = 0; tmp_idx < kstrlen (tmpbuf); tmp_idx++)
 				putchar_call (tmpbuf[tmp_idx]);
 			kfree (tmpbuf), tmpbuf = nullptr;
