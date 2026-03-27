@@ -3,7 +3,6 @@
 #include <kernel/error.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
-#include <kernel/serial.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
 

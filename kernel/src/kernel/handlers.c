@@ -1,8 +1,8 @@
+#include <kclib/stdio.h>
 #include <kernel/handlers.h>
-#include <kernel/serial.h>
 
 registers_t* handle_gpf (registers_t* registers) {
-	write_serial_str ("\nOopsy! Looks like someone tried to execute a disallowed instruction!");
+	kserial_printf ("\nOopsy! Looks like someone tried to execute a disallowed instruction!");
 	for (;;)
 		;
 	return registers; // dead code but shuts up unused var warning

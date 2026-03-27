@@ -6,7 +6,6 @@
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
 #include <kernel/process.h>
-#include <kernel/serial.h>
 #include <kernel/syscall.h>
 
 #define ALIGNUP(x, o) ((x + o - 1) & ~(o - 1))
@@ -173,11 +172,8 @@ static void free_ppages (void* paddr, uint64_t count) {
 		}
 
 		if (!is_valid) {
-			char buffer[16];
-			kulitos ((uint64_t)paddr, buffer, 16);
-			write_serial_str ("Tried to free reserved memory! Address: 0x");
-			write_serial_str (buffer);
-			write_serial_str ("\nHalting.\n");
+			kserial_printf ("Tried to free reserved memory! Address: 0x%llx\nHalting.\n",
+							(uint64_t)paddr);
 			__asm__ ("hlt");
 		}
 
@@ -215,7 +211,7 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 	}
 
 	if (bitmap_phys_addr == nullptr) {
-		write_serial_str (
+		kserial_printf (
 			"Not enough contiguous memory for bitmap setup!! Please download some RAM.\n");
 		kprintf ("Not enough contiguous memory for bitmap setup!! Please download some RAM.\n");
 		__asm__ ("hlt");
@@ -250,13 +246,7 @@ registers_t* page_fault_handler (registers_t* registers) {
 	uint64_t cr2;
 	__asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
 
-	char buffer[16];
-	kulitos (cr2, buffer, 16);
-
-	write_serial_str ("\nEncountered a page fault!\n");
-	write_serial_str ("Faulting address: 0x");
-	write_serial_str (buffer);
-	write_serial ('\n');
+	kserial_printf ("\nEncountered a page fault!\nFaulting address: 0x%llx\n", cr2);
 
 	for (;;)
 		;
@@ -544,7 +534,7 @@ void free_vpages (void* ptr, size_t count) {
 
 	vaddr_t vaddr = get_vaddr_t_from_ptr (ptr);
 	if (vaddr.pml4_index != 1) {
-		write_serial_str ("free_vpages called for pml4_index that is not 1!");
+		kserial_printf ("free_vpages called for pml4_index that is not 1!");
 		return;
 	}
 

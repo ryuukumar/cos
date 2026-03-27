@@ -4,7 +4,6 @@
 #include <kernel/error.h>
 #include <kernel/fs/cpio.h>
 #include <kernel/process.h>
-#include <kernel/serial.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
 
@@ -33,7 +32,7 @@ static uint64_t hex_to_u64 (const char hex[8]) [[unsequenced]] {
 static void* jump_next_file (void* pos) {
 	cpio_newc_header_t* header = pos;
 	if (kmemcmp (header->c_magic, "070701", 6) != 0) {
-		write_serial_str (
+		kserial_printf (
 			"Caller provided a pointer to cpio header, but it did not have the magic number!\n");
 		return nullptr;
 	}
