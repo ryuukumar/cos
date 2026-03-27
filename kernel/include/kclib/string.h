@@ -16,9 +16,7 @@ char*  kstrcat (char* restrict s1, const char* restrict s2);
 char*  kstrncat (char* restrict s1, const char* restrict s2, size_t n);
 int	   kmemcmp (const void* s1, const void* s2, size_t n);
 int	   kstrcmp (const char* s1, const char* s2);
-int	   kstrcoll (const char* s1, const char* s2);
 int	   kstrncmp (const char* s1, const char* s2, size_t n);
-size_t kstrxfrm (char* restrict s1, const char* restrict s2, size_t n);
 void*  kmemchr (void* s, int c, size_t n);
 char*  kstrchr (char* s, int c);
 size_t kstrcspn (const char* s1, const char* s2);
@@ -28,7 +26,6 @@ size_t kstrspn (const char* s1, const char* s2);
 char*  kstrstr (char* s1, const char* s2);
 void*  kmemset (void* s, int c, size_t n);
 void*  kmemset_explicit (void* s, int c, size_t n);
-char*  kstrerror (int errnum);
 size_t kstrlen (const char* s);
 size_t kstrnlen (const char* s, size_t n);
 
@@ -36,6 +33,13 @@ size_t kstrnlen (const char* s, size_t n);
 // of keeping it in static memory
 
 char* kstrtok_r (char* restrict s1, const char* restrict s2, char** restrict saveptr);
+
+// TODO: implement when consideration for locale is required
+// int kstrcoll (const char* s1, const char* s2);
+// size_t kstrxfrm (char* restrict s1, const char* restrict s2, size_t n);
+
+// TODO: implement when errno infrastructure is set up
+// char* kstrerror (int errnum);
 
 // TODO: these should be moved to some other lib
 
