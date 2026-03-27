@@ -89,11 +89,11 @@ int ispunct (int c) { return isgraph (c) && !isalnum (c); }
  * @param c character to assess
  * @return lowercase character if matches, else c
  */
-char tolower (int c) { return isupper (c) ? (c + ('a' - 'A')) : c; }
+int tolower (int c) { return isupper (c) ? (c + ('a' - 'A')) : c; }
 
 /*!
  * Converts a character to uppercase
  * @param c character to assess
  * @return uppercase character if matches, else c
  */
-char toupper (int c) { return islower (c) ? (c - ('a' - 'A')) : c; }
+int toupper (int c) { return islower (c) ? (c - ('a' - 'A')) : c; }
