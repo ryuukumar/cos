@@ -67,18 +67,6 @@ void kulitos (uint64_t i, char* buf, uint32_t b) {
 	kreverse (buf);
 }
 
-/*!
- * Compare two strings.
- * @param a first string
- * @param b second string
- * @return whether strings are equal
- */
-int kstrcmp (const char* a, const char* b) {
-	for (int i = 0; a[i] != 0 && b[i] != 0; i++)
-		if (a[i] != b[i]) return 1;
-	return 0;
-}
-
 /*
  * Duplicate a string using the kernel allocator.
  * Returns a newly allocated copy or nullptr on failure.
