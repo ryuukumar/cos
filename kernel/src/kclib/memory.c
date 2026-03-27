@@ -1,5 +1,5 @@
 
-#include <kclib/memory.h>
+#include <kclib/string.h>
 
 /*!
 Copy memory chunk of size n.

@@ -1,4 +1,3 @@
-#include <kclib/memory.h>
 #include <kclib/string.h>
 #include <kernel/gdt.h>
 #include <kernel/stack.h>

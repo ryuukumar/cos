@@ -1,4 +1,3 @@
-#include <kclib/memory.h>
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/vfs.h>
