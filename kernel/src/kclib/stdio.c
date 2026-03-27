@@ -8,7 +8,7 @@
 /*!
  * Handle the next % case in printf. Currently handles: d,i -> signed int, u -> unsigned int, x,X ->
  * unsigned hexadecimal (case not considered), l,ll prefix -> 64-bit, h prefix -> 16-bit, hh prefix
- * -> 8-bit, s -> string, % -> actual % sign
+ * -> 8-bit, s -> string, % -> actual % sign, c -> character (signed), p -> 64-bit pointer
  * @param input full input fmt string
  * @param idx pointer to index at which % was encountered
  * @param list argument list
@@ -43,10 +43,21 @@ static size_t format_handler (const char* input, size_t idx, va_list* list, char
 		char* str = kstrdup (va_arg (*list, const char*));
 		if (str) buf = str;
 		break;
+	case 'c':
+		buf = kmalloc (2);
+		buf[0] = (char)va_arg (*list, int);
+		buf[1] = '\0';
+		break;
 	case '%':
 		buf = kmalloc (2);
 		buf[0] = '%';
 		buf[1] = '\0';
+		break;
+	case 'p':
+		buf = kmalloc (19);
+		buf[0] = '0';
+		buf[1] = 'x';
+		kulitos ((uint64_t)va_arg (*list, void*), buf + 2, 16);
 		break;
 	case 'd':
 	case 'i':
