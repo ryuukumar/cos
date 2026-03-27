@@ -33,7 +33,6 @@ char*  kstrerror (int errnum);
 size_t kstrlen (const char* s);
 size_t kstrnlen (const char* s, size_t n);
 
-
 size_t kstrlen_s (const char* s, size_t strsz);
 void*  kmemcpy_s (void* restrict s1, size_t s1max, const void* restrict s2, size_t n);
 void*  kmemmove_s (void* s1, size_t s1max, const void* s2, size_t n);
@@ -43,9 +42,12 @@ char*  kstrcat_s (char* restrict s1, size_t s1max, const char* restrict s2);
 char*  kstrncat_s (char* restrict s1, size_t s1max, const char* restrict s2, size_t n);
 char*  kstrtok_s (char* restrict s1, size_t* restrict s1max, const char* restrict s2,
 				  char** restrict ptr);
-void*  kmemset_s (void* s, size_t smax, int c,
-				  size_t n) char* kstrerror_s (char* s, size_t maxsize, errno_t errnum);
-size_t kstrerrorlen_s (errno_t errnum);
+void*  kmemset_s (void* s, size_t smax, int c, size_t n);
 size_t kstrnlen_s (const char* s, size_t maxsize);
+
+// TODO: these should be moved to some other lib
+
+void kitos (int32_t i, char* buf, uint32_t b);
+void kulitos (uint64_t i, char* buf, uint32_t b);
 
 #endif
