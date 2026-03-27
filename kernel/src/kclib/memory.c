@@ -19,22 +19,6 @@ void* kmemcpy (void* dest, const void* src, size_t n) {
 }
 
 /*!
-Set memory chunk of size n to be value c.
-
-@param  s pointer to memory
-@param  c value to set memory to
-@param  n size of memory chunk
-*/
-void* kmemset (void* s, int c, size_t n) {
-	uint8_t* p = (uint8_t*)s;
-
-	for (size_t i = 0; i < n; i++)
-		p[i] = (uint8_t)c;
-
-	return s;
-}
-
-/*!
 Move memory chunk.
 
 @param  dest destination
