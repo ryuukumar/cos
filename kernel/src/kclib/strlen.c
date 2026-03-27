@@ -20,7 +20,6 @@ size_t kstrlen (const char* s) {
  * @return min of string size and strsz
  */
 size_t kstrnlen (const char* s, size_t n) {
-	if (s == nullptr) return 0;
 	size_t ret = 0;
 	while (ret < n && s[ret] != 0)
 		ret++;
