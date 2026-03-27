@@ -54,21 +54,3 @@ void* kmemmove (void* dest, const void* src, size_t n) {
 
 	return dest;
 }
-
-/*!
-Compare memory chunks.
-
-@param  s1 memory chunk 1
-@param  s2 memory chunk 2
-@param  n size of both chunks
-@return -1 if less, 0 if equal and 1 if greater
-*/
-int kmemcmp (const void* s1, const void* s2, size_t n) {
-	const uint8_t* p1 = (const uint8_t*)s1;
-	const uint8_t* p2 = (const uint8_t*)s2;
-
-	for (size_t i = 0; i < n; i++)
-		if (p1[i] != p2[i]) return p1[i] < p2[i] ? -1 : 1;
-
-	return 0;
-}
