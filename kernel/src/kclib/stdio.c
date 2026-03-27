@@ -5,6 +5,15 @@
 #include <kernel/serial.h>
 #include <liballoc/liballoc.h>
 
+static uint64_t uint_str_to_num (const char* str, size_t len) {
+	uint64_t res = 0;
+	for (size_t i = 0; i < len; i++) {
+		res *= 10;
+		res += str[i] - '0';
+	}
+	return res;
+}
+
 /*!
  * Handle the next % case in printf. Currently handles: d,i -> signed int, u -> unsigned int, x,X ->
  * unsigned hexadecimal (case not considered), l,ll prefix -> 64-bit, h prefix -> 16-bit, hh prefix
@@ -23,8 +32,24 @@ static size_t format_handler (const char* input, size_t idx, va_list* list, char
 
 	size_t consumed = 1; /* '%' */
 	size_t input_bytes = 32;
+	size_t pad_width = 0;
+	char   pad_char = ' ';
 
 	idx++;
+	if ('0' <= input[idx] && input[idx] <= '9') {
+		if (input[idx] == '0') {
+			idx++, consumed++;
+			pad_char = '0';
+		}
+
+		size_t num_len = idx;
+		while ('0' <= input[idx] && input[idx] <= '9')
+			idx++, consumed++;
+		num_len = idx - num_len;
+
+		pad_width = uint_str_to_num ((const char*)&input[idx - num_len], num_len);
+	}
+
 	while (input[idx] == 'l' || input[idx] == 'h') {
 		if (input[idx] == 'l')
 			input_bytes = 64;
@@ -91,6 +116,23 @@ static size_t format_handler (const char* input, size_t idx, va_list* list, char
 	default:
 		*r_output = nullptr;
 		return consumed;
+	}
+
+	if (pad_width > 0 && buf) {
+		size_t len = kstrlen (buf);
+
+		if (pad_width > len) {
+			size_t newlen = pad_width;
+			char*  pbuf = kmalloc (newlen + 1);
+			size_t pad = pad_width - len;
+
+			for (size_t i = 0; i < pad; i++)
+				pbuf[i] = pad_char;
+
+			kmemcpy (pbuf + pad, buf, len + 1);
+			kfree (buf);
+			buf = pbuf;
+		}
 	}
 
 	*r_output = buf;
