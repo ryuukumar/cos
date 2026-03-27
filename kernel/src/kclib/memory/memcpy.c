@@ -1,7 +1,7 @@
 #include <kclib/string.h>
 
 /*!
- * Copies count characters from the object pointed to by s2 to the object pointed to by s1. Both
+ * Copies n characters from the object pointed to by s2 to the object pointed to by s1. Both
  * objects are interpreted as arrays of unsigned char.
  *
  * @param s1 destination buffer
