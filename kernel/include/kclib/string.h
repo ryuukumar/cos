@@ -26,12 +26,16 @@ char*  kstrpbrk (char* s1, const char* s2);
 char*  kstrrchr (char* s, int c);
 size_t kstrspn (const char* s1, const char* s2);
 char*  kstrstr (char* s1, const char* s2);
-char*  kstrtok (char* restrict s1, const char* restrict s2);
 void*  kmemset (void* s, int c, size_t n);
 void*  kmemset_explicit (void* s, int c, size_t n);
 char*  kstrerror (int errnum);
 size_t kstrlen (const char* s);
 size_t kstrnlen (const char* s, size_t n);
+
+// The following is only provided as a reentrant version that accepts a pointer from caller instead
+// of keeping it in static memory
+
+char* kstrtok_r (char* restrict s1, const char* restrict s2, char** restrict saveptr);
 
 // TODO: these should be moved to some other lib
 
