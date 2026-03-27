@@ -1,10 +1,9 @@
 #include <kassert.h>
-#include <kernel/serial.h>
+#include <kclib/stdio.h>
+#include <kclib/string.h>
 #include <kernel/tests.h>
 #include <liballoc/liballoc.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <string.h>
 
 reg_test_t* tests_head = nullptr;
 reg_test_t* tests_tail = nullptr;
@@ -16,7 +15,7 @@ void register_test (test_t t_handler, const char* t_failmessage) {
 						"Tried to register a test but no memory was available.\n");
 
 	new_test->handler = t_handler;
-	new_test->description = strdup (t_failmessage);
+	new_test->description = kstrdup (t_failmessage);
 	new_test->next = nullptr;
 
 	if (tests_tail)
@@ -33,18 +32,14 @@ void run_tests (void) {
 	for (reg_test_t* test = tests_head; test != nullptr; test = test->next) {
 		if (test->handler) {
 			if (!test->handler ()) {
-				write_serial_str ("Test failed: ");
-				write_serial_str (test->description);
-				write_serial ('\n');
+				kserial_printf ("Test failed: %s\n", test->description);
 				failed++;
 			} else {
-				write_serial_str ("Test succeeded: ");
-				write_serial_str (test->description);
-				write_serial ('\n');
+				kserial_printf ("Test succeeded: %s\n", test->description);
 				successful++;
 			}
 		}
 	}
 
-	printf ("Ran all tests! %lld succeeded, %lld failed.\n", successful, failed);
+	kprintf ("Ran all tests! %lld succeeded, %lld failed.\n", successful, failed);
 }
