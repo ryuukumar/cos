@@ -242,7 +242,7 @@ void init_process (void) {
 	register_syscall (SYSCALL_SYS_GETPID, sys_getpid);
 
 #ifdef SYS_SELF_TEST
-	register_test (test_process_queue_empty, "Process Queue: Dequeue from empty queue");
-	register_test (test_process_queue_torture, "Process Queue: Happy path torture");
+	register_test (test_process_queue_empty, "Dequeuing from empty queue");
+	register_test (test_process_queue_torture, "Process queue torture");
 #endif
 }
