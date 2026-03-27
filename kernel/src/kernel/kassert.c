@@ -1,5 +1,5 @@
-#include <kassert.h>
-#include <kernel/serial.h>
+#include <kclib/stdio.h>
+#include <kernel/kassert.h>
 
 /*!
  * Assert condition is true, if not, then busy wait
@@ -29,8 +29,7 @@ inline bool kassert_handle (bool condition, const char* message, kassert_handler
  */
 inline bool kassert_print_halt (bool condition, const char* message) {
 	if (condition) return true;
-	write_serial_str ("KASSERT (halt) failed for:\n");
-	write_serial_str (message);
+	kserial_printf ("KASSERT (halt) failed for: %s\n", message);
 	for (;;)
 		;
 }
@@ -42,8 +41,7 @@ inline bool kassert_print_halt (bool condition, const char* message) {
  */
 inline bool kassert_print_no_block (bool condition, const char* message) {
 	if (condition) return true;
-	write_serial_str ("KASSERT (non-block) failed for:\n");
-	write_serial_str (message);
+	kserial_printf ("KASSERT (non-block) failed for: %s\n", message);
 	return false;
 }
 
@@ -55,7 +53,6 @@ inline bool kassert_print_no_block (bool condition, const char* message) {
  */
 inline bool kassert_print_handle (bool condition, const char* message, kassert_handler handler) {
 	if (condition) return true;
-	write_serial_str ("KASSERT (handle) failed for:\n");
-	write_serial_str (message);
+	kserial_printf ("KASSERT (handle) failed for: %s\n", message);
 	return handler (condition, message);
 }
