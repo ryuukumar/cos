@@ -2,24 +2,11 @@
 #include <liballoc/liballoc.h>
 
 /*!
-Get the length of a standard string (terminating with 0).
-
-@param  str pointer to string
-@return string size
-*/
-size_t kstrlen (const char* str) {
-	size_t ret = 0;
-	while (str[ret] != 0)
-		ret++;
-	return ret;
-}
-
-/*!
 Reverse a standard string (terminating with 0).
 
 @param  str string to reverse
 */
-void kreverse (char* str) {
+static void kreverse (char* str) {
 	int len = kstrlen (str), start = 0, end = len - 1;
 	while (start < end) {
 		char temp = str[start];
