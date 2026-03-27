@@ -7,6 +7,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void printf (const char*, ...);
+void kprintf (const char*, ...);
 
 #endif

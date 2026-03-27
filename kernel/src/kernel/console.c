@@ -1,12 +1,11 @@
+#include <kclib/memory.h>
+#include <kclib/string.h>
 #include <kernel/console.h>
 #include <kernel/graphics.h>
 #include <kernel/hardfonts/classic.h>
 #include <kernel/serial.h>
-#include <memory.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 
 #define CONSOLE_HEIGHT 80
 #define CONSOLE_WIDTH  140

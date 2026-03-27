@@ -1,5 +1,5 @@
 
-#include <memory.h>
+#include <kclib/memory.h>
 
 /*!
 Copy memory chunk of size n.
@@ -8,7 +8,7 @@ Copy memory chunk of size n.
 @param  src source
 @param  n width of data
 */
-void* memcpy (void* dest, const void* src, size_t n) {
+void* kmemcpy (void* dest, const void* src, size_t n) {
 	uint8_t*	   pdest = (uint8_t*)dest;
 	const uint8_t* psrc = (const uint8_t*)src;
 
@@ -25,7 +25,7 @@ Set memory chunk of size n to be value c.
 @param  c value to set memory to
 @param  n size of memory chunk
 */
-void* memset (void* s, int c, size_t n) {
+void* kmemset (void* s, int c, size_t n) {
 	uint8_t* p = (uint8_t*)s;
 
 	for (size_t i = 0; i < n; i++)
@@ -41,7 +41,7 @@ Move memory chunk.
 @param  src source
 @param  n width of data
 */
-void* memmove (void* dest, const void* src, size_t n) {
+void* kmemmove (void* dest, const void* src, size_t n) {
 	uint8_t*	   pdest = (uint8_t*)dest;
 	const uint8_t* psrc = (const uint8_t*)src;
 
@@ -63,7 +63,7 @@ Compare memory chunks.
 @param  n size of both chunks
 @return -1 if less, 0 if equal and 1 if greater
 */
-int memcmp (const void* s1, const void* s2, size_t n) {
+int kmemcmp (const void* s1, const void* s2, size_t n) {
 	const uint8_t* p1 = (const uint8_t*)s1;
 	const uint8_t* p2 = (const uint8_t*)s2;
 

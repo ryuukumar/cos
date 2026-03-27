@@ -1,10 +1,12 @@
+#include <kclib/memory.h>
+#include <kclib/stdio.h>
+#include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/cpio.h>
 #include <kernel/process.h>
+#include <kernel/serial.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
-#include <memory.h>
-#include <stdio.h>
 
 #define C_ISDIR 0040000
 #define C_ISREG 0100000
@@ -30,7 +32,7 @@ static uint64_t hex_to_u64 (const char hex[8]) [[unsequenced]] {
 
 static void* jump_next_file (void* pos) {
 	cpio_newc_header_t* header = pos;
-	if (memcmp (header->c_magic, "070701", 6) != 0) {
+	if (kmemcmp (header->c_magic, "070701", 6) != 0) {
 		write_serial_str (
 			"Caller provided a pointer to cpio header, but it did not have the magic number!\n");
 		return nullptr;
@@ -40,7 +42,7 @@ static void* jump_next_file (void* pos) {
 	uint64_t filesize = hex_to_u64 (header->c_filesize);
 
 	pos += sizeof (cpio_newc_header_t);
-	if (memcmp (pos, "TRAILER!!!", 11) == 0) return nullptr;
+	if (kmemcmp (pos, "TRAILER!!!", 11) == 0) return nullptr;
 
 	pos += namesize;
 	if ((uint64_t)pos % 4) pos += 4 - ((uint64_t)pos % 4);
@@ -54,10 +56,10 @@ static int mkdir_if_required (const char* dir, inode* root) {
 	if (!dir) return -EINVARG;
 	if (dir[0] != '/') return -ENEEDABS;
 
-	char* path = strdup (dir);
+	char* path = kstrdup (dir);
 	if (!path) return -ENOMEM;
 
-	size_t len = strlen (path);
+	size_t len = kstrlen (path);
 	while (len > 1 && path[len - 1] == '/') {
 		path[len - 1] = '\0';
 		len--;
@@ -94,7 +96,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 		child_name = nullptr;
 	}
 
-	if (error == 0 && child_name && strlen (child_name) > 0) {
+	if (error == 0 && child_name && kstrlen (child_name) > 0) {
 		inode* result = nullptr;
 		error = do_mkdir (child_name, &result, parent_dir);
 		if (error == -EPEXISTS) error = 0;
@@ -120,16 +122,16 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	if (namesize == 0) return -EINVARG;
 
 	char* filename = kmalloc (namesize + 1);
-	memcpy ((void*)(filename + 1), (void*)(header + 1), namesize);
+	kmemcpy ((void*)(filename + 1), (void*)(header + 1), namesize);
 	filename[namesize] = 0; // enforce string in case corrupt
 	filename[0] = '/';		// many syscalls require absolute paths, which cpio does not guarantee
 
-	if (strcmp (filename, "/TRAILER!!!") == 0 || strcmp (filename, "/.") == 0) goto cleanup;
+	if (kstrcmp (filename, "/TRAILER!!!") == 0 || kstrcmp (filename, "/.") == 0) goto cleanup;
 
 	if (filetype == C_ISDIR) {
 		error = mkdir_if_required (filename, root_dir);
 		if (error) {
-			printf ("[CPIO] Could not create directory %s : %lld\n", filename, error);
+			kprintf ("[CPIO] Could not create directory %s : %lld\n", filename, error);
 			goto cleanup;
 		}
 	}
@@ -159,7 +161,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 			do_syscall (SYSCALL_SYS_WRITE, fd, (uint64_t)data, filesize);
 			do_syscall (SYSCALL_SYS_CLOSE, fd, 0, 0);
 		} else {
-			printf ("[CPIO] Could not write file %s : %lld\n", filename, fd);
+			kprintf ("[CPIO] Could not write file %s : %lld\n", filename, fd);
 			goto cleanup;
 		}
 	}

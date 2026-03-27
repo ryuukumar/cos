@@ -1,3 +1,4 @@
+#include <kclib/memory.h>
 #include <kernel/error.h>
 #include <kernel/gdt.h>
 #include <kernel/memmgt.h>
@@ -5,7 +6,6 @@
 #include <kernel/stack.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
-#include <memory.h>
 
 process_queue ready_queue;
 uint64_t	  next_free_pid;
@@ -73,7 +73,7 @@ int process_fork (process* source_process, process** dest_ptr) {
 	process* new_process = kmalloc (sizeof (process));
 	if (!new_process) return -ENOMEM;
 
-	memcpy ((void*)new_process, (void*)source_process, sizeof (process));
+	kmemcpy ((void*)new_process, (void*)source_process, sizeof (process));
 
 	void* new_kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, false);
 	if (!new_kstack) return -ENOMEM;
@@ -86,7 +86,7 @@ int process_fork (process* source_process, process** dest_ptr) {
 	// privilege shift, messing up rbp and stuff
 	if (!source_process->p_user) {
 		// Kernel thread: flush parent state into child's new kernel stack byte-for-byte
-		memcpy (new_kstack, (void*)(source_process->p_kstack - STACK_SIZE), STACK_SIZE);
+		kmemcpy (new_kstack, (void*)(source_process->p_kstack - STACK_SIZE), STACK_SIZE);
 
 		uintptr_t parent_stack_base = source_process->p_kstack - STACK_SIZE;
 		uintptr_t child_stack_base = (uintptr_t)new_kstack;
@@ -121,7 +121,7 @@ int process_fork (process* source_process, process** dest_ptr) {
 		}
 	} else {
 		registers_t* child_frame = (registers_t*)(new_process->p_kstack - sizeof (registers_t));
-		memcpy (child_frame, source_process->p_registers_ptr, sizeof (registers_t));
+		kmemcpy (child_frame, source_process->p_registers_ptr, sizeof (registers_t));
 		new_process->p_registers_ptr = child_frame;
 		new_process->p_registers_ptr->rsp = source_process->p_registers_ptr->rsp;
 	}

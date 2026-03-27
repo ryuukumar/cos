@@ -2,9 +2,7 @@
 #ifndef IDT_H
 #define IDT_H
 
-#include <kernel/serial.h>
 #include <stdint.h>
-#include <string.h>
 
 typedef struct __attribute__ ((packed)) {
 	uint16_t size;
