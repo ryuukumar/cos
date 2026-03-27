@@ -1,20 +1,20 @@
 #ifndef CTYPE_H
 #define CTYPE_H
 
-int isalnum (char c);
-int isalpha (char c);
-int islower (char c);
-int isupper (char c);
-int isdigit (char c);
-int isxdigit (char c);
-int iscntrl (char c);
-int isgraph (char c);
-int isspace (char c);
-int isblank (char c);
-int isprint (char c);
-int ispunct (char c);
+int isalnum (int c);
+int isalpha (int c);
+int islower (int c);
+int isupper (int c);
+int isdigit (int c);
+int isxdigit (int c);
+int iscntrl (int c);
+int isgraph (int c);
+int isspace (int c);
+int isblank (int c);
+int isprint (int c);
+int ispunct (int c);
 
-char tolower (char c);
-char toupper (char c);
+char tolower (int c);
+char toupper (int c);
 
 #endif
