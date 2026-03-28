@@ -1,3 +1,4 @@
+#include <kclib/ctype.h>
 #include <kclib/string.h>
 #include <kernel/console.h>
 #include <kernel/graphics.h>
@@ -78,8 +79,7 @@ void init_console (size_t x_screen, size_t y_screen, size_t x_pad, size_t y_pad,
 
 	fs = font_size;
 
-	for (size_t i = 0; i < xc * yc; i++)
-		buffer[i] = 32;
+	kmemset (buffer, 32, xc * yc);
 }
 
 /*!
@@ -93,11 +93,11 @@ void set_color (uint32_t c) { color = c; }
 Update the display.
 */
 void update () {
-	for (size_t i = 0; i < yc; i++) {
-		for (size_t j = 0; j < xc; j++) {
-			renderGlyph (glyph (buffer[i * xc + j]), 8, 5, xs + (fs * j * (5 + xsp)),
-						 ys + (fs * i * (8 + ysp)), fs, colorbuffer[i * xc + j]);
-		}
+	for (size_t pos = 0; pos < xc * yc; pos++) {
+		size_t i = pos / xc;
+		size_t j = pos % xc;
+		renderGlyph (glyph (buffer[pos]), 8, 5, xs + (fs * j * (5 + xsp)),
+					 ys + (fs * i * (8 + ysp)), fs, colorbuffer[pos]);
 	}
 }
 
@@ -120,9 +120,8 @@ Print a single character to the screen.
 void putchar (unsigned char rc) {
 	switch (rc) {
 	case '\n':
-		idx = xc * ((idx / xc) + 1);
-		while (idx >= CONSOLE_HEIGHT * CONSOLE_WIDTH)
-			idx -= CONSOLE_HEIGHT * CONSOLE_WIDTH;
+		idx = ((idx / xc) + 1) * xc;
+		if (idx >= xc * yc) idx -= xc * yc;
 		return;
 	}
 	registerChar (rc, idx);
