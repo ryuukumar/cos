@@ -1,4 +1,4 @@
-#include <kclib/memory.h>
+#include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/gdt.h>
 #include <kernel/memmgt.h>
@@ -164,8 +164,6 @@ static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
 
 	for (int i = 0; i < MAX_FDS; i++)
 		if (current->p_fds[i]) sys_close (i, 0, 0);
-
-	// TODO: memory should not be freed here. set up a reaper for dead tasks
 
 	return (uint64_t)schedule (get_latest_r_frame ());
 }

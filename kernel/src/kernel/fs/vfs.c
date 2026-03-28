@@ -1,4 +1,4 @@
-#include <kclib/memory.h>
+#include <kclib/ctype.h>
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/vfs.h>
@@ -10,7 +10,8 @@ inode* vfs_absolute_root = nullptr;
 
 static bool filename_has_invalid_chars (char* filename) {
 	while (*filename != 0) {
-		if (*filename == '/' || *filename < (char)32) return true;
+		unsigned char c = (unsigned char)*filename;
+		if (c == '/' || !isprint (c)) return true;
 		filename++;
 	}
 	return false;
@@ -29,12 +30,10 @@ int vfs_resolve_parent (const char* path_arg, inode* root, inode** r_parent, cha
 	char* path = kstrdup (path_arg);
 	if (!path) return -ENOMEM;
 
-	char* last_slash = nullptr;
-	for (int i = kstrlen (path) - 1; i >= 0; i--) {
-		if (path[i] == '/') {
-			last_slash = &path[i];
-			break;
-		}
+	char* last_slash = kstrrchr (path, '/');
+	if (!last_slash) {
+		kfree (path);
+		return -EINVARG;
 	}
 
 	*r_name = kstrdup (last_slash + 1);
@@ -185,9 +184,8 @@ int do_lookup (char* filename, inode** result, inode* root) {
 	}
 
 	// get the target_name
-	char* target_name = (char*)kmalloc ((size_t)(next_slash - filename));
-	kmemcpy ((void*)target_name, (void*)(filename + 1), (size_t)(next_slash - filename) - 1);
-	target_name[(size_t)(next_slash - filename) - 1] = 0;
+	size_t comp_len = (size_t)(next_slash - filename) - 1;
+	char*  target_name = kstrndup (filename + 1, comp_len);
 
 	if (kstrcmp (target_name, ".") == 0) {
 		kfree (target_name);

@@ -1,4 +1,4 @@
-#include <kclib/memory.h>
+#include <kclib/ctype.h>
 #include <kclib/stdio.h>
 #include <kclib/string.h>
 #include <kernel/error.h>
@@ -14,16 +14,13 @@
 static uint64_t hex_to_u64 (const char hex[8]) [[unsequenced]] {
 	uint64_t val = 0;
 	for (int i = 0; i < 8; i++) {
-		char	c = hex[i];
-		uint8_t digit;
-		if (c >= '0' && c <= '9')
+		unsigned char c = (unsigned char)hex[i];
+		uint8_t		  digit;
+		if (!isxdigit (c)) break;
+		if (isdigit (c))
 			digit = c - '0';
-		else if (c >= 'A' && c <= 'F')
-			digit = c - 'A' + 10;
-		else if (c >= 'a' && c <= 'f')
-			digit = c - 'a' + 10;
 		else
-			break;
+			digit = tolower (c) - 'a' + 10;
 		val = (val << 4) | digit;
 	}
 	return val;
@@ -76,13 +73,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 	if (error == -EPNOEXIST) {
 		child_name = nullptr;
 
-		char* last_slash = nullptr;
-		for (int i = len - 1; i >= 0; i--) {
-			if (path[i] == '/') {
-				last_slash = &path[i];
-				break;
-			}
-		}
+		char* last_slash = kstrrchr (path, '/');
 
 		if (last_slash && last_slash != path) {
 			*last_slash = '\0';
@@ -135,17 +126,14 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 		}
 	}
 	if (filetype == C_ISREG) {
-		char* trailing_slashes = &filename[namesize - 1];
-		while ((uintptr_t)trailing_slashes > (uintptr_t)filename && *trailing_slashes == '/')
-			trailing_slashes--;
-		trailing_slashes[1] = 0;
+		size_t flen = kstrlen (filename);
+		while (flen > 1 && filename[flen - 1] == '/')
+			flen--;
+		filename[flen] = '\0';
 
-		char* last_slash = trailing_slashes;
-		while ((uintptr_t)last_slash > (uintptr_t)filename && *last_slash != '/')
-			last_slash--;
-
-		if (last_slash != filename) { // i.e. there is a prefix
-			*last_slash = 0;
+		char* last_slash = kstrrchr (filename, '/');
+		if (last_slash && last_slash != filename) {
+			*last_slash = '\0';
 			mkdir_if_required (filename, root_dir);
 			*last_slash = '/';
 		}
