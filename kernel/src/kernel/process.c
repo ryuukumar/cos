@@ -59,8 +59,8 @@ registers_t* schedule (registers_t* registers) {
 
 	if (upcoming_process == nullptr)
 		for (;;)
-			;						  // if nothing to run, game over
-	if (errno != 0) return registers; // issue with queue
+			;
+	if (errno != 0) return registers;
 
 	current_process = upcoming_process;
 	current_process->p_state = TASK_RUNNING;
