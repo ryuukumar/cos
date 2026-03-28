@@ -645,46 +645,6 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 uintptr_t get_kernel_cr3 (void) { return kernel_cr3; }
 
 /*!
- * Walks the page table hierarchy and prints present entries and their address ranges.
- * @deprecated
- */
-void walk_pagetable () {
-	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[1];
-	if (!pml4t_entry->present) return;
-
-	pdpt_entry_t* pdpt_base_ptr =
-		(pdpt_entry_t*)get_vaddr_from_frame (pml4t_entry->pdpt_base_address);
-	pdpt_entry_t* pdpt_entry = &pdpt_base_ptr[0];
-	if (!pdpt_entry->present) return;
-
-	pd_entry_t* pd_base_ptr = (pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address);
-	for (int k = 0; k < 512; k++) {
-		pd_entry_t* pd_entry = &pd_base_ptr[k];
-		if (!pd_entry->present) continue;
-		kprintf ("PD %d: PT Base Address:   0x%lx\n", k, pd_entry->pt_base_address << 12);
-		pt_entry_t* pt_base_ptr = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
-
-		bool is_present_pt[512] = {false};
-		for (int k = 0; k < 512; k++)
-			is_present_pt[k] = (&pt_base_ptr[k])->present;
-
-		// print ranges of present pd's
-		int range_start = -1;
-		for (int k = 0; k <= 512; k++) {
-			if (k < 512 && is_present_pt[k]) {
-				if (range_start == -1) range_start = k;
-			} else if (range_start != -1) {
-				if (range_start == k - 1)
-					kprintf ("  Present PT: %d\n", range_start);
-				else
-					kprintf ("  Present PTs: %d-%d\n", range_start, k - 1);
-				range_start = -1;
-			}
-		}
-	}
-}
-
-/*!
  * Finds the physical address mapped to a given virtual address.
  * @param vaddr The virtual address to look up.
  * @return The corresponding physical address, or nullptr if not mapped.
