@@ -48,22 +48,19 @@ process* get_current_process (void) { return current_process; }
 
 registers_t* schedule (registers_t* registers) {
 	process* upcoming_process = nullptr;
-	int		 errno = dequeue_process (get_ready_queue (), &upcoming_process);
-
-	if (errno != 0) return registers; // issue with queue
-
-	if (upcoming_process == nullptr) {
-		if (current_process != nullptr && current_process->p_state == TASK_RUNNING)
-			return registers;
-		for (;;)
-			; // if nothing to run, game over
-	}
 
 	if (current_process != nullptr && current_process->p_state == TASK_RUNNING) {
 		current_process->p_registers_ptr = registers;
 		current_process->p_state = TASK_READY;
 		enqueue_process (get_ready_queue (), current_process);
 	}
+
+	int errno = dequeue_process (get_ready_queue (), &upcoming_process);
+
+	if (upcoming_process == nullptr)
+		for (;;)
+			;
+	if (errno != 0) return registers;
 
 	current_process = upcoming_process;
 	current_process->p_state = TASK_RUNNING;
