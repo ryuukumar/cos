@@ -174,6 +174,63 @@ static uint64_t sys_getpid (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 	return current ? current->p_id : 0ull;
 }
 
+#ifdef SYS_SELF_TEST
+
+#include <kernel/tests.h>
+
+static bool test_process_queue_torture (void) {
+	const int	  count = 50;
+	process_queue q = {.head = nullptr, .tail = nullptr};
+	process**	  procs = kmalloc (sizeof (process*) * count);
+	if (!procs) return false;
+
+	// Fill procs
+	for (int i = 0; i < count; i++) {
+		procs[i] = kmalloc (sizeof (process));
+		if (!procs[i]) return false;
+		procs[i]->p_id = 1000 + i;
+		if (enqueue_process (&q, procs[i]) != 0) return false;
+	}
+
+	// Partial dequeue and re-enqueue
+	for (int i = 0; i < count / 2; i++) {
+		process* out = nullptr;
+		if (dequeue_process (&q, &out) != 0 || out != procs[i]) return false;
+	}
+
+	for (int i = 0; i < count / 2; i++)
+		if (enqueue_process (&q, procs[i]) != 0) return false;
+
+	// Final drain and verification
+	for (int i = count / 2; i < count; i++) {
+		process* out = nullptr;
+		if (dequeue_process (&q, &out) != 0 || out != procs[i]) return false;
+	}
+	for (int i = 0; i < count / 2; i++) {
+		process* out = nullptr;
+		if (dequeue_process (&q, &out) != 0 || out != procs[i]) return false;
+	}
+
+	// Cleanup
+	for (int i = 0; i < count; i++)
+		kfree (procs[i]);
+	kfree (procs);
+
+	return q.head == nullptr && q.tail == nullptr;
+}
+
+static bool test_process_queue_empty (void) {
+	process_queue q = {.head = nullptr, .tail = nullptr};
+	process*	  out = (process*)0xdeadbeef;
+
+	if (dequeue_process (&q, &out) != 0) return false;
+	if (out != nullptr) return false;
+
+	return true;
+}
+
+#endif
+
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = nullptr;
 	next_free_pid = 2ll;
@@ -181,4 +238,9 @@ void init_process (void) {
 	register_syscall (SYSCALL_SYS_EXIT, sys_exit);
 	register_syscall (SYSCALL_SYS_FORK, sys_fork);
 	register_syscall (SYSCALL_SYS_GETPID, sys_getpid);
+
+#ifdef SYS_SELF_TEST
+	register_test (test_process_queue_empty, "Dequeuing from empty queue");
+	register_test (test_process_queue_torture, "Process queue torture");
+#endif
 }

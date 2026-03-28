@@ -59,7 +59,8 @@ override CFLAGS += \
 	-mno-sse \
 	-mno-sse2 \
 	-mno-red-zone \
-	-mcmodel=kernel
+	-mcmodel=kernel \
+	-DSYS_SELF_TEST
 
 # TODO: add these flags: -Wconversion -Wsign-conversion -Wcast-align \
 # -Wpointer-arith -Wshadow
@@ -70,7 +71,8 @@ override CPPFLAGS := \
 	-I. \
 	$(CPPFLAGS) \
 	-MMD \
-	-MP
+	-MP \
+	-DSYS_SELF_TEST
  
 # Internal linker flags that should not be changed by the user.
 override LDFLAGS += \
