@@ -753,8 +753,7 @@ int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest) {
 
 	// map the higher half to be exactly the same as kernel's
 	pml4t_entry_t* krnl_pml4_table = (pml4t_entry_t*)((uint64_t)get_kernel_cr3 () + hhdm_offset);
-	for (int i = 256; i < 512; i++)
-		dest_pml4_table[i] = krnl_pml4_table[i];
+	kmemcpy (&dest_pml4_table[256], &krnl_pml4_table[256], 256 * sizeof (pml4t_entry_t));
 
 	// deep clone the lower half (user space)
 	for (uint16_t pml4_index = 0; pml4_index < 256; pml4_index++) {
