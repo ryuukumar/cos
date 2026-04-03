@@ -40,15 +40,15 @@ charqueue* create_charqueue (void) {
  * @return 0 if successful, else error code
  */
 int push_charqueue (charqueue* queue, unsigned char insert) {
+	charqueue_page_t* new_page = nullptr;
+	if (queue->tail.current_page == nullptr || queue->tail.offset > max_offset) {
+		new_page = alloc_vpage (false);
+		if (new_page == nullptr) return -ENOMEM;
+		new_page->next = nullptr;
+	}
+
 	uint64_t flags = spinlock_acquire (&queue->lock);
 	if (queue->tail.current_page == nullptr || queue->tail.offset > max_offset) {
-		charqueue_page_t* new_page = alloc_vpage (false);
-		if (new_page == nullptr) {
-			spinlock_release (&queue->lock, flags);
-			return -ENOMEM;
-		}
-
-		new_page->next = nullptr;
 		queue->tail.offset = 0;
 		if (queue->tail.current_page == nullptr) {
 			queue->head.current_page = queue->tail.current_page = new_page;
@@ -56,10 +56,13 @@ int push_charqueue (charqueue* queue, unsigned char insert) {
 		} else {
 			queue->tail.current_page = queue->tail.current_page->next = new_page;
 		}
+		new_page = nullptr;
 	}
 
 	queue->tail.current_page->data[queue->tail.offset++] = insert;
 	spinlock_release (&queue->lock, flags);
+
+	if (new_page) free_vpage (new_page);
 	return 0;
 }
 
@@ -77,6 +80,7 @@ int pop_charqueue (charqueue* queue, unsigned char* ret) {
 		return -EEMPQ;
 	}
 	*ret = queue->head.current_page->data[queue->head.offset++];
+	charqueue_page_t* page_to_free = nullptr;
 	if (queue->head.offset > max_offset) {
 		// possible if current page is cleared out; then just reuse the same page
 		if (queue->head.current_page == queue->tail.current_page) {
@@ -86,12 +90,13 @@ int pop_charqueue (charqueue* queue, unsigned char* ret) {
 		}
 
 		charqueue_page_t* next_page = queue->head.current_page->next;
-		free_vpage (queue->head.current_page);
+		page_to_free = queue->head.current_page;
 		queue->head.current_page = next_page;
 		queue->head.offset = 0;
 	}
 
 	spinlock_release (&queue->lock, flags);
+	if (page_to_free) free_vpage (page_to_free);
 	return 0;
 }
 
