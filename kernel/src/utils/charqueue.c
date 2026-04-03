@@ -116,7 +116,9 @@ int peek_charqueue (charqueue* queue, unsigned char* ret) {
 }
 
 /*!
- * Free a charqueue entirely. Behavior undefined if any input parameter or queue state is invalid
+ * Free a charqueue entirely. Behavior undefined if any input parameter or queue state is invalid.
+ * Behavior undefined for other threads or processes that access the same queue while this function
+ * is executing or after it has executed.
  * @param queue valid charqueue
  * @return 0 if successful, else error code
  */
