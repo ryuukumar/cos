@@ -53,6 +53,7 @@ int push_charqueue (charqueue* queue, unsigned char insert) {
 				spinlock_release (&queue->lock, flags);
 				return -ENOMEM;
 			}
+			new_page->next = nullptr;
 		}
 		queue->tail.offset = 0;
 		if (queue->tail.current_page == nullptr) {
