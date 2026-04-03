@@ -2,6 +2,7 @@
 #include <kernel/error.h>
 #include <liballoc/liballoc.h>
 #include <utils/charqueue.h>
+#include <utils/spinlock.h>
 
 constexpr unsigned int max_offset = PAGE_SIZE - sizeof (charqueue_page_t*) - 1;
 
@@ -39,9 +40,13 @@ charqueue* create_charqueue (void) {
  * @return 0 if successful, else error code
  */
 int push_charqueue (charqueue* queue, unsigned char insert) {
+	uint64_t flags = spinlock_acquire (&queue->lock);
 	if (queue->tail.current_page == nullptr || queue->tail.offset > max_offset) {
 		charqueue_page_t* new_page = alloc_vpage (false);
-		if (new_page == nullptr) return -ENOMEM;
+		if (new_page == nullptr) {
+			spinlock_release (&queue->lock, flags);
+			return -ENOMEM;
+		}
 
 		new_page->next = nullptr;
 		queue->tail.offset = 0;
@@ -54,6 +59,7 @@ int push_charqueue (charqueue* queue, unsigned char insert) {
 	}
 
 	queue->tail.current_page->data[queue->tail.offset++] = insert;
+	spinlock_release (&queue->lock, flags);
 	return 0;
 }
 
@@ -65,18 +71,27 @@ int push_charqueue (charqueue* queue, unsigned char insert) {
  * @return 0 if successful, else error code
  */
 int pop_charqueue (charqueue* queue, unsigned char* ret) {
-	if (is_empty_charqueue (queue)) return -EEMPQ;
+	uint64_t flags = spinlock_acquire (&queue->lock);
+	if (is_empty_charqueue (queue)) {
+		spinlock_release (&queue->lock, flags);
+		return -EEMPQ;
+	}
 	*ret = queue->head.current_page->data[queue->head.offset++];
 	if (queue->head.offset > max_offset) {
 		// possible if current page is cleared out; then just reuse the same page
-		if (queue->head.current_page == queue->tail.current_page)
-			return queue->head.offset = queue->tail.offset = 0;
+		if (queue->head.current_page == queue->tail.current_page) {
+			queue->head.offset = queue->tail.offset = 0;
+			spinlock_release (&queue->lock, flags);
+			return 0;
+		}
 
 		charqueue_page_t* next_page = queue->head.current_page->next;
 		free_vpage (queue->head.current_page);
 		queue->head.current_page = next_page;
 		queue->head.offset = 0;
 	}
+
+	spinlock_release (&queue->lock, flags);
 	return 0;
 }
 
@@ -88,8 +103,13 @@ int pop_charqueue (charqueue* queue, unsigned char* ret) {
  * @return 0 if successful, else error code
  */
 int peek_charqueue (charqueue* queue, unsigned char* ret) {
-	if (is_empty_charqueue (queue)) return -EEMPQ;
+	uint64_t flags = spinlock_acquire (&queue->lock);
+	if (is_empty_charqueue (queue)) {
+		spinlock_release (&queue->lock, flags);
+		return -EEMPQ;
+	}
 	*ret = queue->head.current_page->data[queue->head.offset];
+	spinlock_release (&queue->lock, flags);
 	return 0;
 }
 

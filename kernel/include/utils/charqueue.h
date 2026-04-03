@@ -17,6 +17,7 @@ typedef struct {
 
 typedef struct {
 	charqueue_ptr_t head, tail;
+	bool			lock;
 } charqueue;
 
 charqueue* create_charqueue (void);
