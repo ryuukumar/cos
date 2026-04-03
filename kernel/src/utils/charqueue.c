@@ -119,11 +119,17 @@ int peek_charqueue (charqueue* queue, unsigned char* ret) {
  * @return 0 if successful, else error code
  */
 int free_charqueue (charqueue* queue) {
-	for (charqueue_page_t* current_page = queue->head.current_page; current_page != nullptr;) {
+	uint64_t		  flags = spinlock_acquire (&queue->lock);
+	charqueue_page_t* current_page = queue->head.current_page;
+	queue->head.current_page = queue->tail.current_page = nullptr;
+	spinlock_release (&queue->lock, flags);
+
+	while (current_page != nullptr) {
 		charqueue_page_t* page_stat = current_page;
 		current_page = current_page->next;
 		free_vpage (page_stat);
 	}
+
 	kfree (queue);
 	return 0;
 }
