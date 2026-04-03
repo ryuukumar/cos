@@ -46,6 +46,14 @@ int push_charqueue (charqueue* queue, unsigned char insert) {
 
 	uint64_t flags = spinlock_acquire (&queue->lock);
 	if (queue->tail.current_page == nullptr || queue->tail.offset > max_offset) {
+		if (new_page == nullptr) {
+			// TODO: this should be replaced with a quicker allocation function when available
+			new_page = alloc_vpage (false);
+			if (new_page == nullptr) {
+				spinlock_release (&queue->lock, flags);
+				return -ENOMEM;
+			}
+		}
 		queue->tail.offset = 0;
 		if (queue->tail.current_page == nullptr) {
 			queue->head.current_page = queue->tail.current_page = new_page;
