@@ -5,6 +5,9 @@
 
 constexpr unsigned int max_offset = PAGE_SIZE - sizeof (charqueue_page_t*) - 1;
 
+// TODO: thread safety via __atomic_test_and_set and __atomic_clear
+// This should probably live centrally somewhere, and may require some process considerations
+
 /*!
  * Check if queue is empty. A queue is empty if it is not initialised, initialised but has no pages
  * allocated, or has pages allocated but pointers are identical.
