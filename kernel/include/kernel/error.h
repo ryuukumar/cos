@@ -23,6 +23,8 @@
 
 // Corrupt queue
 #define ECORRQ 601
+// Empty queue
+#define EEMPQ 602
 
 // Cannot execute
 #define ENOEXEC 701
