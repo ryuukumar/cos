@@ -18,83 +18,23 @@ static int stdout_write (inode* node, file* f, void* buf, size_t len) {
 	return len;
 }
 
-static int stderr_write (inode* node, file* f, void* buf, size_t len) {
-	(void)node, (void)f; // args not used
-	bool stdio_buf = get_update_on_putch ();
-	set_update_on_putch (false);
+void init_tty1 (inode* absolute_root) {
+	inode* dev_dir = nullptr;
+	int	   error = do_mkdir ("dev", &dev_dir, absolute_root);
+	if (!(error == 0 || error == -EPEXISTS)) return;
 
-	for (size_t i = 0; i < len; i++)
-		putchar (((char*)buf)[i]);
+	inode* tty1_file = nullptr;
+	error = do_create ("tty1", &tty1_file, dev_dir);
+	if (error != 0 || !tty1_file) return;
 
-	update ();
-	set_update_on_putch (stdio_buf);
-	return len;
-}
+	file_operations* tty1_fops = kmalloc (sizeof (file_operations));
+	if (!tty1_fops) return;
 
-int register_stdin (struct file* f) {
-	if (!f) return -EINVARG;
+	kmemset (tty1_fops, 0, sizeof (file_operations));
+	tty1_fops->write = stdout_write;
+	// tty1_fops->read = // connect to keyboard get_next_char when available
 
-	inode* new_inode = kmalloc (sizeof (inode));
-	if (!new_inode) return -ENOMEM;
-
-	kmemset (new_inode, 0, sizeof (inode));
-
-	new_inode->i_cnt = 1;
-	new_inode->i_type = CHAR_DEV;
-
-	f->f_inode = new_inode;
-
-	return 0;
-}
-
-int register_stdout (struct file* f) {
-	if (!f) return -EINVARG;
-
-	inode* new_inode = kmalloc (sizeof (inode));
-	if (!new_inode) return -ENOMEM;
-
-	file_operations* stdout_fops = kmalloc (sizeof (file_operations));
-	if (!stdout_fops) {
-		kfree (new_inode);
-		return -ENOMEM;
-	}
-
-	kmemset (new_inode, 0, sizeof (inode));
-	kmemset (stdout_fops, 0, sizeof (file_operations));
-
-	stdout_fops->write = stdout_write;
-
-	new_inode->i_cnt = 1;
-	new_inode->i_type = CHAR_DEV;
-
-	f->f_inode = new_inode;
-	f->f_fops = stdout_fops;
-
-	return 0;
-}
-
-int register_stderr (struct file* f) {
-	if (!f) return -EINVARG;
-
-	inode* new_inode = kmalloc (sizeof (inode));
-	if (!new_inode) return -ENOMEM;
-
-	file_operations* stdout_fops = kmalloc (sizeof (file_operations));
-	if (!stdout_fops) {
-		kfree (new_inode);
-		return -ENOMEM;
-	}
-
-	kmemset (new_inode, 0, sizeof (inode));
-	kmemset (stdout_fops, 0, sizeof (file_operations));
-
-	stdout_fops->write = stderr_write;
-
-	new_inode->i_cnt = 1;
-	new_inode->i_type = CHAR_DEV;
-
-	f->f_inode = new_inode;
-	f->f_fops = stdout_fops;
-
-	return 0;
+	tty1_file->i_iops = nullptr;
+	tty1_file->i_fops = tty1_fops;
+	tty1_file->i_type = CHAR_DEV;
 }
