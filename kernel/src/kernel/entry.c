@@ -107,6 +107,9 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
 	init_kb ();
 
+	for (int i = 0; i < 3; i++) // open stdin, stdout and stderr
+		do_syscall (SYSCALL_SYS_OPEN, (uint64_t)"/dev/tty1", 0, 0);
+
 	print_info ();
 
 	kprintf ("\n[Stage 2] Running as PID %lld\n", get_current_process ()->p_id);
@@ -186,6 +189,7 @@ void _start (void) {
 	init_process ();
 
 	init_vfs (init_ramfs_root ());
+	init_tty1 (get_absolute_root ());
 
 	// Launch Stage 2 as the first process (PID 1)
 	process* stage2_proc = kmalloc (sizeof (process));
@@ -195,15 +199,6 @@ void _start (void) {
 	stage2_proc->p_user = false;
 	stage2_proc->p_state = TASK_READY;
 	stage2_proc->p_wd = stage2_proc->p_root = get_absolute_root ();
-
-	for (int i = 0; i < 3; i++) {
-		stage2_proc->p_fds[i] = kmalloc (sizeof (struct file));
-		kmemset (stage2_proc->p_fds[i], 0, sizeof (struct file));
-	}
-
-	register_stdin (stage2_proc->p_fds[0]);
-	register_stdout (stage2_proc->p_fds[1]);
-	register_stderr (stage2_proc->p_fds[2]);
 
 	void* kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, false);
 	stage2_proc->p_kstack = (uintptr_t)kstack + STACK_SIZE;

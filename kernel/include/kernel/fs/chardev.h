@@ -3,8 +3,6 @@
 
 #include <kernel/fs/vfs.h>
 
-int register_stderr (struct file* f);
-int register_stdin (struct file* f);
-int register_stdout (struct file* f);
+void init_tty1 (inode* absolute_root);
 
 #endif
