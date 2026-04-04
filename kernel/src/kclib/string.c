@@ -39,7 +39,7 @@ void kitos (int32_t i, char* buf, uint32_t b) {
 	} while (i);
 	if (ctr == 0) buf[0] = '0';
 	if (negative) buf[ctr++] = '-';
-	buf[ctr + 1] = 0;
+	buf[ctr++] = 0;
 	kreverse (buf);
 }
 
