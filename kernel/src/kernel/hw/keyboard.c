@@ -1,9 +1,11 @@
-#include <kclib/stdio.h>
 #include <kernel/hw/keyboard.h>
 #include <kernel/hw/pic.h>
+#include <kernel/idt.h>
 #include <kernel/io.h>
+#include <utils/charqueue.h>
 
-static bool is_kb_setup = false;
+static bool		  is_kb_setup = false;
+static charqueue* kb_keypress_charqueue;
 
 static inline kb_ps2_status_register_t kb_read_status_register (void) {
 	return (kb_ps2_status_register_t){.raw = inb (kb_ps2_status_port)};
@@ -47,7 +49,16 @@ static inline bool kb_reset (void) {
 	return true;
 }
 
+static registers_t* kb_handler (registers_t* registers) {
+	unsigned char scancode = kb_read_data ();
+	pic_send_eoi (1);
+	push_charqueue (kb_keypress_charqueue, scancode);
+	return registers;
+}
+
 void init_kb (void) {
+	kb_keypress_charqueue = create_charqueue ();
+
 	// TODO: actually verify the PS2 controller exists
 
 	kb_send_command (kb_ps2_disable_port_1, false);
@@ -70,4 +81,9 @@ void init_kb (void) {
 	cfg_byte.irq1_enable = 1;
 	kb_write_cfg_byte (cfg_byte);
 	is_kb_setup = kb_reset ();
+
+	if (kb_keypress_charqueue != nullptr) {
+		idt_register_handler (0x21, kb_handler);
+		pic_clr_mask (1);
+	}
 }
