@@ -106,7 +106,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
 
 	for (int i = 0; i < 3; i++) // open stdin, stdout and stderr
-		sys_open ((uint64_t)"/dev/tty1", 0, 0);
+		do_syscall (SYSCALL_SYS_OPEN, (uint64_t)"/dev/tty1", 0, 0);
 
 	print_info ();
 
