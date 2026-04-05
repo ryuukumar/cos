@@ -70,6 +70,10 @@ void schedule (registers_t* registers) {
 	current_process->p_state = TASK_RUNNING;
 	tss_set_stack (current_process->p_kstack);
 
+	// context switching between the same process is buggy because of compiler evaluation gimmicks.
+	// the simplest solution is to just avoid it entirely
+	if (prev == upcoming_process) return;
+
 	if (prev != nullptr) {
 		switch_to (&prev->p_sp, upcoming_process->p_sp, upcoming_process->p_cr3);
 	} else {
