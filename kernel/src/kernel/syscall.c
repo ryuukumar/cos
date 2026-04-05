@@ -14,9 +14,6 @@ void syscall_handler (registers_t* registers) {
 	process* current = get_current_process ();
 	if (current) current->p_registers_ptr = registers;
 
-	// if (vector == SYSCALL_SYS_EXIT)
-	// 	syscall_handlers[vector](registers->rdi, registers->rsi, registers->rdx);
-
 	if (syscall_handlers[vector]) {
 		registers->rax = syscall_handlers[vector](registers->rdi, registers->rsi, registers->rdx);
 	} else {
