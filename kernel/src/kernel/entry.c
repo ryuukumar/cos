@@ -143,7 +143,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	}
 
 	for (;;)
-		;
+		do_syscall (SYSCALL_SCHED_YIELD, 0, 0, 0);
 }
 
 static void get_limine_requests (void) {

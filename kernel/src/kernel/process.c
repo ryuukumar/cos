@@ -82,6 +82,11 @@ void schedule (registers_t* registers) {
 	}
 }
 
+static int do_sched_yield (void) {
+	schedule (get_latest_r_frame ());
+	return 0;
+}
+
 int process_fork (process* source_process, process** dest_ptr) {
 	process* new_process = kmalloc (sizeof (process));
 	if (!new_process) return -ENOMEM;
@@ -201,6 +206,11 @@ static uint64_t sys_getpid (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 	return current ? current->p_id : 0ull;
 }
 
+static uint64_t sys_sched_yield (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+	(void)arg1, (void)arg2, (void)arg3;
+	return do_sched_yield ();
+}
+
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = nullptr;
 	next_free_pid = 2ll;
@@ -208,4 +218,5 @@ void init_process (void) {
 	register_syscall (SYSCALL_SYS_EXIT, sys_exit);
 	register_syscall (SYSCALL_SYS_FORK, sys_fork);
 	register_syscall (SYSCALL_SYS_GETPID, sys_getpid);
+	register_syscall (SYSCALL_SCHED_YIELD, sys_sched_yield);
 }
