@@ -18,6 +18,7 @@
 #include <kernel/serial.h>
 #include <kernel/stack.h>
 #include <kernel/syscall.h>
+#include <kernel/tests.h>
 #include <liballoc/liballoc.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -141,6 +142,15 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 		kserial_printf ("Jumping to ring 3...\n");
 		jump_to_usermode (entry_point, user_stack_base, &current->p_user);
 	}
+
+#ifdef SYS_SELF_TEST
+	uint64_t test_fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
+	if (test_fork_result == 0) {
+		write_serial_str ("Sys self test enabled!\n");
+		run_tests ();
+		do_syscall (SYSCALL_SYS_EXIT, 0, 0, 0);
+	}
+#endif
 
 	for (;;)
 		;
