@@ -41,8 +41,8 @@ isr_common_stub:
     movq %rsp, %rdi
     call kernel_dispatch_interrupt
 
-    movq %rax, %rsp
-
+.global restore_registers_and_iret
+restore_registers_and_iret:
     popq %rax
     popq %rbx
     popq %rcx
@@ -61,6 +61,34 @@ isr_common_stub:
 
     addq $16, %rsp
     iretq
+
+.global switch_to
+switch_to:
+    pushq %rbx
+    pushq %rbp
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+    
+    movq %rsp, (%rdi)
+    movq %rsi, %rsp
+    movq %rdx, %cr3
+    
+    popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %rbp
+    popq %rbx
+    
+    ret
+
+.global ret_from_fork
+ret_from_fork:
+    jmp restore_registers_and_iret
+
+
 
 
 # here be the isr definitions

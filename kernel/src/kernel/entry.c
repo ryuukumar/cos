@@ -145,7 +145,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	}
 
 	for (;;)
-		;
+		do_syscall (SYSCALL_SCHED_YIELD, 0, 0, 0);
 }
 
 static void get_limine_requests (void) {
@@ -212,6 +212,19 @@ void _start (void) {
 	regs->rflags = 0x202; // IF=1
 
 	stage2_proc->p_registers_ptr = regs;
+
+	extern void ret_from_fork (void);
+	uintptr_t*	init_sp = (uintptr_t*)regs;
+
+	init_sp -= 1;
+	*init_sp = (uintptr_t)ret_from_fork;
+
+	init_sp -= 6;
+	for (int i = 0; i < 6; i++)
+		init_sp[i] = 0;
+
+	stage2_proc->p_sp = (uintptr_t)init_sp;
+
 	enqueue_process (get_ready_queue (), stage2_proc);
 
 	kserial_printf ("\n[Stage 1] Hands off to scheduler.\n");

@@ -46,8 +46,12 @@ int enqueue_process (process_queue* queue, process* new_process) {
 
 process* get_current_process (void) { return current_process; }
 
-registers_t* schedule (registers_t* registers) {
+extern void switch_to (uintptr_t* prev_sp, uintptr_t next_sp, uintptr_t next_cr3);
+extern void ret_from_fork (void);
+
+void schedule (registers_t* registers) {
 	process* upcoming_process = nullptr;
+	process* prev = current_process;
 
 	if (current_process != nullptr && current_process->p_state == TASK_RUNNING) {
 		current_process->p_registers_ptr = registers;
@@ -60,13 +64,27 @@ registers_t* schedule (registers_t* registers) {
 	if (upcoming_process == nullptr)
 		for (;;)
 			;
-	if (errno != 0) return registers;
+	if (errno != 0) return;
 
 	current_process = upcoming_process;
 	current_process->p_state = TASK_RUNNING;
-	write_cr3 (current_process->p_cr3);
 	tss_set_stack (current_process->p_kstack);
-	return current_process->p_registers_ptr;
+
+	// context switching between the same process is buggy because of compiler evaluation gimmicks.
+	// the simplest solution is to just avoid it entirely
+	if (prev == upcoming_process) return;
+
+	if (prev != nullptr) {
+		switch_to (&prev->p_sp, upcoming_process->p_sp, upcoming_process->p_cr3);
+	} else {
+		uintptr_t dummy_sp;
+		switch_to (&dummy_sp, upcoming_process->p_sp, upcoming_process->p_cr3);
+	}
+}
+
+static int do_sched_yield (void) {
+	schedule (get_latest_r_frame ());
+	return 0;
 }
 
 int process_fork (process* source_process, process** dest_ptr) {
@@ -128,6 +146,19 @@ int process_fork (process* source_process, process** dest_ptr) {
 
 	new_process->p_registers_ptr->rax = 0;
 
+	uintptr_t* stack_ptr = (uintptr_t*)new_process->p_registers_ptr;
+
+	// 'call switch_to' pushes return address
+	stack_ptr -= 1;
+	*stack_ptr = (uintptr_t)ret_from_fork;
+
+	// Push 6 dummy callee-saved registers (rbx, rbp, r12, r13, r14, r15)
+	stack_ptr -= 6;
+	for (int i = 0; i < 6; i++)
+		stack_ptr[i] = 0;
+
+	new_process->p_sp = (uintptr_t)stack_ptr;
+
 	int errno = clone_user_memory (source_process->p_cr3, &new_process->p_cr3);
 	if (errno != 0) {
 		free_vpages (new_kstack, STACK_SIZE / PAGE_SIZE);
@@ -165,13 +196,19 @@ static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
 	for (int i = 0; i < MAX_FDS; i++)
 		if (current->p_fds[i]) sys_close (i, 0, 0);
 
-	return (uint64_t)schedule (get_latest_r_frame ());
+	schedule (get_latest_r_frame ());
+	return 0;
 }
 
 static uint64_t sys_getpid (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 	(void)arg1, (void)arg2, (void)arg3;
 	process* current = get_current_process ();
 	return current ? current->p_id : 0ull;
+}
+
+static uint64_t sys_sched_yield (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+	(void)arg1, (void)arg2, (void)arg3;
+	return do_sched_yield ();
 }
 
 void init_process (void) {
@@ -181,4 +218,5 @@ void init_process (void) {
 	register_syscall (SYSCALL_SYS_EXIT, sys_exit);
 	register_syscall (SYSCALL_SYS_FORK, sys_fork);
 	register_syscall (SYSCALL_SYS_GETPID, sys_getpid);
+	register_syscall (SYSCALL_SCHED_YIELD, sys_sched_yield);
 }

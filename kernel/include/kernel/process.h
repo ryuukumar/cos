@@ -23,6 +23,7 @@ struct process {
 	struct file* p_fds[MAX_FDS];
 	uintptr_t	 p_heap_base;
 	uintptr_t	 p_heap_sz;
+	uintptr_t	 p_sp;
 };
 
 typedef struct {
@@ -35,7 +36,7 @@ process*	   get_current_process (void);
 int dequeue_process (process_queue* queue, process** result);
 int enqueue_process (process_queue* queue, process* new_process);
 
-registers_t* schedule (registers_t* registers);
+void schedule (registers_t* registers);
 
 int process_fork (process* source_process, process** dest_ptr);
 
