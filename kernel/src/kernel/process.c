@@ -60,13 +60,13 @@ void schedule (registers_t* registers) {
 	if (upcoming_process == nullptr)
 		for (;;)
 			;
-	if (errno != 0) return registers;
+	if (errno != 0) return;
 
 	current_process = upcoming_process;
 	current_process->p_state = TASK_RUNNING;
 	write_cr3 (current_process->p_cr3);
 	tss_set_stack (current_process->p_kstack);
-	return current_process->p_registers_ptr;
+	// return current_process->p_registers_ptr;
 }
 
 int process_fork (process* source_process, process** dest_ptr) {
@@ -165,7 +165,8 @@ static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
 	for (int i = 0; i < MAX_FDS; i++)
 		if (current->p_fds[i]) sys_close (i, 0, 0);
 
-	return (uint64_t)schedule (get_latest_r_frame ());
+	schedule (get_latest_r_frame ());
+	return 0;
 }
 
 static uint64_t sys_getpid (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
