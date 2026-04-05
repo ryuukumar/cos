@@ -9,6 +9,7 @@
 #include <kernel/graphics.h>
 #include <kernel/handlers.h>
 #include <kernel/hardfonts/classic.h>
+#include <kernel/hw/keyboard.h>
 #include <kernel/hw/pic.h>
 #include <kernel/hw/timer.h>
 #include <kernel/idt.h>
@@ -104,6 +105,7 @@ static void print_info (void) {
 __attribute__ ((noreturn)) void _start_stage2 (void) {
 	init_graphics (framebuffer);
 	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
+	init_kb ();
 
 	for (int i = 0; i < 3; i++) // open stdin, stdout and stderr
 		do_syscall (SYSCALL_SYS_OPEN, (uint64_t)"/dev/tty1", 0, 0);
