@@ -70,9 +70,12 @@ void schedule (registers_t* registers) {
 	current_process->p_state = TASK_RUNNING;
 	tss_set_stack (current_process->p_kstack);
 
-	uintptr_t prev_sp = 0;
-	if (prev != nullptr) prev_sp = prev->p_sp;
-	switch_to (&prev_sp, upcoming_process->p_sp, upcoming_process->p_cr3);
+	if (prev != nullptr) {
+		switch_to (&prev->p_sp, upcoming_process->p_sp, upcoming_process->p_cr3);
+	} else {
+		uintptr_t dummy_sp;
+		switch_to (&dummy_sp, upcoming_process->p_sp, upcoming_process->p_cr3);
+	}
 }
 
 int process_fork (process* source_process, process** dest_ptr) {
