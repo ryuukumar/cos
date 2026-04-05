@@ -2,6 +2,7 @@
 #include <kernel/handlers.h>
 
 void handle_gpf (registers_t* registers) {
+	(void)registers;
 	kserial_printf ("\nOopsy! Looks like someone tried to execute a disallowed instruction!");
 	for (;;)
 		;
