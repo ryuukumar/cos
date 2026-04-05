@@ -137,6 +137,19 @@ int process_fork (process* source_process, process** dest_ptr) {
 
 	new_process->p_registers_ptr->rax = 0;
 
+	uintptr_t* stack_ptr = (uintptr_t*)new_process->p_registers_ptr;
+
+	// 'call switch_to' pushes return address
+	stack_ptr -= 1;
+	*stack_ptr = (uintptr_t)ret_from_fork;
+
+	// Push 6 dummy callee-saved registers (rbx, rbp, r12, r13, r14, r15)
+	stack_ptr -= 6;
+	for (int i = 0; i < 6; i++)
+		stack_ptr[i] = 0;
+
+	new_process->p_sp = (uintptr_t)stack_ptr;
+
 	int errno = clone_user_memory (source_process->p_cr3, &new_process->p_cr3);
 	if (errno != 0) {
 		free_vpages (new_kstack, STACK_SIZE / PAGE_SIZE);
