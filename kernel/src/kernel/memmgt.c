@@ -23,9 +23,6 @@ struct limine_memmap_response* memmap_response_ptr;
 
 uintptr_t kernel_cr3 = 0;
 
-// Handler definition for internal use only
-registers_t* page_fault_handler (registers_t* registers);
-
 /*!
  * Reads the value of the CR3 register, which contains the physical address of the PML4 table.
  * @return The value of the CR3 register.
@@ -239,9 +236,10 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 
 /*!
  * Simple handler for page fault, prints faulting address from CR2
- * @param registers idt-passed registers object
  */
-registers_t* page_fault_handler (registers_t* registers) {
+static void page_fault_handler (registers_t* registers) {
+	(void)registers;
+
 	uint64_t cr2;
 	__asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
 
@@ -249,8 +247,6 @@ registers_t* page_fault_handler (registers_t* registers) {
 
 	for (;;)
 		;
-
-	return registers;
 }
 
 /*!

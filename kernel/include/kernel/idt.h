@@ -30,7 +30,7 @@ typedef struct __attribute__ ((packed)) {
 	uint64_t rip, cs, rflags, rsp, ss;
 } registers_t;
 
-typedef registers_t* (*irq_handler_t) (registers_t*);
+typedef void (*irq_handler_t) (registers_t*);
 
 void init_idt (void);
 void idt_register_handler (int vector, irq_handler_t handler);
