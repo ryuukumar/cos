@@ -51,6 +51,7 @@ extern void ret_from_fork (void);
 
 void schedule (registers_t* registers) {
 	process* upcoming_process = nullptr;
+	process* prev = current_process;
 
 	if (current_process != nullptr && current_process->p_state == TASK_RUNNING) {
 		current_process->p_registers_ptr = registers;
@@ -67,9 +68,11 @@ void schedule (registers_t* registers) {
 
 	current_process = upcoming_process;
 	current_process->p_state = TASK_RUNNING;
-	write_cr3 (current_process->p_cr3);
 	tss_set_stack (current_process->p_kstack);
-	// return current_process->p_registers_ptr;
+
+	uintptr_t prev_sp = 0;
+	if (prev != nullptr) prev_sp = prev->p_sp;
+	switch_to (&prev_sp, upcoming_process->p_sp, upcoming_process->p_cr3);
 }
 
 int process_fork (process* source_process, process** dest_ptr) {
