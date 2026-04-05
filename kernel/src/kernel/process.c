@@ -46,6 +46,9 @@ int enqueue_process (process_queue* queue, process* new_process) {
 
 process* get_current_process (void) { return current_process; }
 
+extern void switch_to (uintptr_t* prev_sp, uintptr_t next_sp, uintptr_t next_cr3);
+extern void ret_from_fork (void);
+
 void schedule (registers_t* registers) {
 	process* upcoming_process = nullptr;
 
