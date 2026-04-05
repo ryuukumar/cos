@@ -46,7 +46,7 @@ int enqueue_process (process_queue* queue, process* new_process) {
 
 process* get_current_process (void) { return current_process; }
 
-registers_t* schedule (registers_t* registers) {
+void schedule (registers_t* registers) {
 	process* upcoming_process = nullptr;
 
 	if (current_process != nullptr && current_process->p_state == TASK_RUNNING) {

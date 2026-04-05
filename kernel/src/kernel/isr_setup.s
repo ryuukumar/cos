@@ -41,8 +41,6 @@ isr_common_stub:
     movq %rsp, %rdi
     call kernel_dispatch_interrupt
 
-    movq %rax, %rsp
-
     popq %rax
     popq %rbx
     popq %rcx
