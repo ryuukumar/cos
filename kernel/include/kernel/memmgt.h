@@ -6,7 +6,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define PAGE_SIZE 4096ull
+#define PAGE_SIZE		   4096ull
+#define ALIGN_PAGE_DOWN(x) ((x) & ~(PAGE_SIZE - 1))
 
 typedef struct {
 	uint64_t present : 1;			 // Page present in memory
