@@ -30,9 +30,11 @@ extern volatile struct limine_boot_time_request		  boottime_req;
 extern volatile struct limine_memmap_request		  memmap_req;
 extern volatile struct limine_module_request		  mod_req;
 extern volatile struct limine_hhdm_request			  hhdm_req;
+extern volatile struct limine_rsdp_request			  rsdp_req;
 
 struct limine_framebuffer* framebuffer = nullptr;
 struct limine_file*		   initramfs = nullptr;
+uintptr_t				   rsdp = 0;
 uint64_t				   hhdm_base = 0;
 
 // Declaration of kernel entry points
@@ -158,10 +160,14 @@ static void get_limine_requests (void) {
 	// REQUIRED: modules (for initramfs)
 	if (mod_req.response == nullptr || mod_req.response->module_count < 1) hcf ();
 
+	// REQUIRED: RSDP for ACPI
+	if (rsdp_req.response == nullptr) hcf ();
+
 	// set the values received from limine
 	framebuffer = framebuffer_request.response->framebuffers[0];
 	hhdm_base = hhdm_req.response->offset;
 	initramfs = mod_req.response->modules[0];
+	rsdp = (uintptr_t)rsdp_req.response->address;
 }
 
 /*!
