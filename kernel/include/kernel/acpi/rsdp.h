@@ -23,7 +23,14 @@ typedef struct __attribute__ ((packed)) {
 	uint8_t	 reserved[3];
 } XSDP_t;
 
+void* init_rsdp (uintptr_t rsdp_base_ptr, uint64_t hhdm_offset);
+
+bool is_init (void);
+bool is_rsdp (void);
+bool is_xsdp (void);
+
 uint8_t get_rsdp_revision ();
-void*	init_rsdp (uintptr_t rsdp_base_ptr, uint64_t hhdm_offset);
+RSDP_t* get_rsdp ();
+XSDP_t* get_xsdp ();
 
 #endif
