@@ -1,5 +1,22 @@
 #!/bin/sh
 
+export CC=x86_64-elf-gcc
+export CXX=x86_64-elf-g++
+export LD=x86_64-elf-ld
+export AS=x86_64-elf-as
+export AR=x86_64-elf-ar
+
+NPROC=$(getconf _NPROCESSORS_ONLN)
+
+export MAKE=make
+if [ "$(uname)" = "Darwin" ]; then
+    if command -v gmake >/dev/null 2>&1; then
+        export MAKE=gmake # build could fail if using BSD make. use gmake if possible
+    else
+        printf "You are on macOS but gmake was not found. I will use make but build could fail.\nRetry with GNU make (e.g. brew install make) if build fails.\n" >&2
+    fi
+fi
+
 function heading() {
 	input_string="$1"
 	output_color="$2"
@@ -100,7 +117,7 @@ fi
 
 heading "Building OS binaries" "1;33"
 
-make -j$(nproc)
+$MAKE -j$NPROC
 
 printf "\nentry.elf generated with size $(wc -c <"build/kernel/entry.elf") bytes\n"
 
@@ -110,7 +127,7 @@ heading "Building Limine-deploy" "1;33"
 git clone https://github.com/limine-bootloader/limine.git --branch=v9.x-binary --depth=1
  
 # Build limine-deploy.
-make -C limine
+$MAKE -C limine
 
 heading "Populating ISO directory" "1;33"
 
