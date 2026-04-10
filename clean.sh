@@ -1,3 +1,4 @@
+#!/bin/sh
 
 echo -e "\e[1;33m\n# ---+\n# Removing all build files\n# ---+\n\e[0m"
 

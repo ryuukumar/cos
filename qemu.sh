@@ -1,3 +1,4 @@
+#!/bin/sh
 
 function heading() {
 	input_string=$1
