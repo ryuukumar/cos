@@ -137,7 +137,6 @@ xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
 		&& rm -rvf iso_root
  
 # Install Limine stage 1 and 2 for legacy BIOS boot.
-#./limine/limine-deploy image.iso
 ./limine/limine bios-install image.iso
 
 printf "\nimage.iso generated with size $(wc -c <"image.iso") bytes\n"
