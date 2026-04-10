@@ -1,12 +1,28 @@
 #!/bin/sh
 
-printf "\e[1;33m\n# ---+\n# Removing all build files\n# ---+\n\e[0m\n"
+function heading() {
+	input_string="$1"
+	output_color="$2"
+	line_char="-"
+
+	len=${#input_string}
+	width=$((len + 4))
+	line=$(printf '%*s' "$width" '' | tr ' ' "$line_char")
+
+	if [ -n "$output_color" ]; then
+		printf '\e[%sm\n%s\n%s\n%s\n\n\e[0m' "$output_color" "$line" "# ${input_string} #" "$line"
+	else
+		printf '\n%s\n%s\n%s\n\n' "$line" "# ${input_string} #" "$line"
+	fi
+}
+
+heading "Removing all build files" "1;33"
 
 rm -rf build
 rm -rf limine
 
-printf "\e[1;33m\n# ---+\n# Removing ISO image\n# ---+\n\e[0m\n"
+heading "Removing ISO image" "1;33"
 
 rm -v image.iso
 
-printf "\e[1;32m\n# ---+\n# Cleaning complete\n# ---+\n\e[0m\n"
+heading "Cleaning complete" "1;32"
