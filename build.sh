@@ -119,6 +119,11 @@ heading "Building OS binaries" "1;33"
 
 $MAKE -j$NPROC
 
+if [ $? -ne 0 ]; then
+    printf "\n$MAKE exited with errors. Not proceeding with build.\n"
+	exit
+fi
+
 printf "\nentry.elf generated with size $(wc -c <"build/kernel/entry.elf") bytes\n"
 
 heading "Building Limine-deploy" "1;33"
@@ -128,6 +133,11 @@ git clone https://github.com/limine-bootloader/limine.git --branch=v9.x-binary -
  
 # Build limine-deploy.
 $MAKE -C limine
+
+if [ $? -ne 0 ]; then
+    printf "\n$MAKE for limine exited with errors. Not proceeding with build.\n"
+	exit
+fi
 
 heading "Populating ISO directory" "1;33"
 
