@@ -91,7 +91,7 @@ uint64_t read_cr3 (void);
 void	 write_cr3 (uint64_t new_value);
 
 vaddr_t get_vaddr_t_from_ptr (void* ptr);
-void*	get_vaddr_hhdm (uint64_t phys_address);
+void*	get_vaddr_from_frame (uint64_t phys_address);
 void*	vaddr_t_to_ptr (vaddr_t* virtual_addr);
 
 void* alloc_vpages (size_t req_count, bool user);
