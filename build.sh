@@ -117,7 +117,7 @@ fi
 
 heading "Building OS binaries" "1;33"
 
-$MAKE -j$NPROC
+$MAKE -j$NPROC kernel
 
 if [ $? -ne 0 ]; then
     printf "\n$MAKE exited with errors. Not proceeding with build.\n"
@@ -125,6 +125,17 @@ if [ $? -ne 0 ]; then
 fi
 
 printf "\nentry.elf generated with size $(wc -c <"build/kernel/entry.elf") bytes\n"
+
+heading "Building userspace" "1;33"
+
+$MAKE -j$NPROC initramfs
+
+if [ $? -ne 0 ]; then
+    printf "\n$MAKE exited with errors. Not proceeding with build.\n"
+	exit
+fi
+
+printf "\ninitramfs.cpio generated with size $(wc -c <"build/initramfs.cpio") bytes\n"
 
 heading "Building Limine-deploy" "1;33"
 
