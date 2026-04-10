@@ -5,24 +5,15 @@ function heading() {
 	string_length=${#input_string}
 	line_char="-"
 
-	# Output hashtags
-	final_string=""
-	for ((i=1; i<=string_length+4; i++))
-	do
-		final_string+=$line_char
-	done
-	final_string+="\n"  # Add a newline after the hashtags
-  
-	final_string+="# ${input_string} #\n"
-  
-	# Output hashtags
-	for ((i=1; i<=string_length+4; i++))
-	do
-		final_string+=$line_char
-	done
-	final_string+="\n"  # Add a newline after the hashtags
+    # Generate line
+    line=""
+    i=0
+    while [ $i -lt $((string_length + 4)) ]; do
+        line="${line}${line_char}"
+        i=$((i + 1))
+    done
 
-	echo -e "$final_string"
+	echo -e "\n$line\n# $input_string #\n$line\n\n"
 }
 
 function show_help() {
