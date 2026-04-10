@@ -27,11 +27,11 @@ function show_help() {
 
 function clean_build() {
 	heading "Removing all build files" "1;33"
-	rm -rf build
-	rm -rf limine
+	rm -rvf build
+	rm -rvf limine
 
 	heading "Removing ISO image" "1;33"
-	rm -v image.iso
+	[ -f image.iso ] && rm -v image.iso
 
 	heading "Cleaning complete" "1;32"
 }
