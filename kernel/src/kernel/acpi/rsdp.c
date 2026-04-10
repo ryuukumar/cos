@@ -2,18 +2,24 @@
 #include <kernel/acpi/rsdp.h>
 #include <kernel/memmgt.h>
 
-static bool is_init = false;
+static bool is_init_flag = false;
 
 static RSDP_t* rsdp_ptr = nullptr;
 static XSDP_t* xsdp_ptr = nullptr;
 static uint8_t rsdp_ver = 0;
 
 static void* init_and_return (void* arg) {
-	is_init = true;
+	is_init_flag = true;
 	return arg;
 }
 
-uint8_t get_rsdp_revision () { return rsdp_ver; }
+inline bool is_init (void) { return is_init_flag; }
+inline bool is_rsdp (void) { return is_init () ? (rsdp_ptr != nullptr) : false; }
+inline bool is_xsdp (void) { return is_init () ? (xsdp_ptr != nullptr) : false; }
+
+uint8_t get_rsdp_revision (void) { return rsdp_ver; }
+RSDP_t* get_rsdp (void) { return rsdp_ptr; }
+XSDP_t* get_xsdp (void) { return xsdp_ptr; }
 
 void* init_rsdp (uintptr_t rsdp_base_ptr, uint64_t hhdm_offset) {
 	if (rsdp_base_ptr == 0) return nullptr;
