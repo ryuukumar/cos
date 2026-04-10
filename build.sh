@@ -86,29 +86,16 @@ fi
 
 printf "\e[1;33m\n$(heading "Checking for compilers")\n\e[0m\n"
 
-if ! command -v x86_64-elf-gcc &> /dev/null; then
-	heading "ERROR: x86_64-elf-gcc not found." "1;31"
-	printf "You probably don't have a cross-compiler installed, or it is in the wrong path. Please refer online on how you can build and install one.\n"
-	exit
-else
-	printf "x86_64-elf-gcc found"
-fi
-
-if ! command -v x86_64-elf-g++ &> /dev/null; then
-	heading "ERROR: x86_64-elf-g++ not found." "1;31"
-	printf "You probably don't have a cross-compiler installed, or it is in the wrong path. Please refer online on how you can build and install one.\n"
-	exit
-else
-	printf "x86_64-elf-g++ found"
-fi
-
-if ! command -v x86_64-elf-as &> /dev/null; then
-	heading "ERROR: x86_64-elf-as not found." "1;31"
-	printf "You probably don't have a cross-compiler installed, or it is in the wrong path. Please refer online on how you can build and install one.\n"
-	exit
-else
-	printf "x86_64-elf-as found"
-fi
+commands="x86_64-elf-gcc x86_64-elf-g++ x86_64-elf-ld x86_64-elf-as"
+for cmd in $commands; do
+	if ! command -v "$cmd" &> /dev/null; then
+		heading "ERROR: $cmd not found." "1;31"
+		printf "You probably don't have a cross-compiler installed, or it is in the wrong path. Please refer online on how you can build and install one.\n"
+		exit
+	else
+		printf "$cmd found\n"
+	fi
+done
 
 if [ "$BUILD_DOCS" = true ]; then
 	heading "Building documentation" "1;33"
