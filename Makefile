@@ -13,7 +13,7 @@ user_bin:
 	$(MAKE) -C user bin
 
 initramfs: user
-	( cd build/initramfs && find . -print | cpio -o -H newc -v ) > build/initramfs.cpio
+	@( cd build/initramfs && find . -print | cpio -o -H newc -v ) > build/initramfs.cpio
 
 format:
 	@echo "Formatting Kernel..."

@@ -102,7 +102,8 @@ all: $(BUILD_DIR)/$(KERNEL)
  
 # Link rules for the final kernel executable.
 $(BUILD_DIR)/$(KERNEL): $(OBJ)
-	$(LD) $(OBJ) $(LDFLAGS) -o $@
+	@printf "LD\t%s\n" $@
+	@$(LD) $(OBJ) $(LDFLAGS) -o $@
  
 # Include header dependencies.
 -include $(HEADER_DEPS)
@@ -110,12 +111,14 @@ $(BUILD_DIR)/$(KERNEL): $(OBJ)
 # Compilation rules for *.c files.
 $(BUILD_DIR)/%.c.o: %.c
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@printf "CC\t%s\n" $<
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
  
 # Compilation rules for *.S files.
 $(BUILD_DIR)/%.s.o: %.s
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@printf "CC\t%s\n" $<
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
  
 # Remove object files and the final executable.
 .PHONY: clean
