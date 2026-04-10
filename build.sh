@@ -1,19 +1,19 @@
 #!/bin/sh
 
 function heading() {
-	input_string=$1
-	string_length=${#input_string}
+	input_string="$1"
+	output_color="$2"
 	line_char="-"
 
-    # Generate line
-    line=""
-    i=0
-    while [ $i -lt $((string_length + 4)) ]; do
-        line="${line}${line_char}"
-        i=$((i + 1))
-    done
+	len=${#input_string}
+	width=$((len + 4))
+	line=$(printf '%*s' "$width" '' | tr ' ' "$line_char")
 
-	printf "\n%s\n# %s #\n%s\n\n" "$line" "$input_string" "$line"
+	if [ -n "$output_color" ]; then
+		printf '\e[%sm\n%s\n%s\n%s\n\n\e[0m' "$output_color" "$line" "# ${input_string} #" "$line"
+	else
+		printf '\n%s\n%s\n%s\n\n' "$line" "# ${input_string} #" "$line"
+	fi
 }
 
 function show_help() {
@@ -26,14 +26,14 @@ function show_help() {
 }
 
 function clean_build() {
-	printf "\e[1;33m\n$(heading "Removing all build files")\n\e[0m\n"
+	heading "Removing all build files" "1;33"
 	rm -rf build
 	rm -rf limine
 
-	printf "\e[1;33m\n$(heading "Removing ISO image")\n\e[0m\n"
+	heading "Removing ISO image" "1;33"
 	rm -v image.iso
 
-	printf "\e[1;32m\n$(heading "Cleaning complete")\n\e[0m\n"
+	heading "Cleaning complete" "1;32"
 }
 
 # Parse command line arguments
@@ -70,7 +70,7 @@ fi
 printf "\e[1;33m\n$(heading "Checking for compilers")\n\e[0m\n"
 
 if ! command -v x86_64-elf-gcc &> /dev/null; then
-	printf "\e[1;31m\n$(heading "ERROR: x86_64-elf-gcc not found.")\n\e[0m\n"
+	heading "ERROR: x86_64-elf-gcc not found." "1;31"
 	printf "You probably don't have a cross-compiler installed, or it is in the wrong path. Please refer online on how you can build and install one.\n"
 	exit
 else
@@ -78,7 +78,7 @@ else
 fi
 
 if ! command -v x86_64-elf-g++ &> /dev/null; then
-	printf "\e[1;31m\n$(heading "ERROR: x86_64-elf-g++ not found.")\n\e[0m\n"
+	heading "ERROR: x86_64-elf-g++ not found." "1;31"
 	printf "You probably don't have a cross-compiler installed, or it is in the wrong path. Please refer online on how you can build and install one.\n"
 	exit
 else
@@ -86,7 +86,7 @@ else
 fi
 
 if ! command -v x86_64-elf-as &> /dev/null; then
-	printf "\e[1;31m\n$(heading "ERROR: x86_64-elf-as not found.")\n\e[0m\n"
+	heading "ERROR: x86_64-elf-as not found." "1;31"
 	printf "You probably don't have a cross-compiler installed, or it is in the wrong path. Please refer online on how you can build and install one.\n"
 	exit
 else
@@ -94,17 +94,17 @@ else
 fi
 
 if [ "$BUILD_DOCS" = true ]; then
-	printf "\e[1;33m\n$(heading "Building documentation")\n\e[0m\n"
+	heading "Building documentation" "1;33"
 	doxygen Doxyfile
 fi
 
-printf "\e[1;33m\n$(heading "Building OS binaries")\n\e[0m\n"
+heading "Building OS binaries" "1;33"
 
 make -j$(nproc)
 
 printf "\nentry.elf generated with size $(wc -c <"build/kernel/entry.elf") bytes\n"
 
-printf "\e[1;33m\n$(heading "Building Limine-deploy")\n\e[0m\n"
+heading "Building Limine-deploy" "1;33"
 
 # Download the latest Limine binary release.
 git clone https://github.com/limine-bootloader/limine.git --branch=v9.x-binary --depth=1
@@ -112,7 +112,7 @@ git clone https://github.com/limine-bootloader/limine.git --branch=v9.x-binary -
 # Build limine-deploy.
 make -C limine
 
-printf "\e[1;33m\n$(heading "Populating ISO directory")\n\e[0m\n"
+heading "Populating ISO directory" "1;33"
 
 # Create a directory which will be our ISO root.
 mkdir -p iso_root/boot/limine
@@ -125,8 +125,8 @@ cp -v build/initramfs.cpio iso_root/boot/
 # Create the EFI boot tree and copy Limine's EFI executables over.
 mkdir -p iso_root/EFI/BOOT
 cp -v limine/BOOT*.EFI iso_root/EFI/BOOT/
- 
-printf "\e[1;33m\n$(heading "Creating ISO")\n\e[0m\n"
+
+heading "Creating ISO" "1;33"
  
 # Create the bootable ISO.
 xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
@@ -142,4 +142,4 @@ xorriso -as mkisofs -b boot/limine/limine-bios-cd.bin \
 
 printf "\nimage.iso generated with size $(wc -c <"image.iso") bytes\n"
 
-printf "\e[1;32m\n$(heading "ISO generated successfully")\n\e[0m\n"
+heading "ISO generated successfully" "1;32"
