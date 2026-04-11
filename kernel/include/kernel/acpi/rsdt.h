@@ -1,18 +1,13 @@
 #ifndef ACPI_RSDT_H
 #define ACPI_RSDT_H
 
-#include <stdint.h>
+#include <kernel/acpi/sdt_header.h>
 
-typedef struct __attribute__ ((packed)) {
-	char	 signature[4];
-	uint32_t length;
-	uint8_t	 revision;
-	uint8_t	 checksum;
-	char	 oemid[6];
-	char	 oemTableId[8];
-	uint32_t oemRevision;
-	uint32_t creatorId;
-	uint32_t creatorRevision;
-} SDT_header_t;
+typedef struct __attribute__((packed)) {
+    SDT_header_t header;
+    uint32_t other_sdt_ptrs[];
+} RSDT_t;
+
+void init_rsdt (void* rsdp_base_ptr);
 
 #endif
