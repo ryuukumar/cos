@@ -6,7 +6,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define PAGE_SIZE 4096ull
+#define PAGE_SIZE		   4096ull
+#define ALIGN_PAGE_DOWN(x) ((x) & ~(PAGE_SIZE - 1))
 
 typedef struct {
 	uint64_t present : 1;			 // Page present in memory
@@ -91,7 +92,8 @@ uint64_t read_cr3 (void);
 void	 write_cr3 (uint64_t new_value);
 
 vaddr_t get_vaddr_t_from_ptr (void* ptr);
-void*	get_vaddr_from_frame (uint64_t phys_address);
+void*	get_vaddr_from_frame (uint64_t phys_frame);
+void*	get_vaddr_from_phys_addr (uint64_t phys_address);
 void*	vaddr_t_to_ptr (vaddr_t* virtual_addr);
 
 void* alloc_vpages (size_t req_count, bool user);

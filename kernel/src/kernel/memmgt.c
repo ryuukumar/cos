@@ -85,6 +85,15 @@ inline void* get_vaddr_from_frame (uint64_t phys_frame) {
 }
 
 /*!
+ * Access a physical pointer as vaddr pointer with HHDM mapping
+ * @param phys_address the physical pointer
+ * @return pointer to virtual memory using HHDM mapping
+ */
+void* get_vaddr_from_phys_addr (uint64_t phys_address) {
+	return (void*)(phys_address + hhdm_offset);
+}
+
+/*!
  * Set a bit in the memory bitmap
  * @param page_idx page index
  */

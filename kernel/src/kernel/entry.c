@@ -1,5 +1,6 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
+#include <kernel/acpi/rsdp.h>
 #include <kernel/console.h>
 #include <kernel/elf.h>
 #include <kernel/fs/chardev.h>
@@ -30,9 +31,11 @@ extern volatile struct limine_boot_time_request		  boottime_req;
 extern volatile struct limine_memmap_request		  memmap_req;
 extern volatile struct limine_module_request		  mod_req;
 extern volatile struct limine_hhdm_request			  hhdm_req;
+extern volatile struct limine_rsdp_request			  rsdp_req;
 
 struct limine_framebuffer* framebuffer = nullptr;
 struct limine_file*		   initramfs = nullptr;
+uintptr_t				   rsdp = 0;
 uint64_t				   hhdm_base = 0;
 
 // Declaration of kernel entry points
@@ -104,6 +107,7 @@ static void print_info (void) {
 __attribute__ ((noreturn)) void _start_stage2 (void) {
 	init_graphics (framebuffer);
 	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
+	rsdp = (uintptr_t)init_rsdp (rsdp, hhdm_base);
 
 	for (int i = 0; i < 3; i++) // open stdin, stdout and stderr
 		do_syscall (SYSCALL_SYS_OPEN, (uint64_t)"/dev/tty1", 0, 0);
@@ -117,6 +121,9 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	load_cpio_from_memory (initramfs->address, "/");
 
 	kprintf ("[Stage 2] Trying to load the ELF.\n");
+
+	kserial_printf ("RSDP Address: %llx\n", rsdp);
+	kserial_printf ("ACPI Revision: %u\n", get_rsdp_revision ());
 
 	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
 
@@ -158,10 +165,14 @@ static void get_limine_requests (void) {
 	// REQUIRED: modules (for initramfs)
 	if (mod_req.response == nullptr || mod_req.response->module_count < 1) hcf ();
 
+	// REQUIRED: RSDP for ACPI
+	if (rsdp_req.response == nullptr) hcf ();
+
 	// set the values received from limine
 	framebuffer = framebuffer_request.response->framebuffers[0];
 	hhdm_base = hhdm_req.response->offset;
 	initramfs = mod_req.response->modules[0];
+	rsdp = (uintptr_t)rsdp_req.response->address;
 }
 
 /*!
