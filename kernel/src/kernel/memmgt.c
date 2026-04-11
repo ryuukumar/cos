@@ -183,7 +183,7 @@ static void free_ppages (void* paddr, uint64_t count) {
  */
 static void free_ppage (void* paddr) { free_ppages (paddr, 1); }
 
-static void init_physical_bitmap (struct limine_memmap_response* memmap_response) {
+static uint64_t init_physical_bitmap (struct limine_memmap_response* memmap_response) {
 	uint64_t addr_limit = 0;
 
 	for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
@@ -232,6 +232,8 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 			}
 		}
 	}
+
+	return addr_limit;
 }
 
 /*!
@@ -600,6 +602,18 @@ static uint64_t sys_brk (uint64_t addr, uint64_t arg2, uint64_t arg3) {
 }
 
 /*!
+ * Initializes the HHDM at hhdm_offset.
+ * @param memsz The size of memory available.
+ * @param hhdm_offset The higher half direct mapping offset.
+ */
+void init_hhdm (uint64_t memsz, uint64_t hhdm_offset) {
+	if (memsz == 0) return;
+	vaddr_t start = get_vaddr_t_from_ptr ((void*)hhdm_offset);
+	vaddr_t end = get_vaddr_t_from_ptr ((void*)(hhdm_offset + memsz - 1));
+	alloc_all_vpages_in_range(start, end, 0);
+}
+
+/*!
  * Initializes the memory management subsystem.
  * Sets the base pointer for the PML4 table and stores the HHDM offset.
  * @param p_hhdm_offset The higher half direct mapping offset.
@@ -614,7 +628,7 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	kernel_cr3 = read_cr3 ();
 
 	// set up bitmap for physical page allocation
-	init_physical_bitmap (memmap_response);
+	uint64_t addr_size = init_physical_bitmap (memmap_response);
 
 	paddr_t user_pdpt_frame = alloc_ppage ();
 	kmemset (get_vaddr_from_frame ((uint64_t)user_pdpt_frame / PAGE_SIZE), 0, PAGE_SIZE);
@@ -631,6 +645,7 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	pml4_base_ptr[KRNL_PML4_IDX].read_write = 1;
 	pml4_base_ptr[KRNL_PML4_IDX].pdpt_base_address = ((uint64_t)krnl_pdpt_frame) / PAGE_SIZE;
 
+	init_hhdm (addr_size, hhdm_offset);
 	register_syscall (SYSCALL_SYS_BRK, sys_brk);
 }
 
