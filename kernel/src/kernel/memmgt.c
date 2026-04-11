@@ -610,7 +610,7 @@ void init_hhdm (uint64_t memsz, uint64_t hhdm_offset) {
 	if (memsz == 0) return;
 	vaddr_t start = get_vaddr_t_from_ptr ((void*)hhdm_offset);
 	vaddr_t end = get_vaddr_t_from_ptr ((void*)(hhdm_offset + memsz - 1));
-	alloc_all_vpages_in_range(start, end, 0);
+	alloc_all_vpages_in_range (start, end, 0);
 }
 
 /*!
