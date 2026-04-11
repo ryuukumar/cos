@@ -606,11 +606,16 @@ static uint64_t sys_brk (uint64_t addr, uint64_t arg2, uint64_t arg3) {
  * @param memsz The size of memory available.
  * @param hhdm_offset The higher half direct mapping offset.
  */
-void init_hhdm (uint64_t memsz, uint64_t hhdm_offset) {
-	if (memsz == 0) return;
-	vaddr_t start = get_vaddr_t_from_ptr ((void*)hhdm_offset);
-	vaddr_t end = get_vaddr_t_from_ptr ((void*)(hhdm_offset + memsz - 1));
-	alloc_all_vpages_in_range (start, end, 0);
+void init_hhdm (struct limine_memmap_response* memmap_response) {
+	for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
+		struct limine_memmap_entry* entry = memmap_response->entries[i];
+		if (entry->type == LIMINE_MEMMAP_RESERVED || entry->type == LIMINE_MEMMAP_BAD_MEMORY)
+			continue;
+		vaddr_t start = get_vaddr_t_from_ptr ((void*)PAGE_ALIGN_DOWN (hhdm_offset + entry->base));
+		vaddr_t end = get_vaddr_t_from_ptr (
+			(void*)PAGE_ALIGN_UP (hhdm_offset + entry->base + entry->length - 1));
+		alloc_all_vpages_in_range (start, end, (paddr_t)PAGE_ALIGN_DOWN (entry->base));
+	}
 }
 
 /*!
@@ -645,7 +650,7 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	pml4_base_ptr[KRNL_PML4_IDX].read_write = 1;
 	pml4_base_ptr[KRNL_PML4_IDX].pdpt_base_address = ((uint64_t)krnl_pdpt_frame) / PAGE_SIZE;
 
-	init_hhdm (addr_size, hhdm_offset);
+	init_hhdm (memmap_response);
 	register_syscall (SYSCALL_SYS_BRK, sys_brk);
 }
 
