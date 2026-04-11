@@ -3,11 +3,11 @@
 
 #include <kernel/acpi/sdt_header.h>
 
-typedef struct __attribute__((packed)) {
-    SDT_header_t header;
-    uint32_t other_sdt_ptrs[];
+typedef struct __attribute__ ((packed)) {
+	SDT_header_t header;
+	uint32_t	 other_sdt_ptrs[];
 } RSDT_t;
 
-void init_rsdt (void* rsdp_base_ptr);
+void init_rsdt (RSDP_t* rsdp_base_ptr);
 
 #endif
