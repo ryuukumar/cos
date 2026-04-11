@@ -8,6 +8,9 @@
 
 #define PAGE_SIZE 4096ull
 
+#define PAGE_ALIGN_DOWN(x) ((x) & ~(PAGE_SIZE - 1))
+#define PAGE_ALIGN_UP(x)   (((x) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
+
 typedef struct {
 	uint64_t present : 1;			 // Page present in memory
 	uint64_t read_write : 1;		 // Read-write flag
