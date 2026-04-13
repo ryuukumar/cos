@@ -17,4 +17,7 @@ typedef struct __attribute__ ((packed)) {
 
 SDT_header_t* acpi_allocate_table (uint32_t phys_address);
 
+bool	 acpi_validate_checksum (SDT_header_t* header);
+uint64_t acpi_data_length (SDT_header_t* header);
+
 #endif
