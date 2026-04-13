@@ -16,8 +16,9 @@ static void parse_by_table (uint32_t phys_address) {
 
 void init_rsdt (uint32_t rsdt_base_ptr) {
 	SDT_header_t* rsdt_ptr = acpi_allocate_table (rsdt_base_ptr);
-	uint32_t*	  data_first_address = (uint32_t*)((char*)rsdt_ptr + sizeof (SDT_header_t));
+	if (!acpi_validate_checksum (rsdt_ptr)) return;
 
+	uint32_t* data_first_address = (uint32_t*)((char*)rsdt_ptr + sizeof (SDT_header_t));
 	for (uint64_t i = 0; sizeof (uint32_t) * i < acpi_data_length (rsdt_ptr); i++)
 		parse_by_table (data_first_address[i]);
 }
