@@ -57,3 +57,6 @@ typedef struct __attribute__ ((packed)) {
 	ACPI_GAS_t	 x_gpe0_block;
 	ACPI_GAS_t	 x_gpe1_block;
 } FADT;
+
+void  init_fadt (SDT_header_t* header);
+FADT* get_fadt_copy (void);

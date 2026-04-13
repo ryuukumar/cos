@@ -1,5 +1,6 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
+#include <kernel/acpi/fadt.h>
 #include <kernel/acpi/rsdt.h>
 #include <kernel/memmgt.h>
 
@@ -10,8 +11,10 @@ static void parse_by_table (uint32_t phys_address) {
 	char buffer[sizeof (((SDT_header_t*)0)->signature) + 1] = {0};
 	kmemcpy (&buffer[0], &table_header->signature, sizeof (buffer) - 1);
 
-	// Right now nothing is recognised, so just fall through to this message
-	kserial_printf ("[ACPI] Unrecognised table signature: %s\n", &buffer);
+	if (kstrncmp (&buffer[0], FADT_IDENTIFIER, 4) == 0)
+		init_fadt (table_header);
+	else
+		kserial_printf ("[ACPI] Unrecognised table signature: %s\n", &buffer);
 }
 
 void init_rsdt (uint32_t rsdt_base_ptr) {

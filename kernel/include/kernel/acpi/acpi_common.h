@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define FADT_IDENTIFIER "FACP"
+
 typedef struct __attribute__ ((packed)) {
 	char	 signature[4];
 	uint32_t length;
