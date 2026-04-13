@@ -19,10 +19,9 @@ SDT_header_t* acpi_allocate_table (uint32_t phys_address) {
 	alloc_all_vpages_in_range (table_vaddr_start, table_vaddr_end, table_base_frame);
 
 	// stage 2: allocate enough to read the entire table
-	SDT_header_t* table_ptr = (SDT_header_t*)table_base_ptr_64;
 	table_vaddr_end =
 		get_vaddr_t_from_ptr ((void*)ALIGN_PAGE_DOWN (table_base_ptr_64 + table_ptr->length));
 	alloc_all_vpages_in_range (table_vaddr_start, table_vaddr_end, table_base_frame);
 
-	return table_ptr;
+	return (SDT_header_t*)table_base_ptr_64;
 }
