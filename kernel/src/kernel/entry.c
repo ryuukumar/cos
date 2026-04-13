@@ -1,6 +1,7 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
 #include <kernel/acpi/rsdp.h>
+#include <kernel/acpi/rsdt.h>
 #include <kernel/console.h>
 #include <kernel/elf.h>
 #include <kernel/fs/chardev.h>
@@ -108,6 +109,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	init_graphics (framebuffer);
 	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
 	rsdp = (uintptr_t)init_rsdp (rsdp, hhdm_base);
+	init_rsdt (((RSDP_t*)rsdp)->rsdt_address);
 
 	for (int i = 0; i < 3; i++) // open stdin, stdout and stderr
 		do_syscall (SYSCALL_SYS_OPEN, (uint64_t)"/dev/tty1", 0, 0);
