@@ -611,7 +611,7 @@ static void init_hhdm (struct limine_memmap_response* memmap_response) {
 			continue;
 		vaddr_t start = get_vaddr_t_from_ptr ((void*)PAGE_ALIGN_DOWN (hhdm_offset + entry->base));
 		vaddr_t end = get_vaddr_t_from_ptr (
-			(void*)PAGE_ALIGN_UP (hhdm_offset + entry->base + entry->length - 1));
+			(void*)PAGE_ALIGN_DOWN (hhdm_offset + entry->base + entry->length - 1));
 		alloc_all_vpages_in_range (start, end, (paddr_t)PAGE_ALIGN_DOWN (entry->base));
 	}
 }
