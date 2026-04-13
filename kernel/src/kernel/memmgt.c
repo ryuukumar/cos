@@ -604,7 +604,7 @@ static uint64_t sys_brk (uint64_t addr, uint64_t arg2, uint64_t arg3) {
  * @param memsz The size of memory available.
  * @param hhdm_offset The higher half direct mapping offset.
  */
-void init_hhdm (struct limine_memmap_response* memmap_response) {
+static void init_hhdm (struct limine_memmap_response* memmap_response) {
 	for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
 		struct limine_memmap_entry* entry = memmap_response->entries[i];
 		if (entry->type == LIMINE_MEMMAP_RESERVED || entry->type == LIMINE_MEMMAP_BAD_MEMORY)

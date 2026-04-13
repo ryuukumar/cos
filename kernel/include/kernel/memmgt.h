@@ -107,7 +107,6 @@ void free_all_vpages_in_range (vaddr_t first, vaddr_t last);
 void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, bool write);
 void dealloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages);
 
-void init_hhdm (struct limine_memmap_response* memmap_response);
 void init_memmgt (uint64_t, struct limine_memmap_response*);
 
 void	  walk_pagetable (void);
