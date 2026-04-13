@@ -1,7 +1,6 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
-#include <kernel/acpi/rsdp.h>
-#include <kernel/acpi/rsdt.h>
+#include <kernel/acpi/acpi.h>
 #include <kernel/console.h>
 #include <kernel/elf.h>
 #include <kernel/fs/chardev.h>
@@ -108,8 +107,7 @@ static void print_info (void) {
 __attribute__ ((noreturn)) void _start_stage2 (void) {
 	init_graphics (framebuffer);
 	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
-	rsdp = (uintptr_t)init_rsdp (rsdp, hhdm_base);
-	init_rsdt (((RSDP_t*)rsdp)->rsdt_address);
+	init_acpi (rsdp);
 
 	for (int i = 0; i < 3; i++) // open stdin, stdout and stderr
 		do_syscall (SYSCALL_SYS_OPEN, (uint64_t)"/dev/tty1", 0, 0);
@@ -123,9 +121,6 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	load_cpio_from_memory (initramfs->address, "/");
 
 	kprintf ("[Stage 2] Trying to load the ELF.\n");
-
-	kserial_printf ("RSDP Address: %llx\n", rsdp);
-	kserial_printf ("ACPI Revision: %u\n", get_rsdp_revision ());
 
 	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
 
