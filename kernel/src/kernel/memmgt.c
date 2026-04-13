@@ -650,6 +650,12 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 uintptr_t get_kernel_cr3 (void) { return kernel_cr3; }
 
 /*!
+ * Get the HHDM offset
+ * @return HHDM offset
+ */
+uint64_t get_hhdm_offset (void) { return hhdm_offset; }
+
+/*!
  * Finds the physical address mapped to a given virtual address.
  * @param vaddr The virtual address to look up.
  * @return The corresponding physical address, or nullptr if not mapped.

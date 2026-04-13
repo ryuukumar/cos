@@ -110,6 +110,7 @@ void	  init_memmgt (uint64_t, struct limine_memmap_response*);
 void	  walk_pagetable (void);
 void*	  get_paddr (void* vaddr);
 uintptr_t get_kernel_cr3 (void);
+uint64_t  get_hhdm_offset (void);
 
 int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest);
 
