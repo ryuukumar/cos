@@ -15,4 +15,6 @@ typedef struct __attribute__ ((packed)) {
 	uint32_t creatorRevision;
 } SDT_header_t;
 
+SDT_header_t* acpi_allocate_table (uint32_t phys_address);
+
 #endif
