@@ -1,5 +1,4 @@
-#ifndef ACPI_RSDP_H
-#define ACPI_RSDP_H
+#pragma once
 
 #include <stdint.h>
 
@@ -32,5 +31,3 @@ bool is_xsdp (void);
 uint8_t get_rsdp_revision ();
 RSDP_t* get_rsdp ();
 XSDP_t* get_xsdp ();
-
-#endif

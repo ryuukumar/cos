@@ -1,5 +1,4 @@
-#ifndef ACPI_SDT_HEADER_H
-#define ACPI_SDT_HEADER_H
+#pragma once
 
 #include <stdint.h>
 
@@ -29,5 +28,3 @@ SDT_header_t* acpi_allocate_table (uint32_t phys_address);
 
 bool	 acpi_validate_checksum (SDT_header_t* header);
 uint64_t acpi_data_length (SDT_header_t* header);
-
-#endif
