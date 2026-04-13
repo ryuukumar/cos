@@ -183,7 +183,7 @@ static void free_ppages (void* paddr, uint64_t count) {
  */
 static void free_ppage (void* paddr) { free_ppages (paddr, 1); }
 
-static uint64_t init_physical_bitmap (struct limine_memmap_response* memmap_response) {
+static void init_physical_bitmap (struct limine_memmap_response* memmap_response) {
 	uint64_t addr_limit = 0;
 
 	for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
@@ -232,8 +232,6 @@ static uint64_t init_physical_bitmap (struct limine_memmap_response* memmap_resp
 			}
 		}
 	}
-
-	return addr_limit;
 }
 
 /*!
@@ -633,7 +631,7 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	kernel_cr3 = read_cr3 ();
 
 	// set up bitmap for physical page allocation
-	uint64_t addr_size = init_physical_bitmap (memmap_response);
+	init_physical_bitmap (memmap_response);
 
 	paddr_t user_pdpt_frame = alloc_ppage ();
 	kmemset (get_vaddr_from_frame ((uint64_t)user_pdpt_frame / PAGE_SIZE), 0, PAGE_SIZE);
