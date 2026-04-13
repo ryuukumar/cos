@@ -1,7 +1,7 @@
 #pragma once
 
 #include <kernel/acpi/acpi_common.h>
-#include <stddef.h>
+#include <stdint.h>
 
 typedef struct __attribute__ ((packed)) {
 	SDT_header_t header;

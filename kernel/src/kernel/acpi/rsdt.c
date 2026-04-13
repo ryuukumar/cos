@@ -2,7 +2,6 @@
 #include <kclib/string.h>
 #include <kernel/acpi/fadt.h>
 #include <kernel/acpi/rsdt.h>
-#include <kernel/memmgt.h>
 
 static void parse_by_table (uint32_t phys_address) {
 	SDT_header_t* table_header = acpi_allocate_table (phys_address);
