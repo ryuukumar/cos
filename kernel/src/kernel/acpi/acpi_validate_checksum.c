@@ -8,7 +8,7 @@
  */
 bool acpi_validate_checksum (SDT_header_t* header) {
 	uint8_t checksum = 0;
-	for (uint64_t i = 0; i < sizeof (SDT_header_t); i++)
+	for (uint64_t i = 0; i < header->length; i++)
 		checksum += ((uint8_t*)header)[i];
 	return checksum == 0;
 }
