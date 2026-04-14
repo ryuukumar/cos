@@ -1,5 +1,4 @@
-#ifndef STDIO_H
-#define STDIO_H
+#pragma once
 
 #include <kernel/console.h>
 #include <stdarg.h>
@@ -11,5 +10,3 @@ void ksprintf (char* buf, const char* fmt, ...);
 void kprintf (const char*, ...);
 
 void kserial_printf (const char* fmt, ...);
-
-#endif

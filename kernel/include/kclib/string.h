@@ -1,5 +1,4 @@
-#ifndef STRING_H
-#define STRING_H
+#pragma once
 
 #include <stddef.h>
 #include <stdint.h>
@@ -44,5 +43,3 @@ char* kstrtok_r (char* restrict s1, const char* restrict s2, char** restrict sav
 
 void kitos (int32_t i, char* buf, uint32_t b);
 void kulitos (uint64_t i, char* buf, uint32_t b);
-
-#endif
