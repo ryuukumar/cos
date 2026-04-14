@@ -25,6 +25,10 @@ __attribute__ ((used,
 	.id = LIMINE_MODULE_REQUEST, .revision = 0};
 
 __attribute__ ((used,
+				section (".limine_requests"))) volatile struct limine_rsdp_request rsdp_req = {
+	.id = LIMINE_RSDP_REQUEST, .revision = 0};
+
+__attribute__ ((used,
 				section (".limine_requests_start"))) static volatile LIMINE_REQUESTS_START_MARKER;
 
 __attribute__ ((used, section (".limine_requests_end"))) static volatile LIMINE_REQUESTS_END_MARKER;

@@ -85,6 +85,15 @@ inline void* get_vaddr_from_frame (uint64_t phys_frame) {
 }
 
 /*!
+ * Access a physical pointer as vaddr pointer with HHDM mapping
+ * @param phys_address the physical pointer
+ * @return pointer to virtual memory using HHDM mapping
+ */
+void* get_vaddr_from_phys_addr (uint64_t phys_address) {
+	return (void*)(phys_address + hhdm_offset);
+}
+
+/*!
  * Set a bit in the memory bitmap
  * @param page_idx page index
  */
@@ -639,6 +648,12 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
  * @return kernel CR3
  */
 uintptr_t get_kernel_cr3 (void) { return kernel_cr3; }
+
+/*!
+ * Get the HHDM offset
+ * @return HHDM offset
+ */
+uint64_t get_hhdm_offset (void) { return hhdm_offset; }
 
 /*!
  * Finds the physical address mapped to a given virtual address.

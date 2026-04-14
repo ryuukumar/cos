@@ -103,4 +103,4 @@ clean:
 
 .PHONY: format
 format:
-	find -type f \( -name '*.c' -o -name '*.h' \) ! -name 'limine.h' -exec clang-format -i {} +
+	find . -type f \( -name '*.c' -o -name '*.h' \) ! -name 'limine.h' -exec clang-format -i {} +
