@@ -59,4 +59,4 @@ typedef struct __attribute__ ((packed)) {
 } FADT;
 
 void  init_fadt (SDT_header_t* header);
-FADT* get_fadt_copy (void);
+FADT* get_fadt (void);

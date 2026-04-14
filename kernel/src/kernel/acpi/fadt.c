@@ -12,12 +12,4 @@ void init_fadt (SDT_header_t* header) {
 	kmemcpy ((void*)cp_fadt, (void*)header, sizeof (FADT));
 }
 
-FADT* get_fadt_copy (void) {
-	if (!cp_fadt) return nullptr;
-
-	FADT* new_fadt = kmalloc (sizeof (FADT));
-	if (!new_fadt) return nullptr;
-
-	kmemcpy ((void*)new_fadt, (void*)cp_fadt, sizeof (FADT));
-	return new_fadt;
-}
+FADT* get_fadt (void) { return cp_fadt; }
