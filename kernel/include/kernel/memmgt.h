@@ -1,5 +1,4 @@
-#ifndef MEMMGT_H
-#define MEMMGT_H
+#pragma once
 
 #include <kernel/limine.h>
 #include <stdbool.h>
@@ -121,5 +120,3 @@ int	  liballoc_lock (void);
 int	  liballoc_unlock (void);
 void* liballoc_alloc (size_t);
 int	  liballoc_free (void*, size_t);
-
-#endif

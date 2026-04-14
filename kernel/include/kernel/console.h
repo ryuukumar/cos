@@ -1,5 +1,4 @@
-#ifndef CONSOLE_H
-#define CONSOLE_H
+#pragma once
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -18,5 +17,3 @@ void update (void);
 
 void putchar (unsigned char);
 void putstr (const char*, size_t);
-
-#endif
