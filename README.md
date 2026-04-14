@@ -26,6 +26,10 @@ In order from `critical` to `meh`:
 - [optional] `doxygen` for documentation (`sudo apt install doxygen` or similar)
 - [optional] `qemu-system-x86` if you want to use `qemu.sh` to run COS (`sudo apt install qemu-system-x86` or similar)
 
+#### On cross-compilers
+
+COS has been written keeping in mind the capabilities and conventions of GNU C23. It is strongly recommended to compile a GCC for compiling COS, and this requirement has been enforced in build.sh. Use other compilers at your own risk.
+
 ### Actually building (and running) COS
 
 You can run the following code to download and build COS:
