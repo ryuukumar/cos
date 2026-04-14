@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #define FADT_IDENTIFIER "FACP"
+#define MADT_IDENTIFIER "APIC"
 
 typedef struct __attribute__ ((packed)) {
 	char	 signature[4];

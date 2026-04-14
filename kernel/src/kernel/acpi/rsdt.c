@@ -1,6 +1,7 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
 #include <kernel/acpi/fadt.h>
+#include <kernel/acpi/madt.h>
 #include <kernel/acpi/rsdt.h>
 
 static void parse_by_table (uint32_t phys_address) {
@@ -12,6 +13,8 @@ static void parse_by_table (uint32_t phys_address) {
 
 	if (kstrncmp (&buffer[0], FADT_IDENTIFIER, 4) == 0)
 		init_fadt (table_header);
+	else if (kstrncmp (&buffer[0], MADT_IDENTIFIER, 4) == 0)
+		init_madt (table_header);
 	else
 		kserial_printf ("[ACPI] Unrecognised table signature: %s\n", &buffer);
 }
