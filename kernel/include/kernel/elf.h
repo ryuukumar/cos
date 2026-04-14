@@ -1,5 +1,4 @@
-#ifndef ELF_H
-#define ELF_H
+#pragma once
 
 #include <kernel/process.h>
 #include <stdbool.h>
@@ -56,5 +55,3 @@ typedef struct __attribute__ ((packed)) {
 
 bool verify_elf_loadable (elf64_header_t* elf);
 int	 load_elf (const char* filepath, process* target_process, uintptr_t* entry_point_r);
-
-#endif

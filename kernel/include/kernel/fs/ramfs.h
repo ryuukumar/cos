@@ -1,5 +1,4 @@
-#ifndef RAMFS_H
-#define RAMFS_H
+#pragma once
 
 #include <kernel/fs/vfs.h>
 
@@ -27,5 +26,3 @@ typedef struct {
 } fs_info_t;
 
 inode* init_ramfs_root (void);
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef ERROR_H
-#define ERROR_H
+#pragma once
 
 // Invalid argument
 #define EINVARG 100
@@ -28,5 +27,3 @@
 
 // Cannot execute
 #define ENOEXEC 701
-
-#endif

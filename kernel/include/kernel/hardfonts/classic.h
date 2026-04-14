@@ -1,6 +1,3 @@
-#ifndef CLASSIC_H
-#define CLASSIC_H
+#pragma once
 
 unsigned char* glyph (char index);
-
-#endif

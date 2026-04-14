@@ -1,6 +1,4 @@
-
-#ifndef PIC_H
-#define PIC_H
+#pragma once
 
 #include <kernel/io.h>
 #include <stdint.h>
@@ -19,5 +17,3 @@ void pic_clr_mask (uint8_t irq_line);
 void pic_send_eoi (uint8_t irq);
 
 void init_pic (void);
-
-#endif

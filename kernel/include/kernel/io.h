@@ -1,6 +1,4 @@
-
-#ifndef IO_H
-#define IO_H
+#pragma once
 
 #include <stdint.h>
 
@@ -10,5 +8,3 @@ void	io_wait (void);
 
 uint64_t save_irq_disable (void);
 void	 restore_irq (uint64_t flags);
-
-#endif
