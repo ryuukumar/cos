@@ -19,6 +19,9 @@ typedef enum { UNDEF, EFILE, DIRECTORY, LINK, CHAR_DEV } file_type_t;
 typedef struct inode inode;
 typedef struct file	 file;
 
+typedef struct chardev_info chardev_info_t;
+typedef struct ramfs_info	ramfs_info_t;
+
 typedef struct {
 	int (*lookup) (char*, inode**, inode*);
 	int (*create) (char*, inode**, inode*);
@@ -40,6 +43,10 @@ struct inode {
 	inode_operations* i_iops;
 	file_operations*  i_fops;
 	file_type_t		  i_type;
+	union {
+		chardev_info_t* chardev_info;
+		ramfs_info_t*	ramfs_info;
+	} i_info;
 };
 
 struct file {

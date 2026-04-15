@@ -34,7 +34,11 @@ void init_tty1 (inode* absolute_root) {
 	tty1_fops->write = stdout_write;
 	// tty1_fops->read = // connect to keyboard get_next_char when available
 
+	chardev_info_t* tty1_info = kmalloc(sizeof(chardev_info_t));
+	kmemset (tty1_info, 0, sizeof(chardev_info_t));
+
 	tty1_file->i_iops = nullptr;
 	tty1_file->i_fops = tty1_fops;
 	tty1_file->i_type = CHAR_DEV;
+	tty1_file->i_info.chardev_info = tty1_info;
 }
