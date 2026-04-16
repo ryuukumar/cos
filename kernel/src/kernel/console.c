@@ -9,7 +9,8 @@
 #define CONSOLE_HEIGHT 80
 #define CONSOLE_WIDTH  140
 
-bool PUTCH_UPDATE = false;
+static bool is_init_console_b = false;
+bool		PUTCH_UPDATE = false;
 
 unsigned char bufferstr[CONSOLE_HEIGHT * CONSOLE_WIDTH] = {
 	0}; // TODO: replace this with malloc when implemented
@@ -80,7 +81,11 @@ void init_console (size_t x_screen, size_t y_screen, size_t x_pad, size_t y_pad,
 	fs = font_size;
 
 	kmemset (buffer, 32, xc * yc);
+
+	is_init_console_b = true;
 }
+
+bool is_init_console (void) { return is_init_console_b; }
 
 /*!
 Set the screen color.

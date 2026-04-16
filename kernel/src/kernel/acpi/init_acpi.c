@@ -3,7 +3,12 @@
 #include <kernel/acpi/rsdt.h>
 #include <kernel/memmgt.h>
 
+static bool is_init_acpi_b = false;
+
 void init_acpi (uintptr_t rsdp_ptr) {
 	RSDP_t* rsdp_ptr_vmm = (RSDP_t*)init_rsdp (rsdp_ptr, get_hhdm_offset ());
 	init_rsdt (rsdp_ptr_vmm->rsdt_address);
+	is_init_acpi_b = true;
 }
+
+bool is_init_acpi (void) { return is_init_acpi_b; }

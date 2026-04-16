@@ -7,6 +7,8 @@
 syscall_handler_t syscall_handlers[SYSCALL_COUNT];
 registers_t*	  latest_frame;
 
+static bool is_init_syscall_b = false;
+
 void syscall_handler (registers_t* registers) {
 	uint64_t vector = registers->rax;
 	latest_frame = registers;
@@ -43,4 +45,7 @@ void init_syscalls (void) {
 	idt_register_handler (0x80, syscall_handler);
 	idt_set_flags (0x80, 0x0E, 3, 0);
 	kmemset (syscall_handlers, 0, SYSCALL_COUNT * sizeof (syscall_handler_t));
+	is_init_syscall_b = true;
 }
+
+bool is_init_syscall (void) { return is_init_syscall_b; }

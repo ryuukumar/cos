@@ -57,3 +57,6 @@ void tss_set_stack (uintptr_t stack);
 
 extern void gdt_flush (gdt_pointer_t*);
 extern void tss_flush (void);
+
+bool is_init_gdt (void);
+bool is_init_tss (void);

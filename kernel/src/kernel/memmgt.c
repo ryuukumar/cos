@@ -12,6 +12,10 @@
 #define USER_PML4_IDX 1
 #define KRNL_PML4_IDX 257
 
+static bool is_init_pmm_b = false;
+static bool is_init_vmm_b = false;
+static bool is_init_memmgt_b = false;
+
 pml4t_entry_t* pml4_base_ptr = nullptr;
 uint64_t	   hhdm_offset = 0;
 
@@ -241,7 +245,11 @@ static void init_physical_bitmap (struct limine_memmap_response* memmap_response
 			}
 		}
 	}
+
+	is_init_pmm_b = true;
 }
+
+bool is_init_pmm (void) { return is_init_pmm_b; }
 
 /*!
  * Simple handler for page fault, prints faulting address from CR2
@@ -641,7 +649,13 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	pml4_base_ptr[KRNL_PML4_IDX].pdpt_base_address = ((uint64_t)krnl_pdpt_frame) / PAGE_SIZE;
 
 	register_syscall (SYSCALL_SYS_BRK, sys_brk);
+
+	is_init_vmm_b = true;
+	is_init_memmgt_b = true;
 }
+
+bool is_init_vmm (void) { return is_init_vmm_b; }
+bool is_init_memmgt (void) { return is_init_memmgt_b; }
 
 /*!
  * Get the CR3 for the kernel

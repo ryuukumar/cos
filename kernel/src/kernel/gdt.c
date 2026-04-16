@@ -16,6 +16,9 @@ gdt_t gdt = {
 	{0x68, 0, 0, 0x89, 0x20, 0, 0, 0} // tss
 };
 
+static bool is_init_gdt_b = false;
+static bool is_init_tss_b = false;
+
 gdt_pointer_t gdt_pointer;
 tss_t		  tss;
 
@@ -27,6 +30,8 @@ void init_gdt (void) {
 
 	gdt_flush (&gdt_pointer);
 	tss_flush ();
+
+	is_init_gdt_b = true;
 }
 
 void init_tss (void) {
@@ -41,6 +46,11 @@ void init_tss (void) {
 	gdt.tss.base_mid8 = ((uintptr_t)&tss >> 16) & 0xFF;
 	gdt.tss.base_high8 = ((uintptr_t)&tss >> 24) & 0xFF;
 	gdt.tss.base_upper32 = (uintptr_t)&tss >> 32;
+
+	is_init_tss_b = true;
 }
 
 void tss_set_stack (uintptr_t stack) { tss.rsp[0] = stack; }
+
+bool is_init_gdt (void) { return is_init_gdt_b; }
+bool is_init_tss (void) { return is_init_tss_b; }

@@ -69,3 +69,4 @@ uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);
+bool   is_init_vfs (void);

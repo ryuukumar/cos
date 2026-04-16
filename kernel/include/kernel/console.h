@@ -12,6 +12,7 @@ void   set_idx (size_t);
 size_t get_idx (void);
 
 void init_console (size_t, size_t, size_t, size_t, size_t, size_t, size_t);
+bool is_init_console (void);
 void set_color (uint32_t);
 void update (void);
 

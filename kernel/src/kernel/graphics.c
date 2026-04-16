@@ -6,6 +6,8 @@ static struct limine_framebuffer* framebuffer;
 static size_t					  frmw, frmh;
 uint32_t*						  fb_ptr;
 
+static bool is_init_graphics_b = false;
+
 /*!
 Initialise the graphics interface.
 
@@ -16,7 +18,10 @@ void init_graphics (struct limine_framebuffer* buf) {
 	frmw = framebuffer->width;
 	frmh = framebuffer->height;
 	fb_ptr = framebuffer->address;
+	is_init_graphics_b = true;
 }
+
+bool is_init_graphics (void) { return is_init_graphics_b; }
 
 /*!
 Convert index to screen position.

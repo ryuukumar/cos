@@ -40,3 +40,4 @@ void schedule (registers_t* registers);
 int process_fork (process* source_process, process** dest_ptr);
 
 void init_process (void);
+bool is_init_process (void);

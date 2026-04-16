@@ -9,6 +9,8 @@ struct posn {
 };
 
 extern void init_graphics (struct limine_framebuffer*);
+bool		is_init_graphics (void);
+
 struct posn itopos (int);
 size_t		postoi (int, int);
 

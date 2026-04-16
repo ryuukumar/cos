@@ -3,6 +3,8 @@
 #include <kclib/string.h>
 #include <kernel/idt.h>
 
+static bool is_init_idt_b = false;
+
 __attribute__ ((aligned (0x10))) static idt_entry_t idt[256];
 
 static idtr_t idtr;
@@ -98,4 +100,8 @@ void init_idt (void) {
 	}
 
 	__asm__ volatile ("lidt %0" : : "m"(idtr));
+
+	is_init_idt_b = true;
 }
+
+bool is_init_idt (void) { return is_init_idt_b; }

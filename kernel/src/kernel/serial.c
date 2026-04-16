@@ -1,6 +1,8 @@
 
 #include <kernel/serial.h>
 
+static bool is_init_serial_b = false;
+
 /*!
  * Initialise serial communications to port SERIAL_COM_1
  * Textbook implementation, see: https://wiki.osdev.org/Serial_Ports
@@ -24,8 +26,11 @@ int init_serial (void) {
 	// If serial is not faulty set it in normal operation mode
 	// (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
 	outb (SERIAL_COM_1 + 4, 0x0F);
+	is_init_serial_b = true;
 	return 0;
 }
+
+bool is_init_serial (void) { return is_init_serial_b; }
 
 /*!
  * Read from SERIAL_COM_1

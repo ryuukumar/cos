@@ -5,6 +5,8 @@
 #include <kernel/fs/chardev.h>
 #include <liballoc/liballoc.h>
 
+static bool is_init_tty1_b = false;
+
 static int stdout_write (inode* node, file* f, void* buf, size_t len) {
 	(void)node, (void)f; // args not used
 	bool stdio_buf = get_update_on_putch ();
@@ -37,4 +39,8 @@ void init_tty1 (inode* absolute_root) {
 	tty1_file->i_iops = nullptr;
 	tty1_file->i_fops = tty1_fops;
 	tty1_file->i_type = CHAR_DEV;
+
+	is_init_tty1_b = true;
 }
+
+bool is_init_tty1 (void) { return is_init_tty1_b; }

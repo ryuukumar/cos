@@ -11,6 +11,8 @@ process_queue ready_queue;
 uint64_t	  next_free_pid;
 process*	  current_process;
 
+static bool is_init_process_b = false;
+
 process_queue* get_ready_queue (void) { return &ready_queue; }
 
 int dequeue_process (process_queue* queue, process** result) {
@@ -219,4 +221,8 @@ void init_process (void) {
 	register_syscall (SYSCALL_SYS_FORK, sys_fork);
 	register_syscall (SYSCALL_SYS_GETPID, sys_getpid);
 	register_syscall (SYSCALL_SCHED_YIELD, sys_sched_yield);
+
+	is_init_process_b = true;
 }
+
+bool is_init_process (void) { return is_init_process_b; }

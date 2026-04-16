@@ -8,6 +8,8 @@
 
 inode* vfs_absolute_root = nullptr;
 
+static bool is_init_vfs_b = false;
+
 static bool filename_has_invalid_chars (char* filename) {
 	while (*filename != 0) {
 		unsigned char c = (unsigned char)*filename;
@@ -400,4 +402,8 @@ void init_vfs (inode* absolute_root) {
 	register_syscall (SYSCALL_SYS_CLOSE, sys_close);
 	register_syscall (SYSCALL_SYS_LSEEK, sys_seek);
 	register_syscall (SYSCALL_SYS_MKDIR, sys_mkdir);
+
+	is_init_vfs_b = true;
 }
+
+bool is_init_vfs (void) { return is_init_vfs_b; }
