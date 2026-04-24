@@ -1,3 +1,4 @@
+#include "kclib/stdio.h"
 #include <kernel/hw/keyboard.h>
 #include <kernel/hw/pic.h>
 #include <kernel/idt.h>
@@ -51,9 +52,12 @@ static inline bool kb_reset (void) {
 
 static void kb_handler (registers_t* registers) {
 	(void)registers;
-	unsigned char scancode = kb_read_data ();
+	if (kb_read_status_register ().out_buffer_full) {
+		unsigned char scancode = kb_read_data ();
+		kprintf ("0x%02x ", scancode);
+		push_charqueue (kb_keypress_charqueue, scancode);
+	}
 	pic_send_eoi (1);
-	push_charqueue (kb_keypress_charqueue, scancode);
 }
 
 void init_kb (void) {
@@ -69,7 +73,7 @@ void init_kb (void) {
 
 	kb_ps2_cfg_byte_t cfg_byte = kb_read_cfg_byte ();
 	cfg_byte.irq1_enable = cfg_byte.irq12_enable = 0;
-	cfg_byte.port_1_tl_enable = 0;
+	cfg_byte.port_1_tl_enable = 1;
 	cfg_byte.port_1_clock_disable = 0;
 	kb_write_cfg_byte (cfg_byte);
 
@@ -78,9 +82,10 @@ void init_kb (void) {
 	kb_write_cfg_byte (cfg_byte);
 	kb_send_command (kb_ps2_enable_port_1, false);
 
+	is_kb_setup = kb_reset ();
+
 	cfg_byte.irq1_enable = 1;
 	kb_write_cfg_byte (cfg_byte);
-	is_kb_setup = kb_reset ();
 
 	if (kb_keypress_charqueue != nullptr) {
 		idt_register_handler (0x21, kb_handler);
