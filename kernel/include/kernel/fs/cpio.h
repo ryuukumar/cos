@@ -1,5 +1,4 @@
-#ifndef CPIO_H
-#define CPIO_H
+#pragma once
 
 #include <kernel/fs/vfs.h>
 #include <stddef.h>
@@ -23,5 +22,3 @@ typedef struct {
 } cpio_newc_header_t;
 
 int load_cpio_from_memory (void* pos, const char* out_path);
-
-#endif

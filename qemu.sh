@@ -1,32 +1,24 @@
+#!/bin/sh
 
 function heading() {
-	input_string=$1
-	string_length=${#input_string}
+	input_string="$1"
+	output_color="$2"
 	line_char="-"
 
-	# Output hashtags
-	final_string=""
-	for ((i=1; i<=string_length+4; i++))
-	do
-		final_string+=$line_char
-	done
-	final_string+="\n"  # Add a newline after the hashtags
-  
-	final_string+="# ${input_string} #\n"
-  
-	# Output hashtags
-	for ((i=1; i<=string_length+4; i++))
-	do
-		final_string+=$line_char
-	done
-	final_string+="\n"  # Add a newline after the hashtags
+	len=${#input_string}
+	width=$((len + 4))
+	line=$(printf '%*s' "$width" '' | tr ' ' "$line_char")
 
-	echo -e "$final_string"
+	if [ -n "$output_color" ]; then
+		printf '\e[%sm\n%s\n%s\n%s\n\n\e[0m' "$output_color" "$line" "# ${input_string} #" "$line"
+	else
+		printf '\n%s\n%s\n%s\n\n' "$line" "# ${input_string} #" "$line"
+	fi
 }
 
-echo -e "\e[1;33m\n$(heading "Running QEMU")\n\e[0m"
+heading "Running QEMU" "1;33"
 
 echo "Running image.iso as CD-ROM image."
 qemu-system-x86_64 -cdrom image.iso -vga std -serial file:serial.log
 
-echo -e "\e[1;32m\n$(heading "Run complete")\n\e[0m"
+heading "Run complete" "1;32"

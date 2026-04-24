@@ -80,7 +80,8 @@ override HEADER_DEPS := $(patsubst %.c,$(BUILD_DIR)/%.c.d,$(CFILES)) $(patsubst 
 all: $(BUILD_DIR)/$(TARGET)
 
 $(BUILD_DIR)/$(TARGET): $(OBJ)
-	$(LD) $(OBJ) $(LDFLAGS) -o $@
+	@printf "LD\t%s\n" $@
+	@$(LD) $(OBJ) $(LDFLAGS) -o $@
 	@mkdir -p $(INITRAMFS_DIR)
 	@cp $(BUILD_DIR)/$(TARGET) $(INITRAMFS_DIR)
 
@@ -88,11 +89,13 @@ $(BUILD_DIR)/$(TARGET): $(OBJ)
 
 $(BUILD_DIR)/%.c.o: %.c
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@printf "CC\t%s\n" $<
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.s.o: %.s
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+	@printf "CC\t%s\n" $<
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:
@@ -100,4 +103,4 @@ clean:
 
 .PHONY: format
 format:
-	find -type f \( -name '*.c' -o -name '*.h' \) ! -name 'limine.h' -exec clang-format -i {} +
+	find . -type f \( -name '*.c' -o -name '*.h' \) ! -name 'limine.h' -exec clang-format -i {} +
