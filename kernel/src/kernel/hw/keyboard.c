@@ -49,11 +49,11 @@ static inline bool kb_reset (void) {
 	return true;
 }
 
-static registers_t* kb_handler (registers_t* registers) {
+static void kb_handler (registers_t* registers) {
+	(void)registers;
 	unsigned char scancode = kb_read_data ();
 	pic_send_eoi (1);
 	push_charqueue (kb_keypress_charqueue, scancode);
-	return registers;
 }
 
 void init_kb (void) {
