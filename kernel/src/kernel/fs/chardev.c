@@ -8,6 +8,8 @@
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
 
+inode* tty1_ptr = nullptr;
+
 static int stdout_write (inode* node, file* f, void* buf, size_t len) {
 	(void)node, (void)f; // args not used
 	bool stdio_buf = get_update_on_putch ();
@@ -21,17 +23,20 @@ static int stdout_write (inode* node, file* f, void* buf, size_t len) {
 	return len;
 }
 
+static void stdin_kb_handler (unsigned char nextchar) {
+	(void)nextchar; // factually we don't really need this
+	process* next_process = nullptr;
+	while (dequeue_process (&tty1_ptr->i_info.chardev_info->rsrc_wait_queue, &next_process) == 0)
+		process_unblock (next_process);
+}
+
 static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 	(void)node, (void)f; // args not used
 	char* cbuffer = (char*)buffer;
 	for (size_t i = 0; i < size; i++) {
 		unsigned char c = 255;
 		while ((c = pop_next_char ()) == 255)
-			do_sched_yield ();
-		// if (isprint (c))
-		// 	cbuffer[i] = c;
-		// else
-		// 	i--;
+			process_block(&tty1_ptr->i_info.chardev_info->rsrc_wait_queue);
 	}
 	return (int)size;
 }
@@ -59,4 +64,7 @@ void init_tty1 (inode* absolute_root) {
 	tty1_file->i_fops = tty1_fops;
 	tty1_file->i_type = CHAR_DEV;
 	tty1_file->i_info.chardev_info = tty1_info;
+
+	tty1_ptr = tty1_file;
+	register_kb_tty_handler (stdin_kb_handler);
 }
