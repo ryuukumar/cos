@@ -133,9 +133,9 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 		process* current = get_current_process ();
 
 		uintptr_t entry_point;
-		int		  err = load_elf ("/bin/hello", current, &entry_point);
+		int		  err = load_elf ("/bin/pishell", current, &entry_point);
 		if (err != 0) {
-			kprintf ("Failed to load /bin/hello : %d\n", err);
+			kprintf ("Failed to load /bin/pishell : %d\n", err);
 			for (;;)
 				;
 		}
@@ -150,11 +150,8 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 		jump_to_usermode (entry_point, user_stack_base, &current->p_user);
 	}
 
-	for (;;) {
-		unsigned char c = 0;
-		do_syscall (SYSCALL_SYS_READ, 0, (uint64_t)&c, 1);
-		kprintf ("%c", c);
-	}
+	for (;;)
+		do_syscall (SYSCALL_SCHED_YIELD, 0, 0, 0);
 }
 
 static void get_limine_requests (void) {
