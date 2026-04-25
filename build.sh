@@ -102,6 +102,10 @@ if [ "$BUILD_DOCS" = true ]; then
 	doxygen Doxyfile
 fi
 
+heading "Building libc" "1;33"
+
+$MAKE -j$NPROC lib
+
 heading "Building OS binaries" "1;33"
 
 $MAKE -j$NPROC kernel
