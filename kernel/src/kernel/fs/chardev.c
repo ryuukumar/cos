@@ -26,8 +26,10 @@ static int stdout_write (inode* node, file* f, void* buf, size_t len) {
 static void stdin_kb_handler (unsigned char nextchar) {
 	(void)nextchar; // factually we don't really need this
 	process* next_process = nullptr;
-	while (dequeue_process (&tty1_ptr->i_info.chardev_info->rsrc_wait_queue, &next_process) == 0)
+	while (dequeue_process (&tty1_ptr->i_info.chardev_info->rsrc_wait_queue, &next_process) == 0) {
+		if (!next_process) break;
 		process_unblock (next_process);
+	}
 }
 
 static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
@@ -36,7 +38,7 @@ static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 	for (size_t i = 0; i < size; i++) {
 		unsigned char c = 255;
 		while ((c = pop_next_char ()) == 255)
-			process_block(&tty1_ptr->i_info.chardev_info->rsrc_wait_queue);
+			process_block (&tty1_ptr->i_info.chardev_info->rsrc_wait_queue);
 	}
 	return (int)size;
 }
