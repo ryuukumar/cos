@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdint.h>
 
 typedef long		 ssize_t;
 typedef long		 off_t;
@@ -24,7 +25,13 @@ off_t	lseek (int fd, off_t offset, int whence);
 
 int mkdir (const char* pathname, mode_t mode);
 
-int brk (void* addr);
+uint64_t brk (void* addr);
+void* sbrk (ptrdiff_t incr);
+
+// TODO: implement stubs
+int fstat(int file, struct stat *st);
+int isatty(int file);
+int kill(int pid, int sig);
 
 #ifdef __cplusplus
 }
