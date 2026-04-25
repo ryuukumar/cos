@@ -308,6 +308,13 @@ constexpr unsigned char ext_keypress_to_action[128] = {[0x1C] = '\n',
 													   [0x52] = kb_action_insert,
 													   [0x53] = kb_action_delete};
 
+typedef struct {
+	bool lctl, rctl, lshift, rshift, lalt, ralt, caps, numlk, scrllk, ext;
+} statemachine_t;
+
 int kp_isaction (unsigned char kp);
 int kp_ischar (unsigned char kp);
 int kp_isext (unsigned char kp);
+int kp_islk (unsigned char kp);
+
+unsigned char map_keypress (statemachine_t* sm, unsigned char kp);
