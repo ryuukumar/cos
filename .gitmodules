@@ -1,0 +1,3 @@
+[submodule "user/pishell"]
+	path = user/pishell
+	url = git@github.com:ryuukumar/pishell.git
