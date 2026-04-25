@@ -14,6 +14,10 @@ void _start (void) {
 	const char* msg = "Hello from USERLAND!!!\n";
 
 	syscall3 (4, 1, (long)msg, 24);
+
+	for (;;)
+		;
+
 	syscall3 (1, 0, 0, 0);
 
 	while (1)
