@@ -307,3 +307,7 @@ constexpr unsigned char ext_keypress_to_action[128] = {[0x1C] = '\n',
 													   [0x51] = kb_action_pgdn,
 													   [0x52] = kb_action_insert,
 													   [0x53] = kb_action_delete};
+
+int kp_isaction (unsigned char kp);
+int kp_ischar (unsigned char kp);
+int kp_isext (unsigned char kp);
