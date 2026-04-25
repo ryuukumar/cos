@@ -181,6 +181,17 @@ int process_fork (process* source_process, process** dest_ptr) {
 	return new_process->p_id;
 }
 
+void process_block (process_queue* wait_queue) {
+	current_process->p_state = TASK_BLOCKED;
+	enqueue_process (wait_queue, current_process);
+	do_sched_yield ();
+}
+
+void process_unblock (process* p) {
+	p->p_state = TASK_READY;
+	enqueue_process (&ready_queue, p);
+}
+
 static uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 	(void)arg1, (void)arg2, (void)arg3; // fork does not use any args
 	process* child = nullptr;
