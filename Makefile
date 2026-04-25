@@ -6,11 +6,9 @@ kernel:
 	@echo "Building Kernel..."
 	$(MAKE) -C kernel
 
-user: user_bin
-
-user_bin:
-	@echo "Building user binaries..."
-	$(MAKE) -C user bin
+user:
+	@echo "Building userspace..."
+	$(MAKE) -C user
 
 initramfs: user
 	@( cd build/initramfs && find . -print | cpio -o -H newc -v ) > build/initramfs.cpio
