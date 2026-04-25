@@ -123,6 +123,10 @@ void putchar (unsigned char rc) {
 		idx = ((idx / xc) + 1) * xc;
 		if (idx >= xc * yc) idx -= xc * yc;
 		return;
+	case '\b':
+		idx--;
+		registerChar (0, idx);
+		return;
 	}
 	registerChar (rc, idx);
 	idx++;

@@ -10,6 +10,7 @@
 #include <kernel/graphics.h>
 #include <kernel/handlers.h>
 #include <kernel/hardfonts/classic.h>
+#include <kernel/hw/keyboard.h>
 #include <kernel/hw/pic.h>
 #include <kernel/hw/timer.h>
 #include <kernel/idt.h>
@@ -107,6 +108,7 @@ static void print_info (void) {
 __attribute__ ((noreturn)) void _start_stage2 (void) {
 	init_graphics (framebuffer);
 	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
+	init_kb ();
 	init_acpi (rsdp);
 
 	for (int i = 0; i < 3; i++) // open stdin, stdout and stderr
@@ -146,8 +148,11 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 		jump_to_usermode (entry_point, user_stack_base, &current->p_user);
 	}
 
-	for (;;)
-		do_syscall (SYSCALL_SCHED_YIELD, 0, 0, 0);
+	for (;;) {
+		unsigned char c = 0;
+		do_syscall (SYSCALL_SYS_READ, 0, (uint64_t)&c, 1);
+		kprintf ("%c", c);
+	}
 }
 
 static void get_limine_requests (void) {
