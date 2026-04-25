@@ -1,4 +1,3 @@
-#include <kclib/stdio.h>
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/hw/keyboard.h>
@@ -62,7 +61,6 @@ static void kb_handler (registers_t* registers) {
 		unsigned char scancode = inb (kb_ps2_data_port);
 		unsigned char processed = map_keypress (kb_statemachine, scancode);
 		if (processed != 0) {
-			kprintf ("0x%02x [%1c]\t", processed, processed);
 			push_charqueue (kb_keypress_charqueue, processed);
 			if (kb_tty_handler) kb_tty_handler (processed);
 		}
