@@ -30,6 +30,8 @@ $(eval $(call DEFAULT_VAR,CPPFLAGS,$(DEFAULT_CPPFLAGS)))
 override DEFAULT_LDFLAGS :=
 $(eval $(call DEFAULT_VAR,LDFLAGS,$(DEFAULT_LDFLAGS)))
  
+override SYSROOT := $(abspath ../../build/user)
+
 # Internal C flags that should not be changed by the user.
 override CFLAGS += \
 	-Wall \
@@ -50,6 +52,7 @@ override CFLAGS += \
  
 # Internal C preprocessor flags that should not be changed by the user.
 override CPPFLAGS := \
+	-I $(SYSROOT)/usr/include \
 	-I include \
 	-I. \
 	$(CPPFLAGS) \
@@ -58,6 +61,7 @@ override CPPFLAGS := \
  
 # Internal linker flags that should not be changed by the user.
 override LDFLAGS += \
+	-L$(SYSROOT)/usr/lib \
 	-nostdlib \
 	-static \
 	-m elf_x86_64 \
@@ -81,7 +85,7 @@ all: $(BUILD_DIR)/$(TARGET)
 
 $(BUILD_DIR)/$(TARGET): $(OBJ)
 	@printf "LD\t%s\n" $@
-	@$(LD) $(OBJ) $(LDFLAGS) -o $@
+	@$(LD) $(SYSROOT)/usr/lib/crt0.o $(OBJ) $(LDFLAGS) -lc -lcos -o $@
 	@mkdir -p $(INITRAMFS_DIR)
 	@cp $(BUILD_DIR)/$(TARGET) $(INITRAMFS_DIR)
 
