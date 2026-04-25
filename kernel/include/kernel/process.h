@@ -41,6 +41,5 @@ void process_unblock (process* p);
 void schedule (registers_t* registers);
 
 int process_fork (process* source_process, process** dest_ptr);
-int do_sched_yield (void);
 
 void init_process (void);
