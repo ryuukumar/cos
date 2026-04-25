@@ -82,7 +82,7 @@ void schedule (registers_t* registers) {
 	}
 }
 
-static int do_sched_yield (void) {
+int do_sched_yield (void) {
 	schedule (get_latest_r_frame ());
 	return 0;
 }

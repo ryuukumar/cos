@@ -38,5 +38,6 @@ int enqueue_process (process_queue* queue, process* new_process);
 void schedule (registers_t* registers);
 
 int process_fork (process* source_process, process** dest_ptr);
+int do_sched_yield (void);
 
 void init_process (void);
