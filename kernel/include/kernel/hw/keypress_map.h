@@ -20,6 +20,19 @@ constexpr unsigned char kb_action_numlk = 0x90;
 constexpr unsigned char kb_action_scrllk = 0x91;
 constexpr unsigned char kb_action_f11 = 0x92;
 constexpr unsigned char kb_action_f12 = 0x93;
+constexpr unsigned char kb_action_rctl = 0x94;
+constexpr unsigned char kb_action_ralt = 0x95;
+constexpr unsigned char kb_action_home = 0x96;
+constexpr unsigned char kb_action_cup = 0x97;
+constexpr unsigned char kb_action_pgup = 0x98;
+constexpr unsigned char kb_action_cleft = 0x99;
+constexpr unsigned char kb_action_cright = 0x9A;
+constexpr unsigned char kb_action_end = 0x9B;
+constexpr unsigned char kb_action_cdown = 0x9C;
+constexpr unsigned char kb_action_pgdn = 0x9D;
+constexpr unsigned char kb_action_insert = 0x9E;
+constexpr unsigned char kb_action_delete = 0x9F;
+constexpr unsigned char kb_action_ext = 0xE0;
 
 constexpr unsigned char kb_ps2_sc1_released_offset = 0x80;
 
@@ -263,7 +276,7 @@ constexpr unsigned char keypress_to_char_or_action[256] = {0,
 														   0,
 														   0,
 														   0,
-														   0,
+														   kb_action_ext,
 														   0,
 														   0,
 														   0,
@@ -279,3 +292,18 @@ constexpr unsigned char keypress_to_char_or_action[256] = {0,
 														   0,
 														   0,
 														   0};
+
+constexpr unsigned char ext_keypress_to_action[128] = {[0x1C] = '\n',
+													   [0x1D] = kb_action_rctl,
+													   [0x35] = '/',
+													   [0x38] = kb_action_ralt,
+													   [0x47] = kb_action_home,
+													   [0x48] = kb_action_cup,
+													   [0x49] = kb_action_pgup,
+													   [0x4B] = kb_action_cleft,
+													   [0x4D] = kb_action_cright,
+													   [0x4F] = kb_action_end,
+													   [0x50] = kb_action_cdown,
+													   [0x51] = kb_action_pgdn,
+													   [0x52] = kb_action_insert,
+													   [0x53] = kb_action_delete};
