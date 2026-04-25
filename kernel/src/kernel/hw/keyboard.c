@@ -1,5 +1,6 @@
-#include "kclib/stdio.h"
+#include <kclib/stdio.h>
 #include <kernel/hw/keyboard.h>
+#include <kernel/hw/keypress_map.h>
 #include <kernel/hw/pic.h>
 #include <kernel/idt.h>
 #include <kernel/io.h>

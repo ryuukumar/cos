@@ -1,5 +1,4 @@
-#ifndef KEYBOARD_H
-#define KEYBOARD_H
+#pragma once
 
 #include <stdint.h>
 
@@ -63,5 +62,3 @@ typedef union {
 } kb_ps2_status_register_t;
 
 void init_kb (void);
-
-#endif
