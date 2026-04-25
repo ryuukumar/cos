@@ -1,12 +1,7 @@
 #!/bin/sh
 
-export CC=x86_64-elf-gcc
-export CXX=x86_64-elf-g++
-export LD=x86_64-elf-ld
-export AS=x86_64-elf-as
-export AR=x86_64-elf-ar
-
 NPROC=$(getconf _NPROCESSORS_ONLN)
+ROOTDIR=$(pwd)
 
 export MAKE=make
 if [ "$(uname)" = "Darwin" ]; then
@@ -102,7 +97,24 @@ if [ "$BUILD_DOCS" = true ]; then
 	doxygen Doxyfile
 fi
 
+heading "Configuring libc" "1;33"
+
+mkdir -p build/lib/newlib
+cd build/lib/newlib
+../../../lib/newlib-cygwin/configure --target=x86_64-elf --prefix=/usr --disable-multilib
+
 heading "Building libc" "1;33"
+
+$MAKE all -j$NPROC
+$MAKE DESTDIR=$(pwd)/../../user tooldir=/usr install
+
+cd "$ROOTDIR"
+
+export CC=x86_64-elf-gcc
+export CXX=x86_64-elf-g++
+export LD=x86_64-elf-ld
+export AS=x86_64-elf-as
+export AR=x86_64-elf-ar
 
 $MAKE -j$NPROC lib
 
