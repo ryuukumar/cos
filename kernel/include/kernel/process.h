@@ -35,6 +35,9 @@ process*	   get_current_process (void);
 int dequeue_process (process_queue* queue, process** result);
 int enqueue_process (process_queue* queue, process* new_process);
 
+void process_block (process_queue* wait_queue);
+void process_unblock (process* p);
+
 void schedule (registers_t* registers);
 
 int process_fork (process* source_process, process** dest_ptr);
