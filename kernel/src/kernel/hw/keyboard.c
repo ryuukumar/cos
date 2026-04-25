@@ -1,13 +1,16 @@
 #include <kclib/stdio.h>
+#include <kclib/string.h>
 #include <kernel/hw/keyboard.h>
 #include <kernel/hw/keypress_map.h>
 #include <kernel/hw/pic.h>
 #include <kernel/idt.h>
 #include <kernel/io.h>
+#include <liballoc/liballoc.h>
 #include <utils/charqueue.h>
 
-static bool		  is_kb_setup = false;
-static charqueue* kb_keypress_charqueue;
+static bool			   is_kb_setup = false;
+static charqueue*	   kb_keypress_charqueue;
+static statemachine_t* kb_statemachine;
 
 static inline kb_ps2_status_register_t kb_read_status_register (void) {
 	return (kb_ps2_status_register_t){.raw = inb (kb_ps2_status_port)};
@@ -55,14 +58,19 @@ static void kb_handler (registers_t* registers) {
 	(void)registers;
 	if (kb_read_status_register ().out_buffer_full) {
 		unsigned char scancode = kb_read_data ();
-		kprintf ("0x%02x ", scancode);
-		push_charqueue (kb_keypress_charqueue, scancode);
+		unsigned char processed = map_keypress (kb_statemachine, scancode);
+		if (processed != 0) {
+			kprintf ("0x%02x [%1c]", processed, processed);
+			push_charqueue (kb_keypress_charqueue, processed);
+		}
 	}
 	pic_send_eoi (1);
 }
 
 void init_kb (void) {
 	kb_keypress_charqueue = create_charqueue ();
+	kb_statemachine = kmalloc (sizeof (statemachine_t));
+	kmemset ((void*)kb_statemachine, 0, sizeof (statemachine_t));
 
 	// TODO: actually verify the PS2 controller exists
 
