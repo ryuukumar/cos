@@ -26,12 +26,12 @@ off_t	lseek (int fd, off_t offset, int whence);
 int mkdir (const char* pathname, mode_t mode);
 
 uint64_t brk (void* addr);
-void* sbrk (ptrdiff_t incr);
+void*	 sbrk (ptrdiff_t incr);
 
 // TODO: implement stubs
-int fstat(int file, struct stat *st);
-int isatty(int file);
-int kill(int pid, int sig);
+int fstat (int file, struct stat* st);
+int isatty (int file);
+int kill (int pid, int sig);
 
 #ifdef __cplusplus
 }

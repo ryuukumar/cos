@@ -21,6 +21,8 @@ initramfs: user
 format:
 	@echo "Formatting Kernel..."
 	$(MAKE) -C kernel format
+	@echo "Formatting Lib..."
+	$(MAKE) -C lib format
 	@echo "Formatting User..."
 	$(MAKE) -C user format
 
