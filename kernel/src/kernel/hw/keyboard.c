@@ -9,9 +9,10 @@
 #include <liballoc/liballoc.h>
 #include <utils/charqueue.h>
 
-static bool			   is_kb_setup = false;
-static charqueue*	   kb_keypress_charqueue;
-static statemachine_t* kb_statemachine;
+static bool				is_kb_setup = false;
+static charqueue*		kb_keypress_charqueue;
+static statemachine_t*	kb_statemachine;
+static kb_tty_handler_t kb_tty_handler = nullptr;
 
 static inline kb_ps2_status_register_t kb_read_status_register (void) {
 	return (kb_ps2_status_register_t){.raw = inb (kb_ps2_status_port)};
@@ -63,6 +64,7 @@ static void kb_handler (registers_t* registers) {
 		if (processed != 0) {
 			kprintf ("0x%02x [%1c]\t", processed, processed);
 			push_charqueue (kb_keypress_charqueue, processed);
+			if (kb_tty_handler) kb_tty_handler (processed);
 		}
 	}
 	pic_send_eoi (1);
@@ -70,10 +72,12 @@ static void kb_handler (registers_t* registers) {
 
 unsigned char pop_next_char (void) {
 	unsigned char ret = 255;
-	if (peek_charqueue (kb_keypress_charqueue, &ret) != -EEMPQ)
+	if (peek_charqueue (kb_keypress_charqueue, &ret) == 0)
 		pop_charqueue (kb_keypress_charqueue, &ret);
 	return ret;
 }
+
+void register_kb_tty_handler (kb_tty_handler_t handler) { kb_tty_handler = handler; }
 
 void init_kb (void) {
 	kb_keypress_charqueue = create_charqueue ();

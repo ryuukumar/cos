@@ -61,5 +61,8 @@ typedef union {
 	} __attribute__ ((packed));
 } kb_ps2_status_register_t;
 
+typedef void (*kb_tty_handler_t) (unsigned char);
+
 void		  init_kb (void);
+void		  register_kb_tty_handler (kb_tty_handler_t handler);
 unsigned char pop_next_char (void);
