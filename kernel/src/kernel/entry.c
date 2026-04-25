@@ -148,8 +148,11 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 		jump_to_usermode (entry_point, user_stack_base, &current->p_user);
 	}
 
-	for (;;)
-		do_syscall (SYSCALL_SCHED_YIELD, 0, 0, 0);
+	for (;;) {
+		unsigned char c = 0;
+		do_syscall (SYSCALL_SYS_READ, 0, (uint64_t)&c, 1);
+		kprintf ("%c", c);
+	}
 }
 
 static void get_limine_requests (void) {
