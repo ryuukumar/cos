@@ -1,0 +1,3 @@
+[submodule "user/kclib"]
+	path = user/kclib
+	url = git@github.com:ryuukumar/kclib.git
