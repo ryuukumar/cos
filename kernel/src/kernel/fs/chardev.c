@@ -34,17 +34,23 @@ static void stdin_kb_handler (unsigned char nextchar) {
 
 static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 	(void)node, (void)f; // args not used
-	char* cbuffer = (char*)buffer;
+	char*  cbuffer = (char*)buffer;
+	size_t bytes_read = 0;
 	for (size_t i = 0; i < size; i++) {
 		unsigned char c = 255;
 		while ((c = pop_next_char ()) == 255)
 			process_block (&tty1_ptr->i_info.chardev_info->rsrc_wait_queue);
-		if (c < 0x80)
+		if (c < 0x80) {
 			cbuffer[i] = c;
-		else
+			bytes_read++;
+			putchar (c);
+			update ();
+			if (c == '\n') break;
+		} else {
 			i--;
+		}
 	}
-	return (int)size;
+	return (int)bytes_read;
 }
 
 void init_tty1 (inode* absolute_root) {
