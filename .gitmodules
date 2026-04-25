@@ -1,3 +1,6 @@
 [submodule "user/pishell"]
 	path = user/pishell
 	url = git@github.com:ryuukumar/pishell.git
+[submodule "lib/newlib-cygwin"]
+	path = lib/newlib-cygwin
+	url = https://sourceware.org/git/newlib-cygwin.git

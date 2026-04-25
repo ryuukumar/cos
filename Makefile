@@ -1,6 +1,6 @@
-.PHONY: all kernel clean format user initramfs
+.PHONY: all lib kernel clean format user initramfs
 
-all: kernel user initramfs
+all: lib kernel user initramfs
 
 kernel:
 	@echo "Building Kernel..."
@@ -12,12 +12,17 @@ user_bin:
 	@echo "Building user binaries..."
 	$(MAKE) -C user bin
 
+lib:
+	$(MAKE) -C lib
+
 initramfs: user
 	@( cd build/initramfs && find . -print | cpio -o -H newc -v ) > build/initramfs.cpio
 
 format:
 	@echo "Formatting Kernel..."
 	$(MAKE) -C kernel format
+	@echo "Formatting Lib..."
+	$(MAKE) -C lib format
 	@echo "Formatting User..."
 	$(MAKE) -C user format
 
