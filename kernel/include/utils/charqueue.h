@@ -1,5 +1,4 @@
-#ifndef CHARQUEUE_H
-#define CHARQUEUE_H
+#pragma once
 
 #include <kernel/memmgt.h>
 
@@ -26,5 +25,3 @@ int		   free_charqueue (charqueue* queue);
 int push_charqueue (charqueue* queue, unsigned char insert);
 int pop_charqueue (charqueue* queue, unsigned char* ret);
 int peek_charqueue (charqueue* queue, unsigned char* ret);
-
-#endif

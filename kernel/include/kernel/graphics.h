@@ -1,5 +1,4 @@
-#ifndef GRAPHICS_H
-#define GRAPHICS_H
+#pragma once
 
 #include <kernel/limine.h>
 #include <stddef.h>
@@ -16,5 +15,3 @@ size_t		postoi (int, int);
 void renderGlyph (unsigned char*, int, int, size_t, size_t, int, uint32_t);
 
 void drawBorder (size_t);
-
-#endif

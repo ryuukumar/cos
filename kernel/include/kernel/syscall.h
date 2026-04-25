@@ -1,6 +1,4 @@
-
-#ifndef SYSCALL_H
-#define SYSCALL_H
+#pragma once
 
 #include <kernel/idt.h>
 
@@ -26,5 +24,3 @@ void init_syscalls (void);
 void		 register_syscall (int vector, syscall_handler_t handler);
 uint64_t	 do_syscall (uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3);
 registers_t* get_latest_r_frame (void);
-
-#endif

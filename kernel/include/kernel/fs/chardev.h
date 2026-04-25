@@ -1,5 +1,4 @@
-#ifndef CHAR_DEV_H
-#define CHAR_DEV_H
+#pragma once
 
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
@@ -9,5 +8,3 @@ struct chardev_info {
 };
 
 void init_tty1 (inode* absolute_root);
-
-#endif

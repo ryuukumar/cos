@@ -1,5 +1,4 @@
-#ifndef PROCESS_H
-#define PROCESS_H
+#pragma once
 
 #include <kernel/fs/vfs.h>
 #include <kernel/idt.h>
@@ -41,5 +40,3 @@ void schedule (registers_t* registers);
 int process_fork (process* source_process, process** dest_ptr);
 
 void init_process (void);
-
-#endif

@@ -1,12 +1,12 @@
-#ifndef MEMMGT_H
-#define MEMMGT_H
+#pragma once
 
 #include <kernel/limine.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-#define PAGE_SIZE 4096ull
+#define PAGE_SIZE		   4096ull
+#define ALIGN_PAGE_DOWN(x) ((x) & ~(PAGE_SIZE - 1))
 
 typedef struct {
 	uint64_t present : 1;			 // Page present in memory
@@ -91,7 +91,8 @@ uint64_t read_cr3 (void);
 void	 write_cr3 (uint64_t new_value);
 
 vaddr_t get_vaddr_t_from_ptr (void* ptr);
-void*	get_vaddr_hhdm (uint64_t phys_address);
+void*	get_vaddr_from_frame (uint64_t phys_frame);
+void*	get_vaddr_from_phys_addr (uint64_t phys_address);
 void*	vaddr_t_to_ptr (vaddr_t* virtual_addr);
 
 void* alloc_vpages (size_t req_count, bool user);
@@ -108,6 +109,7 @@ void	  init_memmgt (uint64_t, struct limine_memmap_response*);
 void	  walk_pagetable (void);
 void*	  get_paddr (void* vaddr);
 uintptr_t get_kernel_cr3 (void);
+uint64_t  get_hhdm_offset (void);
 
 int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest);
 
@@ -118,5 +120,3 @@ int	  liballoc_lock (void);
 int	  liballoc_unlock (void);
 void* liballoc_alloc (size_t);
 int	  liballoc_free (void*, size_t);
-
-#endif

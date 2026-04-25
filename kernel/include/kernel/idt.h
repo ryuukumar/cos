@@ -1,6 +1,4 @@
-
-#ifndef IDT_H
-#define IDT_H
+#pragma once
 
 #include <stdint.h>
 
@@ -35,5 +33,3 @@ typedef void (*irq_handler_t) (registers_t*);
 void init_idt (void);
 void idt_register_handler (int vector, irq_handler_t handler);
 void idt_set_flags (int vector, uint8_t gate_type, uint8_t dpl, uint8_t ist);
-
-#endif
