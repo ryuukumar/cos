@@ -57,7 +57,7 @@ static inline bool kb_reset (void) {
 static void kb_handler (registers_t* registers) {
 	(void)registers;
 	if (kb_read_status_register ().out_buffer_full) {
-		unsigned char scancode = kb_read_data ();
+		unsigned char scancode = inb (kb_ps2_data_port);
 		unsigned char processed = map_keypress (kb_statemachine, scancode);
 		if (processed != 0) {
 			kprintf ("0x%02x [%1c]", processed, processed);
