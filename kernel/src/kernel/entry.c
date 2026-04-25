@@ -26,6 +26,8 @@
 
 #define FONT_SIZE 2
 
+extern void init_sse (void);
+
 extern volatile struct limine_framebuffer_request	  framebuffer_request;
 extern volatile struct limine_bootloader_info_request bootinfo_req;
 extern volatile struct limine_boot_time_request		  boottime_req;
@@ -187,6 +189,7 @@ void _start (void) {
 	init_gdt ();
 	init_pic ();
 	init_idt ();
+	init_sse ();
 	init_timer ();
 
 	init_serial ();
@@ -194,8 +197,8 @@ void _start (void) {
 
 	get_limine_requests ();
 
-	init_memmgt (hhdm_base, memmap_req.response);
 	init_syscalls ();
+	init_memmgt (hhdm_base, memmap_req.response);
 	init_handlers ();
 	init_process ();
 
