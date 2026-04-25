@@ -61,4 +61,5 @@ typedef union {
 	} __attribute__ ((packed));
 } kb_ps2_status_register_t;
 
-void init_kb (void);
+void		  init_kb (void);
+unsigned char pop_next_char (void);

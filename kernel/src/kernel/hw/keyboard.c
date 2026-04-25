@@ -1,5 +1,6 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
+#include <kernel/error.h>
 #include <kernel/hw/keyboard.h>
 #include <kernel/hw/keypress_map.h>
 #include <kernel/hw/pic.h>
@@ -60,11 +61,18 @@ static void kb_handler (registers_t* registers) {
 		unsigned char scancode = inb (kb_ps2_data_port);
 		unsigned char processed = map_keypress (kb_statemachine, scancode);
 		if (processed != 0) {
-			kprintf ("0x%02x [%1c]", processed, processed);
+			kprintf ("0x%02x [%1c]\t", processed, processed);
 			push_charqueue (kb_keypress_charqueue, processed);
 		}
 	}
 	pic_send_eoi (1);
+}
+
+unsigned char pop_next_char (void) {
+	unsigned char ret = 255;
+	if (peek_charqueue (kb_keypress_charqueue, &ret) != -EEMPQ)
+		pop_charqueue (kb_keypress_charqueue, &ret);
+	return ret;
 }
 
 void init_kb (void) {
