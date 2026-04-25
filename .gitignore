@@ -2,6 +2,7 @@ build
 limine
 *.iso
 iso_root
+initramfs
 *.o
 .vscode
 docs

@@ -106,7 +106,7 @@ cd build/lib/newlib
 heading "Building libc" "1;33"
 
 $MAKE all -j$NPROC
-$MAKE DESTDIR=$(pwd)/../../user tooldir=/usr install
+$MAKE DESTDIR=$(pwd)/../../../initramfs tooldir=/usr install
 
 cd "$ROOTDIR"
 

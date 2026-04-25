@@ -48,7 +48,7 @@ override CFLAGS += \
 	-march=x86-64 \
 	-mabi=sysv
  
-override SYSROOT := $(abspath ../../build/user)
+override SYSROOT := $(abspath ../../initramfs)
 
 # Internal C preprocessor flags that should not be changed by the user.
 override CPPFLAGS := \
@@ -73,8 +73,8 @@ endif
 override CFILES := $(shell find -L . -type f -name '*.c')
 
 override BUILD_DIR := ../../build/lib/libcos
-override OUT_DIR := ../../build/user/usr/lib
-override COMMON_INCLUDE_DIR := ../../build/user/usr/include
+override OUT_DIR := $(SYSROOT)/usr/lib
+override COMMON_INCLUDE_DIR := $(SYSROOT)/usr/include
 
 override OBJ := $(patsubst %.c,$(BUILD_DIR)/%.c.o,$(CFILES))
 override HEADER_DEPS := $(patsubst %.c,$(BUILD_DIR)/%.c.d,$(CFILES))
