@@ -2,7 +2,7 @@
 # the exception of some kernel-only flags that have been omitted here
 
 override MAKEFLAGS += -rR
-override TARGET := hello
+override TARGET := libcos.a
 
 define DEFAULT_VAR =
 	ifeq ($(origin $1),default)
@@ -16,8 +16,8 @@ endef
 override DEFAULT_CC := x86_64-elf-gcc
 $(eval $(call DEFAULT_VAR,CC,$(DEFAULT_CC)))
 
-override DEFAULT_LD := x86_64-elf-ld
-$(eval $(call DEFAULT_VAR,LD,$(DEFAULT_LD)))
+override DEFAULT_AR := x86_64-elf-ar
+$(eval $(call DEFAULT_VAR,AR,$(DEFAULT_AR)))
 
 override DEFAULT_CFLAGS := -g -O2 -pipe
 $(eval $(call DEFAULT_VAR,CFLAGS,$(DEFAULT_CFLAGS)))
@@ -30,8 +30,6 @@ $(eval $(call DEFAULT_VAR,CPPFLAGS,$(DEFAULT_CPPFLAGS)))
 override DEFAULT_LDFLAGS :=
 $(eval $(call DEFAULT_VAR,LDFLAGS,$(DEFAULT_LDFLAGS)))
  
-override SYSROOT := $(abspath ../../build/user)
-
 # Internal C flags that should not be changed by the user.
 override CFLAGS += \
 	-Wall \
@@ -50,6 +48,8 @@ override CFLAGS += \
 	-march=x86-64 \
 	-mabi=sysv
  
+override SYSROOT := $(abspath ../../build/user)
+
 # Internal C preprocessor flags that should not be changed by the user.
 override CPPFLAGS := \
 	-I $(SYSROOT)/usr/include \
@@ -61,7 +61,6 @@ override CPPFLAGS := \
  
 # Internal linker flags that should not be changed by the user.
 override LDFLAGS += \
-	-L$(SYSROOT)/usr/lib \
 	-nostdlib \
 	-static \
 	-m elf_x86_64 \
@@ -72,31 +71,32 @@ ifeq ($(shell $(LD) --help 2>&1 | grep 'no-pie' >/dev/null 2>&1; echo $$?),0)
 endif
 
 override CFILES := $(shell find -L . -type f -name '*.c')
-override ASFILES := $(shell find -L . -type f -name '*.s')
 
-override BUILD_DIR := ../../build/user/bin
-override INITRAMFS_DIR := ../../build/initramfs/bin
+override BUILD_DIR := ../../build/lib/libcos
+override OUT_DIR := ../../build/user/usr/lib
+override COMMON_INCLUDE_DIR := ../../build/user/usr/include
 
-override OBJ := $(patsubst %.c,$(BUILD_DIR)/%.c.o,$(CFILES)) $(patsubst %.s,$(BUILD_DIR)/%.s.o,$(ASFILES))
-override HEADER_DEPS := $(patsubst %.c,$(BUILD_DIR)/%.c.d,$(CFILES)) $(patsubst %.s,$(BUILD_DIR)/%.s.d,$(ASFILES))
+override OBJ := $(patsubst %.c,$(BUILD_DIR)/%.c.o,$(CFILES))
+override HEADER_DEPS := $(patsubst %.c,$(BUILD_DIR)/%.c.d,$(CFILES))
  
 .PHONY: all
-all: $(BUILD_DIR)/$(TARGET)
+all: $(OUT_DIR)/$(TARGET) $(OUT_DIR)/crt0.o
 
-$(BUILD_DIR)/$(TARGET): $(OBJ)
-	@printf "LD\t%s\n" $@
-	@$(LD) $(SYSROOT)/usr/lib/crt0.o $(OBJ) $(LDFLAGS) -lc -lcos -o $@
-	@mkdir -p $(INITRAMFS_DIR)
-	@cp $(BUILD_DIR)/$(TARGET) $(INITRAMFS_DIR)
-
--include $(HEADER_DEPS)
-
-$(BUILD_DIR)/%.c.o: %.c
+$(OUT_DIR)/crt0.o: src/crt0.S
 	@mkdir -p $(@D)
 	@printf "CC\t%s\n" $<
 	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/%.s.o: %.s
+$(OUT_DIR)/$(TARGET): $(OBJ)
+	@mkdir -p $(@D)
+	@printf "AR\t%s\n" $@
+	@$(AR) rcs $@ $(OBJ)
+	@mkdir -p $(COMMON_INCLUDE_DIR)
+	@cp -R include/* $(COMMON_INCLUDE_DIR)/
+
+-include $(HEADER_DEPS)
+
+$(BUILD_DIR)/%.c.o: %.c
 	@mkdir -p $(@D)
 	@printf "CC\t%s\n" $<
 	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
