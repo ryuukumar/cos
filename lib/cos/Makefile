@@ -68,17 +68,21 @@ ifeq ($(shell $(LD) --help 2>&1 | grep 'no-pie' >/dev/null 2>&1; echo $$?),0)
 endif
 
 override CFILES := $(shell find -L . -type f -name '*.c')
-override ASFILES := $(shell find -L . -type f -name '*.s')
 
 override BUILD_DIR := ../../build/lib/libcos
 override OUT_DIR := ../../build/user/usr/lib
 override COMMON_INCLUDE_DIR := ../../build/user/usr/include
 
-override OBJ := $(patsubst %.c,$(BUILD_DIR)/%.c.o,$(CFILES)) $(patsubst %.s,$(BUILD_DIR)/%.s.o,$(ASFILES))
-override HEADER_DEPS := $(patsubst %.c,$(BUILD_DIR)/%.c.d,$(CFILES)) $(patsubst %.s,$(BUILD_DIR)/%.s.d,$(ASFILES))
+override OBJ := $(patsubst %.c,$(BUILD_DIR)/%.c.o,$(CFILES))
+override HEADER_DEPS := $(patsubst %.c,$(BUILD_DIR)/%.c.d,$(CFILES))
  
 .PHONY: all
-all: $(OUT_DIR)/$(TARGET)
+all: $(OUT_DIR)/$(TARGET) $(OUT_DIR)/crt0.o
+
+$(OUT_DIR)/crt0.o: src/crt0.S
+	@mkdir -p $(@D)
+	@printf "CC\t%s\n" $<
+	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 $(OUT_DIR)/$(TARGET): $(OBJ)
 	@mkdir -p $(@D)
@@ -90,11 +94,6 @@ $(OUT_DIR)/$(TARGET): $(OBJ)
 -include $(HEADER_DEPS)
 
 $(BUILD_DIR)/%.c.o: %.c
-	@mkdir -p $(@D)
-	@printf "CC\t%s\n" $<
-	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/%.s.o: %.s
 	@mkdir -p $(@D)
 	@printf "CC\t%s\n" $<
 	@$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
