@@ -48,8 +48,11 @@ override CFLAGS += \
 	-march=x86-64 \
 	-mabi=sysv
  
+override SYSROOT := $(abspath ../../build/user)
+
 # Internal C preprocessor flags that should not be changed by the user.
 override CPPFLAGS := \
+	-I $(SYSROOT)/usr/include \
 	-I include \
 	-I. \
 	$(CPPFLAGS) \
