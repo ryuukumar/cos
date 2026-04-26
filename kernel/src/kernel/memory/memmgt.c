@@ -10,9 +10,9 @@
 
 #define ALIGNUP(x, o) ((x + o - 1) & ~(o - 1))
 
-pml4t_entry_t* pml4_base_ptr = nullptr;
-uint64_t	   hhdm_offset = 0;
-uintptr_t	   kernel_cr3 = 0;
+static pml4t_entry_t* pml4_base_ptr = nullptr;
+static uint64_t		  hhdm_offset = 0;
+static uintptr_t	  kernel_cr3 = 0;
 
 struct limine_memmap_response* memmap_response_ptr;
 

@@ -2,7 +2,7 @@
 #include <kernel/memmgt.h>
 #include <kernel/memory/pmm.h>
 
-pml4t_entry_t* pml4_base_ptr = nullptr;
+static pml4t_entry_t* pml4_base_ptr = nullptr;
 
 /*!
  * Allocate all virtual pages in given range (inclusive). Needs physical memory to be allocated.
@@ -255,10 +255,7 @@ void free_vpages (void* ptr, size_t count) {
 	if (ptr == nullptr || count == 0) return;
 
 	vaddr_t vaddr = get_vaddr_t_from_ptr (ptr);
-	if (vaddr.pml4_index != 1) {
-		kserial_printf ("free_vpages called for pml4_index that is not 1!");
-		return;
-	}
+	if (vaddr.pml4_index != 1) return;
 
 	void* phys_base = get_paddr (ptr);
 	if (phys_base == nullptr) return;
