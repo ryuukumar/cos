@@ -5,6 +5,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define USER_PML4_IDX 1
+#define KRNL_PML4_IDX 257
+
 #define PAGE_SIZE		   4096ull
 #define ALIGN_PAGE_DOWN(x) ((x) & ~(PAGE_SIZE - 1))
 
@@ -94,22 +97,27 @@ vaddr_t get_vaddr_t_from_ptr (void* ptr);
 void*	get_vaddr_from_frame (uint64_t phys_frame);
 void*	get_vaddr_from_phys_addr (uint64_t phys_address);
 void*	vaddr_t_to_ptr (vaddr_t* virtual_addr);
+bool	is_vaddr_t_user (vaddr_t* addr);
+bool	is_vaddr_t_lt (vaddr_t* a, vaddr_t* b);
 
 void* alloc_vpages (size_t req_count, bool user);
 void* alloc_vpage (bool user);
 void  free_vpages (void* ptr, size_t count);
 void  free_vpage (void* ptr);
+void  init_vmm (pml4t_entry_t* kernel_pml4);
 
 void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr);
 void free_all_vpages_in_range (vaddr_t first, vaddr_t last);
 void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, bool write);
 void dealloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages);
 
-void	  init_memmgt (uint64_t, struct limine_memmap_response*);
-void	  walk_pagetable (void);
-void*	  get_paddr (void* vaddr);
-uintptr_t get_kernel_cr3 (void);
-uint64_t  get_hhdm_offset (void);
+void  init_memmgt (uint64_t, struct limine_memmap_response*);
+void  walk_pagetable (void);
+void* get_paddr (void* vaddr);
+
+uintptr_t	   get_kernel_cr3 (void);
+uint64_t	   get_hhdm_offset (void);
+pml4t_entry_t* get_pml4_baseptr (void);
 
 int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest);
 

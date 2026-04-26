@@ -101,7 +101,7 @@ heading "Configuring libc" "1;33"
 
 mkdir -p build/lib/newlib
 cd build/lib/newlib
-../../../lib/newlib-cygwin/configure --target=x86_64-elf --prefix=/usr --disable-multilib
+[ -f Makefile ] || ../../../lib/newlib-cygwin/configure --target=x86_64-elf --prefix=/usr --disable-multilib
 
 heading "Building libc" "1;33"
 

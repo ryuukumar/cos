@@ -55,7 +55,8 @@ struct file {
 	file_operations* f_fops;
 };
 
-int vfs_resolve_parent (const char* path_arg, inode* root, inode** r_parent, char** r_name);
+int	 vfs_resolve_parent (const char* path_arg, inode* root, inode** r_parent, char** r_name);
+bool filename_has_invalid_chars (char* filename);
 
 int do_mkdir (char* dirname, inode** result, inode* parent);
 int do_create (char* filename, inode** result, inode* parent);
