@@ -40,7 +40,7 @@ inline void* vaddr_t_to_ptr (vaddr_t* virtual_addr) {
  * @return pointer to virtual memory using HHDM mapping
  */
 inline void* get_vaddr_from_frame (uint64_t phys_frame) {
-	return (void*)((phys_frame << 12) + get_hhdm_offset());
+	return (void*)((phys_frame << 12) + get_hhdm_offset ());
 }
 
 /*!
@@ -49,5 +49,5 @@ inline void* get_vaddr_from_frame (uint64_t phys_frame) {
  * @return pointer to virtual memory using HHDM mapping
  */
 void* get_vaddr_from_phys_addr (uint64_t phys_address) {
-	return (void*)(phys_address + get_hhdm_offset());
+	return (void*)(phys_address + get_hhdm_offset ());
 }
