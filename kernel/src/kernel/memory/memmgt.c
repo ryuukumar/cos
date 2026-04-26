@@ -17,6 +17,24 @@ static uintptr_t	  kernel_cr3 = 0;
 struct limine_memmap_response* memmap_response_ptr;
 
 /*!
+ * Get the CR3 for the kernel
+ * @return kernel CR3
+ */
+uintptr_t get_kernel_cr3 (void) { return kernel_cr3; }
+
+/*!
+ * Get the HHDM offset
+ * @return HHDM offset
+ */
+uint64_t get_hhdm_offset (void) { return hhdm_offset; }
+
+/*!
+ * Get the PML4 base pointer
+ * @return PML4 base pointer
+ */
+pml4t_entry_t* get_pml4_baseptr (void) { return pml4_base_ptr; }
+
+/*!
  * Simple handler for page fault, prints faulting address from CR2
  */
 static void page_fault_handler (registers_t* registers) {
@@ -87,24 +105,6 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 
 	register_syscall (SYSCALL_SYS_BRK, sys_brk);
 }
-
-/*!
- * Get the CR3 for the kernel
- * @return kernel CR3
- */
-uintptr_t get_kernel_cr3 (void) { return kernel_cr3; }
-
-/*!
- * Get the HHDM offset
- * @return HHDM offset
- */
-uint64_t get_hhdm_offset (void) { return hhdm_offset; }
-
-/*!
- * Get the PML4 base pointer
- * @return PML4 base pointer
- */
-pml4t_entry_t* get_pml4_baseptr (void) { return pml4_base_ptr; }
 
 /*!
  * Finds the physical address mapped to a given virtual address.
