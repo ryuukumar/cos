@@ -229,28 +229,6 @@ int do_lookup (char* filename, inode** result, inode* root) {
 }
 
 /*!
- * Execute the open routine and call the filesystem open handler, if any.
- * @param filei pointer to the file inode to be opened
- * @param dest_fd the empty, allocated file entry to be written
- * @return 0 if successful, error (<0) otherwise
- */
-int do_open (inode* filei, struct file* dest_fd) {
-	if (!filei) return -EINVARG;
-	if (filei->i_type == DIRECTORY) return -EINVARG;
-	kmemset (dest_fd, 0, sizeof (struct file));
-
-	filei->i_cnt++;
-
-	dest_fd->f_inode = filei;
-	dest_fd->f_pos = 0;
-	dest_fd->f_cnt = 1;
-	dest_fd->f_fops = filei->i_fops;
-
-	if (dest_fd->f_fops && dest_fd->f_fops->open) return dest_fd->f_fops->open (filei, dest_fd);
-	return 0;
-}
-
-/*!
  * Execute the read routine.
  * @param f pointer to file structure to read via
  * @param buf pointer to allocated memory to write to
@@ -288,54 +266,6 @@ int do_close (struct file* fd) {
 		kfree (fd);
 	}
 	return 0;
-}
-
-/*!
- * Resolve a filename and allocate a file descriptor, allowing for execution of read
- * @param filename_ptr absolute path to the file
- * @param flags (unused) flags for the file
- * @param mode (unused) mode in which to open the file
- * @return fd if successful, else error
- */
-uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
-	(void)mode; // TODO: consider mode when opening file
-
-	char* filename = (char*)filename_ptr;
-	if (!filename) return -EINVARG;
-
-	process* current = get_current_process ();
-	if (!current) return -EINVARG;
-
-	int fd = -1;
-	for (int i = 0; i < MAX_FDS && fd == -1; i++)
-		if (current->p_fds[i] == nullptr) fd = i;
-	if (fd < 0) return -EMFILE;
-
-	current->p_fds[fd] = kmalloc (sizeof (struct file)); // reserve the file entry
-	if (!current->p_fds[fd]) return -ENOMEM;
-
-	inode* target_inode = nullptr;
-	int	   error = do_lookup (filename, &target_inode, current->p_root);
-	if (error == -EPNOEXIST && (flags & O_CREAT)) {
-		inode* parent;
-		char*  name;
-		error = vfs_resolve_parent (filename, current->p_root, &parent, &name);
-		if (error == 0) {
-			error = do_create (name, &target_inode, parent);
-			kfree (name);
-		}
-	}
-	if (error != 0) goto cleanup;
-
-	error = do_open (target_inode, current->p_fds[fd]);
-	if (error) goto cleanup;
-
-	return fd;
-
-cleanup:
-	kfree (current->p_fds[fd]);
-	current->p_fds[fd] = nullptr;
-	return error;
 }
 
 /*!
