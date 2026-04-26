@@ -1,6 +1,5 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
-#include <kernel/error.h>
 #include <kernel/idt.h>
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
