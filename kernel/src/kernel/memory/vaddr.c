@@ -51,3 +51,31 @@ inline void* get_vaddr_from_frame (uint64_t phys_frame) {
 void* get_vaddr_from_phys_addr (uint64_t phys_address) {
 	return (void*)(phys_address + get_hhdm_offset ());
 }
+
+/*!
+ * Check if vaddr is supposed to be a user page. Practically just a check if pml4 index is at least
+ * 256.
+ * @param addr vaddr to check
+ * @return whether it is a user page
+ */
+inline bool is_vaddr_t_user (vaddr_t* addr) { return addr->pml4_index < 256; }
+
+/*!
+ * Check if vaddr a is strictly less than vaddr b
+ * @param a first vaddr
+ * @param b second vaddr
+ * @return true if a lies before b, false otherwise
+ */
+bool is_vaddr_t_lt (vaddr_t* a, vaddr_t* b) {
+	if (a->pml4_index == b->pml4_index) {
+		if (a->pdpt_index == b->pdpt_index) {
+			if (a->pd_index == b->pd_index) {
+				if (a->pt_index == b->pt_index) return a->offset < b->offset;
+				return a->pt_index < b->pt_index;
+			}
+			return a->pd_index < b->pd_index;
+		}
+		return a->pdpt_index < b->pdpt_index;
+	}
+	return a->pml4_index < b->pml4_index;
+}
