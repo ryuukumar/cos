@@ -102,6 +102,8 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 	pml4_base_ptr[KRNL_PML4_IDX].read_write = 1;
 	pml4_base_ptr[KRNL_PML4_IDX].pdpt_base_address = ((uint64_t)krnl_pdpt_frame) / PAGE_SIZE;
 
+	init_vmm (pml4_base_ptr);
+
 	register_syscall (SYSCALL_SYS_BRK, sys_brk);
 }
 
