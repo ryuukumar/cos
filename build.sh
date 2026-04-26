@@ -142,10 +142,6 @@ printf "\ninitramfs.cpio generated with size $(wc -c <"build/initramfs.cpio") by
 
 heading "Building Limine-deploy" "1;33"
 
-# Download the latest Limine binary release.
-git clone https://github.com/limine-bootloader/limine.git --branch=v9.x-binary --depth=1
- 
-# Build limine-deploy.
 $MAKE -C limine
 
 if [ $? -ne 0 ]; then
