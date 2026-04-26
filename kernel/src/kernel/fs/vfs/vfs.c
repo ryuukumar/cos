@@ -247,12 +247,6 @@ int do_seek (struct file* f, size_t offset, int whence) {
 	return f->f_fops->seek (f->f_inode, f, offset, whence);
 }
 
-int do_write (struct file* f, void* buf, size_t size) {
-	if (!f || !buf) return -EINVARG;
-	if (!f->f_fops || !f->f_fops->write) return -ENOIMPL;
-	return f->f_fops->write (f->f_inode, f, buf, size);
-}
-
 /*!
  * Read upto `size` bytes of an opened file.
  * @param fd file descriptor of file to read
@@ -278,12 +272,6 @@ uint64_t sys_seek (uint64_t fd, uint64_t offset, uint64_t whence) {
 	process* current = get_current_process ();
 	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
 	return do_seek (current->p_fds[fd], (size_t)offset, (int)whence);
-}
-
-uint64_t sys_write (uint64_t fd, uint64_t buf, uint64_t size) {
-	process* current = get_current_process ();
-	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
-	return do_write (current->p_fds[fd], (void*)buf, (size_t)size);
 }
 
 inode* get_absolute_root (void) { return vfs_absolute_root; }
