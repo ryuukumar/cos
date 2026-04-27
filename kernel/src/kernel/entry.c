@@ -89,13 +89,9 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 
 	print_info ();
 
-	kprintf ("\n[Stage 2] Running as PID %lld\n", get_current_process ()->p_id);
-	kprintf ("[Stage 2] Current system tick: %lld\n", get_current_tick ());
-
-	kprintf ("[Stage 2] Extracting initramfs...\n");
 	load_cpio_from_memory (initramfs->address, "/");
 
-	kprintf ("[Stage 2] Trying to load the ELF.\n");
+	kprintf ("Launching /bin/hello...\n");
 
 	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
 
