@@ -133,28 +133,19 @@ __attribute__ ((noreturn)) static void jump_to_usermode (uintptr_t entry_point,
 	__asm__ volatile ("cli");
 	*user_flag = true;
 	__asm__ volatile (
-		// "cli \n\t" // 1. Disable interrupts while swapping states
-		// "mov $0x3B, %%ax \n\t" // 2. Load User Data Segment descriptor (0x38 | 3 = 0x3B)
-		// "mov %%ax, %%ds \n\t"
-		// "mov %%ax, %%es \n\t"
-		// "mov %%ax, %%fs \n\t"
-		// "mov %%ax, %%gs \n\t" // (Note: if you use swapgs later, handling GS changes)
+		// Push the structure for iretq
+		"pushq $0x3B \n\t"	// Push SS
+		"pushq %0 \n\t"		// Push RSP
+		"pushq $0x202 \n\t" // Push RFLAGS
+		"pushq $0x43 \n\t"	// Push CS
+		"pushq %1 \n\t"		// Push RIP
 
-		// 3. Push the structure for iretq
-		"pushq $0x3B \n\t"	// Push SS (User Data Segment)
-		"pushq %0 \n\t"		// Push RSP (User Stack Pointer)
-		"pushq $0x202 \n\t" // Push RFLAGS (0x202 = Interrupts Enabled)
-		"pushq $0x43 \n\t"	// Push CS (User Code Segment, 0x40 | 3 = 0x43)
-		"pushq %1 \n\t"		// Push RIP (Entry Point)
-
-		"iretq \n\t" // 4. Fire iretq to pop registers and drop to Ring 3
+		"iretq \n\t" // Fire iretq to pop registers and drop to Ring 3
 		:
-		: "r"(user_stack), "r"(entry_point) // Inputs from C
-		: "memory", "rax"					// Clobbers
-	);
+		: "r"(user_stack), "r"(entry_point)
+		: "memory", "rax");
 
-	// This loop should never be reached, but satisfies compiling with noreturn
-	while (1)
+	for (;;)
 		;
 }
 
@@ -174,12 +165,12 @@ __attribute__ ((noreturn)) void kernel_execve_as_user (const char* path, char* c
 	int err = do_execve (path, argv, envp);
 	if (err != 0) {
 		kprintf ("Failed to load '%s' : %d\n", path, err);
-		for (;;)
-			;
+		goto forever_loop;
 	}
 
 	jump_to_usermode (stable_regs->rip, stable_regs->rsp, &current->p_user);
 
-	while (1)
+forever_loop:
+	for (;;)
 		;
 }
