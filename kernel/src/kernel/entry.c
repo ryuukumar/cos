@@ -3,6 +3,7 @@
 #include <kernel/acpi/acpi.h>
 #include <kernel/console.h>
 #include <kernel/elf.h>
+#include <kernel/exec.h>
 #include <kernel/fs/chardev.h>
 #include <kernel/fs/cpio.h>
 #include <kernel/fs/ramfs.h>
@@ -50,36 +51,6 @@ static void hcf (void) {
 	asm ("cli");
 	for (;;)
 		asm ("hlt");
-}
-
-__attribute__ ((noreturn)) static void jump_to_usermode (uintptr_t entry_point,
-														 uintptr_t user_stack, bool* user_flag) {
-	__asm__ volatile ("cli");
-	*user_flag = true;
-	__asm__ volatile (
-		// "cli \n\t" // 1. Disable interrupts while swapping states
-		// "mov $0x3B, %%ax \n\t" // 2. Load User Data Segment descriptor (0x38 | 3 = 0x3B)
-		// "mov %%ax, %%ds \n\t"
-		// "mov %%ax, %%es \n\t"
-		// "mov %%ax, %%fs \n\t"
-		// "mov %%ax, %%gs \n\t" // (Note: if you use swapgs later, handling GS changes)
-
-		// 3. Push the structure for iretq
-		"pushq $0x3B \n\t"	// Push SS (User Data Segment)
-		"pushq %0 \n\t"		// Push RSP (User Stack Pointer)
-		"pushq $0x202 \n\t" // Push RFLAGS (0x202 = Interrupts Enabled)
-		"pushq $0x43 \n\t"	// Push CS (User Code Segment, 0x40 | 3 = 0x43)
-		"pushq %1 \n\t"		// Push RIP (Entry Point)
-
-		"iretq \n\t" // 4. Fire iretq to pop registers and drop to Ring 3
-		:
-		: "r"(user_stack), "r"(entry_point) // Inputs from C
-		: "memory", "rax"					// Clobbers
-	);
-
-	// This loop should never be reached, but satisfies compiling with noreturn
-	while (1)
-		;
 }
 
 static void print_info (void) {
@@ -130,24 +101,9 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 
 	if (fork_result == 0) {
 		kserial_printf ("Spawned child, attempting to start elf file.\n");
-		process* current = get_current_process ();
-
-		uintptr_t entry_point;
-		int		  err = load_elf ("/bin/hello", current, &entry_point);
-		if (err != 0) {
-			kprintf ("Failed to load /bin/hello : %d\n", err);
-			for (;;)
-				;
-		}
-
-		vaddr_t	  us_base_vaddr = {254, 255, 0, 0, 0};
-		uintptr_t user_stack_base = (uintptr_t)vaddr_t_to_ptr (&us_base_vaddr);
-		size_t	  stack_pages = 4;
-		alloc_by_cr3 (current->p_cr3, user_stack_base - (stack_pages * PAGE_SIZE), stack_pages,
-					  true);
-
-		kserial_printf ("Jumping to ring 3...\n");
-		jump_to_usermode (entry_point, user_stack_base, &current->p_user);
+		char* const argv[] = {"/bin/hello", nullptr};
+		char* const envp[] = {nullptr};
+		kernel_execve_as_user ("/bin/hello", argv, envp);
 	}
 
 	for (;;)

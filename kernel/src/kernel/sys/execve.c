@@ -126,3 +126,34 @@ cleanup_envc_argc_path:
 uint64_t sys_execve (uint64_t path, uint64_t argv, uint64_t envp) {
 	return do_execve ((const char*)path, (char* const*)argv, (char* const*)envp);
 }
+
+__attribute__ ((noreturn)) void kernel_execve_as_user (const char* path, char* const argv[],
+													   char* const envp[]) {
+	int err = do_execve (path, argv, envp);
+	if (err != 0) {
+		kprintf ("Failed to load '%s' : %d\n", path, err);
+		for (;;)
+			;
+	}
+
+	process*  current = get_current_process ();
+	uintptr_t entry_point = current->p_registers_ptr->rip;
+	uintptr_t user_stack = current->p_registers_ptr->rsp;
+
+	__asm__ volatile ("cli");
+	current->p_user = true;
+	__asm__ volatile ("pushq $0x3B \n\t"  // Push SS (User Data Segment)
+					  "pushq %0 \n\t"	  // Push RSP (User Stack Pointer)
+					  "pushq $0x202 \n\t" // Push RFLAGS (0x202 = Interrupts Enabled)
+					  "pushq $0x43 \n\t"  // Push CS (User Code Segment, 0x40 | 3 = 0x43)
+					  "pushq %1 \n\t"	  // Push RIP (Entry Point)
+
+					  "iretq \n\t" // Fire iretq to pop registers and drop to Ring 3
+					  :
+					  : "r"(user_stack), "r"(entry_point) // Inputs from C
+					  : "memory", "rax"					  // Clobbers
+	);
+
+	while (1)
+		;
+}
