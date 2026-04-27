@@ -3,6 +3,7 @@
 #include <kernel/elf.h>
 #include <kernel/error.h>
 #include <kernel/exec.h>
+#include <kernel/idt.h>
 #include <kernel/memmgt.h>
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
@@ -159,6 +160,17 @@ __attribute__ ((noreturn)) static void jump_to_usermode (uintptr_t entry_point,
 
 __attribute__ ((noreturn)) void kernel_execve_as_user (const char* path, char* const argv[],
 													   char* const envp[]) {
+	__asm__ volatile ("cli");
+
+	registers_t* stable_regs = kmalloc (sizeof (registers_t));
+	kmemset (stable_regs, 0, sizeof (registers_t));
+	stable_regs->cs = 0x43;
+	stable_regs->ss = 0x3B;
+	stable_regs->rflags = 0x202;
+
+	process* current = get_current_process ();
+	current->p_registers_ptr = stable_regs;
+
 	int err = do_execve (path, argv, envp);
 	if (err != 0) {
 		kprintf ("Failed to load '%s' : %d\n", path, err);
@@ -166,9 +178,7 @@ __attribute__ ((noreturn)) void kernel_execve_as_user (const char* path, char* c
 			;
 	}
 
-	process* current = get_current_process ();
-	jump_to_usermode (current->p_registers_ptr->rip, current->p_registers_ptr->rsp,
-					  &current->p_user);
+	jump_to_usermode (stable_regs->rip, stable_regs->rsp, &current->p_user);
 
 	while (1)
 		;
