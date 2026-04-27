@@ -12,7 +12,8 @@ void syscall_handler (registers_t* registers) {
 	uint64_t vector = registers->rax;
 	latest_frame = registers;
 
-	process* current = get_current_process ();
+	process*	 current = get_current_process ();
+	registers_t* prev_regs = current ? current->p_registers_ptr : nullptr;
 	if (current) current->p_registers_ptr = registers;
 
 	if (syscall_handlers[vector]) {
@@ -21,6 +22,8 @@ void syscall_handler (registers_t* registers) {
 		kserial_printf ("Unhandled syscall 0x%x!\n", vector);
 		registers->rax = -ENOIMPL;
 	}
+
+	if (current) current->p_registers_ptr = prev_regs;
 }
 
 uint64_t do_syscall (uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
