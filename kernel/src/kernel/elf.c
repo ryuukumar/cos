@@ -44,8 +44,7 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 		return -ENOEXEC;
 	}
 
-	free_all_vpages_in_range ((vaddr_t){0, 0, 0, 0, 0},
-							  (vaddr_t){255, 511, 511, 511, PAGE_SIZE - 1});
+	dealloc_by_cr3 (target_process->p_cr3, 0, (1ULL << 39) / PAGE_SIZE);
 
 	size_t			 ph_size = elf_header.elf_phnum * elf_header.elf_phentsize;
 	elf64_pheader_t* program_headers = kmalloc (ph_size);
