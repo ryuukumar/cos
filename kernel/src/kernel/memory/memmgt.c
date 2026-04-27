@@ -37,12 +37,12 @@ pml4t_entry_t* get_pml4_baseptr (void) { return pml4_base_ptr; }
  * Simple handler for page fault, prints faulting address from CR2
  */
 static void page_fault_handler (registers_t* registers) {
-	(void)registers;
-
 	uint64_t cr2;
 	__asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
 
 	kserial_printf ("\nEncountered a page fault!\nFaulting address: 0x%llx\n", cr2);
+	kserial_printf ("RIP: 0x%llx, RSP: 0x%llx\n", registers->rip, registers->rsp);
+	kserial_printf ("Error code: 0x%llx\n", registers->error_code);
 
 	for (;;)
 		;
