@@ -283,8 +283,6 @@ void free_vpages (void* ptr, size_t count) {
 	void* phys_base = get_paddr (ptr);
 	if (phys_base == nullptr) return;
 
-	free_ppages (phys_base, count);
-
 	uint64_t start_ptr_64t = (uint64_t)ptr;
 	uint64_t last_ptr_64t = start_ptr_64t + ((count - 1) * PAGE_SIZE);
 
