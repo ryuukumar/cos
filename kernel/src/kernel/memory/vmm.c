@@ -1,3 +1,4 @@
+#include "kclib/stdio.h"
 #include <kclib/string.h>
 #include <kernel/memmgt.h>
 #include <kernel/memory/pmm.h>
@@ -187,47 +188,69 @@ static bool is_table_empty (void* table_vaddr) {
  * @param last last virtual page in range
  */
 void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
-	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[first.pml4_index];
-	if (!pml4t_entry->present) return;
-
 	vaddr_t current = first;
+	while (is_vaddr_t_lt (&current, &last)) {
+		pml4t_entry_t* pml4t_entry = &pml4_base_ptr[current.pml4_index];
 
-	while (true) {
+		if (!pml4t_entry->present) {
+			current.pml4_index++;
+			current.pdpt_index = current.pd_index = current.pt_index = 0;
+			continue;
+		}
+
 		pdpt_entry_t* pdpt_base =
 			(pdpt_entry_t*)get_vaddr_from_frame (pml4t_entry->pdpt_base_address);
 		pdpt_entry_t* pdpt_entry = &pdpt_base[current.pdpt_index];
 
-		if (pdpt_entry->present) {
-			pd_entry_t* pd_base = (pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address);
-			pd_entry_t* pd_entry = &pd_base[current.pd_index];
+		if (!pdpt_entry->present) {
+			current.pdpt_index++;
+			if (current.pdpt_index >= 512) current.pdpt_index -= 512, current.pml4_index++;
+			current.pd_index = current.pt_index = 0;
+			continue;
+		}
 
-			if (pd_entry->present) {
-				pt_entry_t* pt_base = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
-				pt_entry_t* pt_entry = &pt_base[current.pt_index];
+		pd_entry_t* pd_base = (pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address);
+		pd_entry_t* pd_entry = &pd_base[current.pd_index];
 
-				if (pt_entry->present) {
-					pt_entry->present = 0;
-					pt_entry->frame_base_address = 0;
+		if (!pd_entry->present) {
+			current.pd_index++;
+			if (current.pd_index >= 512) current.pd_index -= 512, current.pdpt_index++;
+			if (current.pdpt_index >= 512) current.pdpt_index -= 512, current.pml4_index++;
+			current.pt_index = 0;
+			continue;
+		}
 
-					void* current_vaddr_ptr = vaddr_t_to_ptr (&current);
-					__asm__ volatile ("invlpg (%0)" : : "r"(current_vaddr_ptr) : "memory");
+		pt_entry_t* pt_base = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
+		pt_entry_t* pt_entry = &pt_base[current.pt_index];
 
-					// --- GARBAGE COLLECTION ---
-					// We only need to check if a table is empty when we cross its boundary OR on
-					// our final page.
-					bool on_final_pg = !is_vaddr_t_lt (&current, &last);
-					if (((current.pt_index == 511) || on_final_pg) && is_table_empty (pt_base)) {
-						free_ppage ((void*)(pd_entry->pt_base_address * PAGE_SIZE));
-						pd_entry->present = 0;
-						pd_entry->pt_base_address = 0;
+		if (pt_entry->present) {
+			kserial_printf ("[free_all_vpages_in_range] Freeing pt_entry %03i with frame base addr "
+							"0x%016llx (physical 0x%016llx\n",
+							current.pt_index, vaddr_t_to_ptr (&current),
+							pt_entry->frame_base_address * PAGE_SIZE);
 
-						if (((current.pd_index == 511) || on_final_pg) &&
-							is_table_empty (pd_base)) {
-							free_ppage ((void*)(pdpt_entry->pd_base_address * PAGE_SIZE));
-							pdpt_entry->present = 0;
-							pdpt_entry->pd_base_address = 0;
-						}
-					}
+			pt_entry->present = 0;
+			free_ppage ((void*)(pt_entry->frame_base_address * PAGE_SIZE));
+			pt_entry->frame_base_address = 0;
+		}
+
+		void* current_vaddr_ptr = vaddr_t_to_ptr (&current);
+		__asm__ volatile ("invlpg (%0)" : : "r"(current_vaddr_ptr) : "memory");
+
+		if ((current.pt_index == 511) && is_table_empty (pt_base)) {
+			pd_entry->present = 0;
+			free_ppage ((void*)(pd_entry->pt_base_address * PAGE_SIZE));
+			pd_entry->pt_base_address = 0;
+
+			if ((current.pd_index == 511) && is_table_empty (pd_base)) {
+				pdpt_entry->present = 0;
+				free_ppage ((void*)(pdpt_entry->pd_base_address * PAGE_SIZE));
+				pdpt_entry->pd_base_address = 0;
+
+				if ((current.pdpt_index == 511) && is_table_empty (pdpt_base)) {
+					pml4t_entry->present = 0;
+					free_ppage ((void*)(pml4t_entry->pdpt_base_address * PAGE_SIZE));
+					pml4t_entry->pdpt_base_address = 0;
 				}
 			}
 		}
