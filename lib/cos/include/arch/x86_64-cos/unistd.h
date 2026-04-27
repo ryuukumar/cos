@@ -15,6 +15,7 @@ extern "C" {
 void  _exit (int status);
 pid_t fork (void);
 pid_t getpid (void);
+int	  execve (const char* path, char* const argv[], char* const envp[]);
 int	  sched_yield (void);
 
 int		open (const char* pathname, int flags, ...);
