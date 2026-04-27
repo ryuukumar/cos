@@ -133,9 +133,9 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 		process* current = get_current_process ();
 
 		uintptr_t entry_point;
-		int		  err = load_elf ("/bin/pishell", current, &entry_point);
+		int		  err = load_elf ("/bin/hello", current, &entry_point);
 		if (err != 0) {
-			kprintf ("Failed to load /bin/pishell : %d\n", err);
+			kprintf ("Failed to load /bin/hello : %d\n", err);
 			for (;;)
 				;
 		}
