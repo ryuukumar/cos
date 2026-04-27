@@ -1,4 +1,3 @@
-#include <kclib/stdio.h>
 #include <kclib/string.h>
 #include <kernel/elf.h>
 #include <kernel/error.h>
@@ -163,10 +162,7 @@ __attribute__ ((noreturn)) void kernel_execve_as_user (const char* path, char* c
 	current->p_registers_ptr = stable_regs;
 
 	int err = do_execve (path, argv, envp);
-	if (err != 0) {
-		kprintf ("Failed to load '%s' : %d\n", path, err);
-		goto forever_loop;
-	}
+	if (err != 0) goto forever_loop;
 
 	jump_to_usermode (stable_regs->rip, stable_regs->rsp, &current->p_user);
 
