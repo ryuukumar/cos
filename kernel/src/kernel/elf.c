@@ -32,26 +32,25 @@ bool verify_elf_loadable (elf64_header_t* elf) {
 
 int load_elf (const char* filepath, process* target_process, uintptr_t* entry_point_r) {
 	// TODO: open file as readonly once flags implemented
-	int64_t fd = (int64_t)do_syscall (SYSCALL_SYS_OPEN, (uint64_t)filepath, 0ull, 0ull);
+	int64_t fd = (int64_t)sys_open ((uint64_t)filepath, 0ull, 0ull);
 	if (fd < 0) return fd;
 
 	elf64_header_t elf_header;
+	int64_t		   bytes_read =
+		(int64_t)sys_read ((uint64_t)fd, (uint64_t)&elf_header, (uint64_t)sizeof (elf64_header_t));
 
-	int64_t bytes_read = (int64_t)do_syscall (SYSCALL_SYS_READ, (uint64_t)fd, (uint64_t)&elf_header,
-											  (uint64_t)sizeof (elf64_header_t));
 	if (bytes_read != sizeof (elf64_header_t) || !verify_elf_loadable (&elf_header)) {
-		do_syscall (SYSCALL_SYS_CLOSE, fd, 0, 0);
+		sys_close ((uint64_t)fd, 0, 0);
 		return -ENOEXEC;
 	}
 
-	free_all_vpages_in_range ((vaddr_t){0, 0, 0, 0, 0},
-							  (vaddr_t){255, 511, 511, 511, PAGE_SIZE - 1});
+	dealloc_by_cr3 (target_process->p_cr3, 0, (1ULL << 39) / PAGE_SIZE);
 
 	size_t			 ph_size = elf_header.elf_phnum * elf_header.elf_phentsize;
 	elf64_pheader_t* program_headers = kmalloc (ph_size);
 
-	do_syscall (SYSCALL_SYS_LSEEK, fd, elf_header.elf_phoff, SEEK_SET);
-	do_syscall (SYSCALL_SYS_READ, fd, (uint64_t)program_headers, ph_size);
+	sys_seek ((uint64_t)fd, elf_header.elf_phoff, SEEK_SET);
+	sys_read ((uint64_t)fd, (uint64_t)program_headers, ph_size);
 
 	uintptr_t init_break = 0;
 
@@ -70,8 +69,8 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 
 		alloc_by_cr3 (target_process->p_cr3, (uintptr_t)start, num_pages, is_writable);
 
-		do_syscall (SYSCALL_SYS_LSEEK, fd, ph->p_offset, SEEK_SET);
-		do_syscall (SYSCALL_SYS_READ, fd, ph->p_vaddr, ph->p_filesz);
+		sys_seek ((uint64_t)fd, ph->p_offset, SEEK_SET);
+		sys_read ((uint64_t)fd, ph->p_vaddr, ph->p_filesz);
 
 		if (ph->p_memsz > ph->p_filesz)
 			kmemset ((void*)(ph->p_vaddr + ph->p_filesz), 0, ph->p_memsz - ph->p_filesz);
@@ -82,7 +81,7 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 	target_process->p_heap_sz = 0;
 
 	kfree (program_headers);
-	do_syscall (SYSCALL_SYS_CLOSE, fd, 0, 0);
+	sys_close ((uint64_t)fd, 0, 0);
 
 	*entry_point_r = elf_header.elf_entry;
 	return 0;

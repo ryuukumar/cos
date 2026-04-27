@@ -278,12 +278,13 @@ void free_vpages (void* ptr, size_t count) {
 void free_vpage (void* ptr) { free_vpages (ptr, 1); }
 
 void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, bool write) {
+	if (num_pages == 0) return;
 	pml4t_entry_t* original_ptr = pml4_base_ptr;
 	pml4_base_ptr = (pml4t_entry_t*)(cr3 + get_hhdm_offset ());
 
 	paddr_t physmem = alloc_ppages (num_pages);
 	alloc_all_vpages_in_range (get_vaddr_t_from_ptr ((void*)start),
-							   get_vaddr_t_from_ptr ((void*)(start + (num_pages * PAGE_SIZE))),
+							   get_vaddr_t_from_ptr ((void*)(start + (num_pages * PAGE_SIZE) - 1)),
 							   physmem);
 
 	(void)write; // TODO: set rw flag
@@ -292,12 +293,12 @@ void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, bool write) 
 }
 
 void dealloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages) {
+	if (num_pages == 0) return;
 	pml4t_entry_t* original_ptr = pml4_base_ptr;
 	pml4_base_ptr = (pml4t_entry_t*)(cr3 + get_hhdm_offset ());
 
 	free_all_vpages_in_range (get_vaddr_t_from_ptr ((void*)start),
-							  get_vaddr_t_from_ptr ((void*)(start + (num_pages * PAGE_SIZE))));
-
+							  get_vaddr_t_from_ptr ((void*)(start + (num_pages * PAGE_SIZE) - 1)));
 	pml4_base_ptr = original_ptr;
 }
 
