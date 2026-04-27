@@ -3,6 +3,7 @@
 #include <kernel/error.h>
 #include <kernel/process.h>
 #include <kernel/syscall.h>
+#include <kernel/exec.h>
 
 syscall_handler_t syscall_handlers[SYSCALL_COUNT];
 registers_t*	  latest_frame;
@@ -43,4 +44,7 @@ void init_syscalls (void) {
 	idt_register_handler (0x80, syscall_handler);
 	idt_set_flags (0x80, 0x0E, 3, 0);
 	kmemset (syscall_handlers, 0, SYSCALL_COUNT * sizeof (syscall_handler_t));
+
+	// Register some syscalls
+	register_syscall(SYSCALL_SYS_EXECVE, sys_execve);
 }
