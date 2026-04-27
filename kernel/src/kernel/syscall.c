@@ -1,9 +1,9 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
 #include <kernel/error.h>
+#include <kernel/exec.h>
 #include <kernel/process.h>
 #include <kernel/syscall.h>
-#include <kernel/exec.h>
 
 syscall_handler_t syscall_handlers[SYSCALL_COUNT];
 registers_t*	  latest_frame;
@@ -46,5 +46,5 @@ void init_syscalls (void) {
 	kmemset (syscall_handlers, 0, SYSCALL_COUNT * sizeof (syscall_handler_t));
 
 	// Register some syscalls
-	register_syscall(SYSCALL_SYS_EXECVE, sys_execve);
+	register_syscall (SYSCALL_SYS_EXECVE, sys_execve);
 }
