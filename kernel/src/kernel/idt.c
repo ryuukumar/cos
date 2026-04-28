@@ -32,7 +32,7 @@ static void idt_set_gate (uint8_t vector, void* isr, uint8_t gate_type, uint8_t 
 	descriptor->present = present & 0x01;
 }
 
-static void log_registers_to_serial (registers_t* registers) {
+void log_registers_to_serial (registers_t* registers) {
 	kserial_printf ("\n--- Interrupt/Exception Caught ---\n");
 
 	kserial_printf ("interrupt_number: 0x%llx\n", registers->interrupt_number);
