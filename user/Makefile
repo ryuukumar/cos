@@ -1,16 +1,12 @@
-.PHONY: all hello pishell
+.PHONY: all hello
 
-all: hello pishell
+all: hello
 
-bin: hello pishell
+bin: hello
 
 hello:
 	@echo "Building hello..."
 	$(MAKE) -C hello
-
-pishell:
-	@echo "Building pishell..."
-	$(MAKE) -C pishell
 
 format:
 	@echo "Formatting hello..."
