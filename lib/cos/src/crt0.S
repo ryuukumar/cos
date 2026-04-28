@@ -8,6 +8,7 @@
 .extern __preinit_array_end
 .extern __init_array_start
 .extern __init_array_end
+.extern environ
 
 _start:
     xor %ebp, %ebp
@@ -58,12 +59,4 @@ _start:
     call exit
     
 .Lhang:
-    hlt
     jmp .Lhang
-
-.section .bss
-.global environ
-.type environ, @object
-.size environ, 8
-environ:
-    .zero 8
