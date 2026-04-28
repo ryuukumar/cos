@@ -27,7 +27,7 @@ static char** arg_deep_copy (char* const arg_og[]) {
 }
 
 static int do_execve (const char* path, char* const argv[], char* const envp[]) {
-	int err = 0;
+	int err = 0, argc = 0, envc = 0;
 
 	const char* path_cp = kstrdup (path);
 	char**		argv_cp = arg_deep_copy (argv);
@@ -48,7 +48,6 @@ static int do_execve (const char* path, char* const argv[], char* const envp[]) 
 	alloc_by_cr3 (get_current_process ()->p_cr3, user_stack_base - (stack_pages * PAGE_SIZE),
 				  stack_pages, true);
 
-	int argc = 0, envc = 0;
 	while (argv_cp && argv_cp[argc])
 		argc++;
 	while (envp_cp && envp_cp[envc])
@@ -120,7 +119,7 @@ cleanup_envc_argc_path:
 	}
 
 	kfree ((void*)path_cp);
-	return 0;
+	return err;
 }
 
 uint64_t sys_execve (uint64_t path, uint64_t argv, uint64_t envp) {
