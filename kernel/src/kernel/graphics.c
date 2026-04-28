@@ -1,9 +1,12 @@
+#include <kclib/stdio.h>
 #include <kernel/graphics.h>
+#include <kernel/memmgt.h>
 #include <stddef.h>
 #include <stdint.h>
 
 static struct limine_framebuffer* framebuffer;
 static size_t					  frmw, frmh;
+static size_t					  stride_pixels;
 uint32_t*						  fb_ptr;
 
 /*!
@@ -15,6 +18,7 @@ void init_graphics (struct limine_framebuffer* buf) {
 	framebuffer = buf;
 	frmw = framebuffer->width;
 	frmh = framebuffer->height;
+	stride_pixels = framebuffer->pitch / (framebuffer->bpp / 8);
 	fb_ptr = framebuffer->address;
 }
 
@@ -36,7 +40,7 @@ Convert screen position to index.
 @param	x x-position
 @param	y y-position
 */
-inline size_t postoi (int x, int y) { return x + y * frmw; }
+inline size_t postoi (int x, int y) { return (size_t)x + ((size_t)y * stride_pixels); }
 
 /*!
 Place a pixel on the screen.
@@ -45,7 +49,11 @@ Place a pixel on the screen.
 @param	x x-position
 @param	y y-position
 */
-static void putPixel (uint32_t color, int x, int y) { fb_ptr[postoi (x, y)] = color; }
+static void putPixel (uint32_t color, int x, int y) {
+	if (x < 0 || y < 0) return;
+	if ((size_t)x >= frmw || (size_t)y >= frmh) return;
+	fb_ptr[postoi (x, y)] = color;
+}
 
 /*!
 Place a character on the screen
@@ -74,9 +82,8 @@ Draw a white border around the screen.
 @param	padding pixels to leave around the edges
 */
 void drawBorder (size_t padding) {
-	for (size_t i = 0; i < frmw * frmh; i++)
-		if (i % frmw == padding || i % frmw == frmw - padding)
-			fb_ptr[i] = 0xffffff;
-		else if (i / frmw == padding || i / frmw == frmh - padding)
-			fb_ptr[i] = 0xffffff;
+	for (size_t y = 0; y < frmh; y++)
+		for (size_t x = 0; x < frmw; x++)
+			if (x == padding || x + padding + 1 == frmw || y == padding || y + padding + 1 == frmh)
+				putPixel (0xffffff, (int)x, (int)y);
 }

@@ -148,10 +148,10 @@ void init_physical_bitmap (struct limine_memmap_response* memmap_response) {
 	for (uint64_t i = 0; i < memmap_response->entry_count; i++) {
 		struct limine_memmap_entry* entry = memmap_response->entries[i];
 		if (entry->type == LIMINE_MEMMAP_USABLE) {
-			for (uint64_t p = entry->base / PAGE_SIZE;
-				 p < (entry->base + entry->length) / PAGE_SIZE; p++) {
+			uint64_t start_page = (entry->base + PAGE_SIZE - 1) / PAGE_SIZE;
+			uint64_t end_page = (entry->base + entry->length) / PAGE_SIZE;
+			for (uint64_t p = start_page; p < end_page; p++)
 				if (p < bitmap_fst_page || p >= bitmap_lst_page) bitmap_clear_bit (p);
-			}
 		}
 	}
 }

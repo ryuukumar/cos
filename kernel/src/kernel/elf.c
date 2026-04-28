@@ -31,6 +31,8 @@ bool verify_elf_loadable (elf64_header_t* elf) {
 }
 
 int load_elf (const char* filepath, process* target_process, uintptr_t* entry_point_r) {
+	int64_t err = 0;
+
 	// TODO: open file as readonly once flags implemented
 	int64_t fd = (int64_t)sys_open ((uint64_t)filepath, 0ull, 0ull);
 	if (fd < 0) return fd;
@@ -49,8 +51,13 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 	size_t			 ph_size = elf_header.elf_phnum * elf_header.elf_phentsize;
 	elf64_pheader_t* program_headers = kmalloc (ph_size);
 
-	sys_seek ((uint64_t)fd, elf_header.elf_phoff, SEEK_SET);
-	sys_read ((uint64_t)fd, (uint64_t)program_headers, ph_size);
+	err = sys_seek ((uint64_t)fd, elf_header.elf_phoff, SEEK_SET);
+	if (err < 0) return err;
+	err = sys_read ((uint64_t)fd, (uint64_t)program_headers, ph_size);
+	if (err < 0)
+		return err;
+	else if (err != (int64_t)ph_size)
+		return -ENOEXEC;
 
 	uintptr_t init_break = 0;
 
@@ -69,11 +76,16 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 
 		alloc_by_cr3 (target_process->p_cr3, (uintptr_t)start, num_pages, is_writable);
 
-		sys_seek ((uint64_t)fd, ph->p_offset, SEEK_SET);
-		sys_read ((uint64_t)fd, ph->p_vaddr, ph->p_filesz);
+		err = sys_seek ((uint64_t)fd, ph->p_offset, SEEK_SET);
+		if (err < 0) return err;
+		err = sys_read ((uint64_t)fd, ph->p_vaddr, ph->p_filesz);
+		if (err < 0)
+			return err;
+		else if (err != (int64_t)ph->p_filesz)
+			return -ENOEXEC;
 
 		if (ph->p_memsz > ph->p_filesz)
-			kmemset ((void*)(ph->p_vaddr + ph->p_filesz), 0, ph->p_memsz - ph->p_filesz);
+			kmemset_explicit ((void*)(ph->p_vaddr + ph->p_filesz), 0, ph->p_memsz - ph->p_filesz);
 	}
 
 	init_break = ((init_break + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
