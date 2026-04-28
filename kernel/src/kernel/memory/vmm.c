@@ -237,17 +237,18 @@ void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 		void* current_vaddr_ptr = vaddr_t_to_ptr (&current);
 		__asm__ volatile ("invlpg (%0)" : : "r"(current_vaddr_ptr) : "memory");
 
-		if ((current.pt_index == 511) && is_table_empty (pt_base)) {
+		bool on_final_pg = !is_vaddr_t_lt (&current, &last);
+		if (((current.pt_index == 511) || on_final_pg) && is_table_empty (pt_base)) {
 			pd_entry->present = 0;
 			free_ppage ((void*)(pd_entry->pt_base_address * PAGE_SIZE));
 			pd_entry->pt_base_address = 0;
 
-			if ((current.pd_index == 511) && is_table_empty (pd_base)) {
+			if (((current.pd_index == 511) || on_final_pg) && is_table_empty (pd_base)) {
 				pdpt_entry->present = 0;
 				free_ppage ((void*)(pdpt_entry->pd_base_address * PAGE_SIZE));
 				pdpt_entry->pd_base_address = 0;
 
-				if ((current.pdpt_index == 511) && is_table_empty (pdpt_base)) {
+				if (((current.pdpt_index == 511) || on_final_pg) && is_table_empty (pdpt_base)) {
 					pml4t_entry->present = 0;
 					free_ppage ((void*)(pml4t_entry->pdpt_base_address * PAGE_SIZE));
 					pml4t_entry->pdpt_base_address = 0;
@@ -255,7 +256,7 @@ void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 			}
 		}
 
-		if (!is_vaddr_t_lt (&current, &last)) break;
+		if (on_final_pg) break;
 
 		current.pt_index++;
 		if (current.pt_index >= 512) {
@@ -264,6 +265,10 @@ void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 			if (current.pd_index >= 512) {
 				current.pd_index = 0;
 				current.pdpt_index++;
+				if (current.pdpt_index >= 512) {
+					current.pdpt_index = 0;
+					current.pml4_index++;
+				}
 			}
 		}
 	}
