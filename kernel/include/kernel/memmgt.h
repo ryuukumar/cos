@@ -99,6 +99,7 @@ void*	get_vaddr_from_phys_addr (uint64_t phys_address);
 void*	vaddr_t_to_ptr (vaddr_t* virtual_addr);
 bool	is_vaddr_t_user (vaddr_t* addr);
 bool	is_vaddr_t_lt (vaddr_t* a, vaddr_t* b);
+bool	is_vaddr_t_eq (vaddr_t a, vaddr_t b);
 
 void* alloc_vpages (size_t req_count, bool user);
 void* alloc_vpage (bool user);

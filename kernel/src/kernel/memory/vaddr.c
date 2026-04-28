@@ -79,3 +79,14 @@ bool is_vaddr_t_lt (vaddr_t* a, vaddr_t* b) {
 	}
 	return a->pml4_index < b->pml4_index;
 }
+
+/*!
+ * Check if vaddr a is strictly equal to vaddr b
+ * @param a first vaddr
+ * @param b second vaddr
+ * @return true if a == b, false otherwise
+ */
+bool is_vaddr_t_eq (vaddr_t a, vaddr_t b) {
+	return a.pml4_index == b.pml4_index && a.pdpt_index == b.pdpt_index &&
+		   a.pd_index == b.pd_index && a.pt_index == b.pt_index && a.offset == b.offset;
+}
