@@ -41,8 +41,7 @@ static void page_fault_handler (registers_t* registers) {
 	__asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
 
 	kserial_printf ("\nEncountered a page fault!\nFaulting address: 0x%llx\n", cr2);
-	kserial_printf ("RIP: 0x%llx, RSP: 0x%llx\n", registers->rip, registers->rsp);
-	kserial_printf ("Error code: 0x%llx\n", registers->error_code);
+	log_registers_to_serial (registers);
 
 	for (;;)
 		;
