@@ -224,18 +224,12 @@ void free_all_vpages_in_range (vaddr_t first, vaddr_t last) {
 		pt_entry_t* pt_entry = &pt_base[current.pt_index];
 
 		if (pt_entry->present) {
-			kserial_printf ("[free_all_vpages_in_range] Freeing pt_entry %03i with frame base addr "
-							"0x%016llx (physical 0x%016llx\n",
-							current.pt_index, vaddr_t_to_ptr (&current),
-							pt_entry->frame_base_address * PAGE_SIZE);
-
 			pt_entry->present = 0;
 			free_ppage ((void*)(pt_entry->frame_base_address * PAGE_SIZE));
 			pt_entry->frame_base_address = 0;
-		}
 
-		void* current_vaddr_ptr = vaddr_t_to_ptr (&current);
-		__asm__ volatile ("invlpg (%0)" : : "r"(current_vaddr_ptr) : "memory");
+			__asm__ volatile ("invlpg (%0)" : : "r"(vaddr_t_to_ptr (&current)) : "memory");
+		}
 
 		bool on_final_pg = !is_vaddr_t_lt (&current, &last);
 		if (((current.pt_index == 511) || on_final_pg) && is_table_empty (pt_base)) {
