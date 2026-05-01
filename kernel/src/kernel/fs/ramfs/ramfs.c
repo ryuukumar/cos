@@ -6,8 +6,12 @@
 static inode* root_inode;
 
 static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
-static file_operations	f_ops = {
-	.read = read, .write = write, .seek = seek, .open = nullptr, .close = nullptr};
+static file_operations	f_ops = {.read = read,
+								 .write = write,
+								 .seek = seek,
+								 .open = nullptr,
+								 .close = nullptr,
+								 .getdents = getdents};
 
 int mkdir (char* dirname, inode** result, inode* root) {
 	// requires: guarantee that vfs input is valid
@@ -162,6 +166,47 @@ int seek (inode* node, file* f, size_t offset, int whence) {
 	else if (whence == SEEK_END)
 		return -ENOIMPL;
 	return f->f_pos;
+}
+
+int getdents (inode* node, file* f, void* buf, size_t count) {
+	if (node->i_type != DIRECTORY) return -EINVPATH;
+
+	dir_content_t* dir = (dir_content_t*)node->i_pvt;
+	if (!dir || !dir->d_children) return 0;
+
+	size_t	 bytes_written = 0;
+	uint8_t* ptr = (uint8_t*)buf;
+
+	while (f->f_pos < dir->d_count) {
+		child_t* child = &dir->d_children[f->f_pos];
+
+		size_t name_len = kstrlen (child->c_name);
+		size_t reclen = ALIGN_UP (sizeof (linux_dirent64) + name_len + 1, 8);
+
+		if (bytes_written + reclen > count) {
+			if (bytes_written == 0) return -EINVARG;
+			break;
+		}
+
+		linux_dirent64* de = (linux_dirent64*)ptr;
+		de->d_ino = child->c_inode->i_no;
+		de->d_off = f->f_pos + 1;
+		de->d_reclen = (unsigned short)reclen;
+
+		// TODO: add header with actual types
+		if (child->c_inode->i_type == DIRECTORY)
+			de->d_type = 4;
+		else
+			de->d_type = 8;
+
+		kstrcpy (de->d_name, child->c_name);
+
+		bytes_written += reclen;
+		ptr += reclen;
+		f->f_pos++;
+	}
+
+	return (int)bytes_written;
 }
 
 inode* init_ramfs_root (void) {

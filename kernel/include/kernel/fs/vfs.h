@@ -14,6 +14,8 @@
 #define SEEK_CUR 1
 #define SEEK_END 2
 
+#define ALIGN_UP(value, alignment) (((value) + (alignment) - 1) & ~((alignment) - 1))
+
 typedef enum { UNDEF, EFILE, DIRECTORY, LINK, CHAR_DEV } file_type_t;
 
 typedef struct inode inode;
@@ -34,6 +36,7 @@ typedef struct {
 	int (*read) (inode*, file*, void*, size_t);
 	int (*write) (inode*, file*, void*, size_t);
 	int (*seek) (inode*, file*, size_t, int);
+	int (*getdents) (inode*, file*, void*, size_t);
 } file_operations;
 
 struct inode {
@@ -77,3 +80,11 @@ uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);
+
+typedef struct {
+	uint64_t	   d_ino;
+	int64_t		   d_off;
+	unsigned short d_reclen;
+	unsigned char  d_type;
+	char		   d_name[];
+} linux_dirent64;

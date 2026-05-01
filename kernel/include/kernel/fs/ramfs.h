@@ -10,6 +10,7 @@ int lookup (char* filename, inode** result, inode* root);
 int read (inode* node, file* f, void* buffer, size_t size);
 int write (inode* node, file* f, void* buffer, size_t size);
 int seek (inode* node, file* f, size_t offset, int whence);
+int getdents (inode* node, file* f, void* buf, size_t count);
 
 typedef struct {
 	char*  c_name;
