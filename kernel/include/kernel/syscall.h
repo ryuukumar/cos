@@ -17,6 +17,10 @@
 #define SYSCALL_SYS_FORK	57
 #define SYSCALL_SCHED_YIELD 158
 
+// The following will have numbers changed
+
+#define SYSCALL_SYS_GETDENTS 255
+
 typedef uint64_t (*syscall_handler_t) (uint64_t, uint64_t, uint64_t);
 
 void syscall_handler (registers_t* registers);

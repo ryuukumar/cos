@@ -15,6 +15,8 @@
 #define SYSCALL_SYS_FORK	57
 #define SYSCALL_SCHED_YIELD 158
 
+#define SYSCALL_SYS_GETDENTS 255
+
 static inline uint64_t syscall3 (uint64_t num, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 	uint64_t ret;
 	__asm__ volatile ("int $0x80"
