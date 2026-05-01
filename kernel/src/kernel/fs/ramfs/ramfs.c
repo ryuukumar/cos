@@ -3,7 +3,8 @@
 #include <kernel/fs/ramfs.h>
 #include <liballoc/liballoc.h>
 
-static inode* root_inode;
+static inode*	root_inode;
+static uint64_t next_inode = 1;
 
 static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
 static file_operations	f_ops = {.read = read,
@@ -22,6 +23,7 @@ int mkdir (char* dirname, inode** result, inode* root) {
 	new_dir->i_pvt = kmalloc (sizeof (dir_content_t));
 	new_dir->i_iops = &i_ops;
 	new_dir->i_fops = &f_ops;
+	new_dir->i_no = next_inode++;
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)new_dir->i_pvt)->d_count = 2;
@@ -57,6 +59,7 @@ int create (char* filename, inode** result, inode* root) {
 	new_file->i_type = EFILE;
 	new_file->i_iops = &i_ops;
 	new_file->i_fops = &f_ops;
+	new_file->i_no = next_inode++;
 
 	// construct parent replacement structures
 	dir_content_t* parent_pvt = (dir_content_t*)root->i_pvt;
@@ -216,6 +219,7 @@ inode* init_ramfs_root (void) {
 	root_inode->i_pvt = kmalloc (sizeof (dir_content_t));
 	root_inode->i_iops = &i_ops;
 	root_inode->i_fops = &f_ops;
+	root_inode->i_no = next_inode++;
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)root_inode->i_pvt)->d_count = 2;
