@@ -63,6 +63,18 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
 	}
 	if (error != 0) goto cleanup;
 
+	// Directly setup for directories
+	if (target_inode->i_type == DIRECTORY) {
+		struct file* f = current->p_fds[fd];
+		kmemset (f, 0, sizeof (struct file));
+		target_inode->i_cnt++;
+		f->f_inode = f->f_inode = target_inode;
+		f->f_pos = 0;
+		f->f_cnt = 1;
+		f->f_fops = target_inode->i_fops;
+		return fd;
+	}
+
 	error = do_open (target_inode, current->p_fds[fd]);
 	if (error) goto cleanup;
 
