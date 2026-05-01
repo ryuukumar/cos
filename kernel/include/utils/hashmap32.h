@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+constexpr size_t default_bucket_count_h32 = 32;
+
 typedef struct hashmap32_entry hashmap32_entry;
 
 struct hashmap32_entry {

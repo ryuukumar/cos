@@ -5,7 +5,7 @@
 static inline size_t hash (uint32_t key, size_t bucket_count) { return key % bucket_count; }
 
 hashmap32* hashmap_create (size_t bucket_count) {
-	if (bucket_count == 0) return nullptr;
+	if (bucket_count == 0) bucket_count = default_bucket_count_h32;
 
 	hashmap32* map = kmalloc (sizeof (*map));
 	if (!map) return nullptr;
