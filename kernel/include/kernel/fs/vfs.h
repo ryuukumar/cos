@@ -49,6 +49,7 @@ struct inode {
 	inode_operations* i_iops;
 	file_operations*  i_fops;
 	file_type_t		  i_type;
+	inode*			  i_parent;
 	union {
 		chardev_info_t* chardev_info;
 		ramfs_info_t*	ramfs_info;

@@ -27,6 +27,7 @@ int mkdir (char* dirname, inode** result, inode* root) {
 	new_dir->i_iops = &i_ops;
 	new_dir->i_fops = &f_ops;
 	new_dir->i_no = next_inode++;
+	new_dir->i_parent = root;
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)new_dir->i_pvt)->d_count = 2;
@@ -63,6 +64,7 @@ int create (char* filename, inode** result, inode* root) {
 	new_file->i_iops = &i_ops;
 	new_file->i_fops = &f_ops;
 	new_file->i_no = next_inode++;
+	new_file->i_parent = root;
 
 	// construct parent replacement structures
 	dir_content_t* parent_pvt = (dir_content_t*)root->i_pvt;
@@ -240,6 +242,7 @@ inode* init_ramfs_root (void) {
 	root_inode->i_iops = &i_ops;
 	root_inode->i_fops = &f_ops;
 	root_inode->i_no = next_inode++;
+	root_inode->i_parent = root_inode;
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)root_inode->i_pvt)->d_count = 2;
