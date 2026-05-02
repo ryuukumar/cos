@@ -1,5 +1,6 @@
 #include <dirent.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -22,7 +23,11 @@ void list_dir (const char* path) {
 int main (int argc, char* argv[]) {
 	printf ("Hello from USERLAND using newlib!!!\n");
 	chdir ("usr/lib");
-	list_dir (".");
+	list_dir ("..");
 	list_dir ("/usr/lib");
+
+	char* path = malloc (150);
+	getcwd (path, 150);
+	printf ("CWD: %s \n", path);
 	return 0;
 }

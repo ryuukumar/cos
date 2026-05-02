@@ -19,6 +19,7 @@
 
 // The following will have numbers changed
 
+#define SYSCALL_SYS_GETCWD		 242
 #define SYSCALL_SYS_CHDIR		 243
 #define SYSCALL_SYS_FCNTL		 244
 #define SYSCALL_SYS_FSTAT		 245
