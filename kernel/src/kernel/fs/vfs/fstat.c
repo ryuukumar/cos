@@ -5,7 +5,7 @@
 
 int do_fstat (struct file* fd, stat* buf) {
 	if (!fd || !buf) return -EINVARG;
-	if (!fd->f_fops || !fd->f_fops->getdents) return -ENOIMPL;
+	if (!fd->f_fops || !fd->f_fops->fstat) return -ENOIMPL;
 	return fd->f_fops->fstat (fd->f_inode, fd, buf);
 }
 
