@@ -62,12 +62,13 @@ struct file {
 	file_operations* f_fops;
 };
 
-int	 vfs_resolve_parent (const char* path_arg, inode* root, inode** r_parent, char** r_name);
+int	 vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** r_parent,
+						 char** r_name);
 bool filename_has_invalid_chars (char* filename);
 
 int do_mkdir (char* dirname, inode** result, inode* parent);
 int do_create (char* filename, inode** result, inode* parent);
-int do_lookup (char* filename, inode** result, inode* root);
+int do_lookup (char* filename, inode** result, inode* root, inode* cwd);
 
 int do_read (struct file* f, void* buf, size_t size);
 int do_seek (struct file* f, size_t offset, int whence);

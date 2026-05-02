@@ -68,7 +68,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 
 	inode* parent_dir = nullptr;
 	char*  child_name = nullptr;
-	int	   error = vfs_resolve_parent (path, root, &parent_dir, &child_name);
+	int	   error = vfs_resolve_parent (path, root, root, &parent_dir, &child_name);
 
 	if (error == -EPNOEXIST) {
 		child_name = nullptr;
@@ -81,7 +81,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 			*last_slash = '/';
 		}
 
-		if (error == 0) error = vfs_resolve_parent (path, root, &parent_dir, &child_name);
+		if (error == 0) error = vfs_resolve_parent (path, root, root, &parent_dir, &child_name);
 	} else if (error != 0) {
 		child_name = nullptr;
 	}
@@ -101,7 +101,8 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	if (!header || !out_path) return -EINVARG;
 
 	inode* root_dir = nullptr;
-	int	   error = do_lookup ((char*)out_path, &root_dir, get_current_process ()->p_root);
+	int	   error = do_lookup ((char*)out_path, &root_dir, get_current_process ()->p_root,
+							  get_current_process ()->p_wd);
 	if (error || !root_dir) return error;
 
 	uint64_t namesize = hex_to_u64 (header->c_namesize);

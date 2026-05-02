@@ -8,8 +8,10 @@
 int do_stat (const char* restrict path, stat* restrict buf) {
 	if (!path || !buf) return -EINVARG;
 
-	inode* node = nullptr;
-	int	   error = do_lookup ((char*)path, &node, get_current_process ()->p_root);
+	process* current = get_current_process ();
+	inode*	 node = nullptr;
+
+	int error = do_lookup ((char*)path, &node, current->p_root, current->p_wd);
 	if (error != 0) return error;
 
 	if (!node->i_iops || !node->i_iops->stat) return -ENOIMPL;

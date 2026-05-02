@@ -53,7 +53,8 @@ uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3) {
 
 	inode* parent;
 	char*  name;
-	int	   err = vfs_resolve_parent ((const char*)path, current->p_root, &parent, &name);
+	int	   err =
+		vfs_resolve_parent ((const char*)path, current->p_root, current->p_wd, &parent, &name);
 	if (err) return err;
 
 	inode* result;
