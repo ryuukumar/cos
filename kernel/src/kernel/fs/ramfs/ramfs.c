@@ -1,13 +1,25 @@
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/ramfs.h>
+#include <kernel/fs/stat.h>
+#include <kernel/fs/vfs.h>
 #include <liballoc/liballoc.h>
 
-static inode* root_inode;
+static inode*	root_inode;
+static uint64_t next_inode = 1;
 
-static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
-static file_operations	f_ops = {
-	.read = read, .write = write, .seek = seek, .open = nullptr, .close = nullptr};
+static inode_operations i_ops = {.lookup = lookup,
+								 .lookup_by_ino = lookup_by_ino,
+								 .mkdir = mkdir,
+								 .create = create,
+								 .stat = istat};
+static file_operations	f_ops = {.read = read,
+								 .write = write,
+								 .seek = seek,
+								 .open = nullptr,
+								 .close = nullptr,
+								 .getdents = getdents,
+								 .fstat = fstat};
 
 int mkdir (char* dirname, inode** result, inode* root) {
 	// requires: guarantee that vfs input is valid
@@ -18,6 +30,8 @@ int mkdir (char* dirname, inode** result, inode* root) {
 	new_dir->i_pvt = kmalloc (sizeof (dir_content_t));
 	new_dir->i_iops = &i_ops;
 	new_dir->i_fops = &f_ops;
+	new_dir->i_no = next_inode++;
+	new_dir->i_parent = root;
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)new_dir->i_pvt)->d_count = 2;
@@ -53,6 +67,8 @@ int create (char* filename, inode** result, inode* root) {
 	new_file->i_type = EFILE;
 	new_file->i_iops = &i_ops;
 	new_file->i_fops = &f_ops;
+	new_file->i_no = next_inode++;
+	new_file->i_parent = root;
 
 	// construct parent replacement structures
 	dir_content_t* parent_pvt = (dir_content_t*)root->i_pvt;
@@ -103,6 +119,24 @@ int lookup (char* filename, inode** result, inode* root) {
 	}
 
 	// case valid path, but object simply does not exist
+	return -EPNOEXIST;
+}
+
+int lookup_by_ino (char* buf, size_t bufsz, uint64_t ino, inode* root) {
+	if (!root || !buf) return -EINVARG;
+
+	dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
+	for (uint64_t i = 0; i < dir_content->d_count; i++) {
+		child_t* d_child = &dir_content->d_children[i];
+		if (!d_child->c_inode || !d_child->c_name) continue;
+		if (d_child->c_inode->i_no == ino) {
+			size_t namelen = kstrlen (d_child->c_name);
+			if (namelen + 1 > bufsz) return -ERANGE;
+			kmemcpy (buf, d_child->c_name, namelen + 1);
+			return 0;
+		}
+	}
+
 	return -EPNOEXIST;
 }
 
@@ -164,6 +198,64 @@ int seek (inode* node, file* f, size_t offset, int whence) {
 	return f->f_pos;
 }
 
+int getdents (inode* node, file* f, void* buf, size_t count) {
+	if (node->i_type != DIRECTORY) return -EINVPATH;
+
+	dir_content_t* dir = (dir_content_t*)node->i_pvt;
+	if (!dir || !dir->d_children) return 0;
+
+	size_t	 bytes_written = 0;
+	uint8_t* ptr = (uint8_t*)buf;
+
+	while (f->f_pos < dir->d_count) {
+		child_t* child = &dir->d_children[f->f_pos];
+
+		size_t name_len = kstrlen (child->c_name);
+		size_t reclen = ALIGN_UP (sizeof (linux_dirent64) + name_len + 1, 8);
+
+		if (bytes_written + reclen > count) {
+			if (bytes_written == 0) return -EINVARG;
+			break;
+		}
+
+		linux_dirent64* de = (linux_dirent64*)ptr;
+		de->d_ino = child->c_inode->i_no;
+		de->d_off = f->f_pos + 1;
+		de->d_reclen = (unsigned short)reclen;
+
+		// TODO: add header with actual types
+		if (child->c_inode->i_type == DIRECTORY)
+			de->d_type = 4;
+		else
+			de->d_type = 8;
+
+		kstrcpy (de->d_name, child->c_name);
+
+		bytes_written += reclen;
+		ptr += reclen;
+		f->f_pos++;
+	}
+
+	return (int)bytes_written;
+}
+
+int istat (inode* node, stat* buf) {
+	kmemset (buf, 0, sizeof (stat));
+	buf->st_ino = node->i_no;
+	if (node->i_type == DIRECTORY) buf->st_mode = S_IRWXALL | IFDIR;
+	if (node->i_type == EFILE) buf->st_mode = S_IRWXALL | IFREG;
+	if (node->i_type == LINK) buf->st_mode = S_IRWXALL | IFLNK;
+	buf->st_size = node->i_sz;
+	buf->st_blocks = node->i_sz / S_BLKSIZE;
+	buf->st_blksize = S_BLKSIZE;
+	return 0;
+}
+
+int fstat (inode* node, file* f, stat* buf) {
+	(void)f;
+	return istat (node, buf);
+}
+
 inode* init_ramfs_root (void) {
 	root_inode = kmalloc (sizeof (inode));
 	kmemset ((void*)root_inode, 0, sizeof (inode));
@@ -171,6 +263,8 @@ inode* init_ramfs_root (void) {
 	root_inode->i_pvt = kmalloc (sizeof (dir_content_t));
 	root_inode->i_iops = &i_ops;
 	root_inode->i_fops = &f_ops;
+	root_inode->i_no = next_inode++;
+	root_inode->i_parent = root_inode;
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)root_inode->i_pvt)->d_count = 2;

@@ -97,6 +97,15 @@ if [ "$BUILD_DOCS" = true ]; then
 	doxygen Doxyfile
 fi
 
+heading "Applying patches" "1;33"
+
+if git -C "$ROOTDIR/lib/newlib-cygwin" apply --check --reverse "$ROOTDIR/patches/newlib/0001-cos-syscall-stubs.patch" 2>/dev/null; then
+	printf "Already applied: $ROOTDIR/patches/newlib/0001-cos-syscall-stubs.patch\n"
+else
+	git -C "$ROOTDIR/lib/newlib-cygwin" apply "$ROOTDIR/patches/newlib/0001-cos-syscall-stubs.patch"
+	printf "Applied: $ROOTDIR/patches/newlib/0001-cos-syscall-stubs.patch\n"
+fi
+
 heading "Configuring libc" "1;33"
 
 mkdir -p build/lib/newlib

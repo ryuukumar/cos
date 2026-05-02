@@ -6,6 +6,8 @@
 #define ENOIMPL 101
 // Out of memory
 #define ENOMEM 102
+// Buffer too small
+#define ERANGE 103
 
 // No root inode
 #define ENOROOT 500

@@ -19,4 +19,9 @@ void init_vfs (inode* absolute_root) {
 	register_syscall (SYSCALL_SYS_CLOSE, sys_close);
 	register_syscall (SYSCALL_SYS_LSEEK, sys_seek);
 	register_syscall (SYSCALL_SYS_MKDIR, sys_mkdir);
+	register_syscall (SYSCALL_SYS_GETDENTS, sys_getdents);
+	register_syscall (SYSCALL_SYS_FSTAT, sys_fstat);
+	register_syscall (SYSCALL_SYS_STAT, sys_stat);
+	register_syscall (SYSCALL_SYS_CHDIR, sys_chdir);
+	register_syscall (SYSCALL_SYS_GETCWD, sys_getcwd);
 }
