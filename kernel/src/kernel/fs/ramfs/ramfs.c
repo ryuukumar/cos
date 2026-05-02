@@ -8,7 +8,11 @@
 static inode*	root_inode;
 static uint64_t next_inode = 1;
 
-static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create, .stat = istat};
+static inode_operations i_ops = {.lookup = lookup,
+								 .lookup_by_ino = lookup_by_ino,
+								 .mkdir = mkdir,
+								 .create = create,
+								 .stat = istat};
 static file_operations	f_ops = {.read = read,
 								 .write = write,
 								 .seek = seek,
