@@ -1,5 +1,6 @@
 #pragma once
 
+#include <kernel/fs/stat.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -28,6 +29,7 @@ typedef struct {
 	int (*lookup) (char*, inode**, inode*);
 	int (*create) (char*, inode**, inode*);
 	int (*mkdir) (char*, inode**, inode*);
+	int (*stat) (inode*, stat*);
 } inode_operations;
 
 typedef struct {
@@ -37,6 +39,7 @@ typedef struct {
 	int (*write) (inode*, file*, void*, size_t);
 	int (*seek) (inode*, file*, size_t, int);
 	int (*getdents) (inode*, file*, void*, size_t);
+	int (*fstat) (inode*, file*, stat*);
 } file_operations;
 
 struct inode {
@@ -71,6 +74,8 @@ int do_write (struct file* f, void* buf, size_t size);
 int do_open (inode* file, struct file* dest_fd);
 int do_close (struct file* fd);
 int do_getdents (struct file* f, void* buf, size_t count);
+int do_fstat (struct file* fd, stat* buf);
+int do_stat (const char* restrict path, stat* restrict buf);
 
 uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size);
 uint64_t sys_write (uint64_t fd, uint64_t buf, uint64_t size);
@@ -79,6 +84,8 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode);
 uint64_t sys_close (uint64_t fd, uint64_t arg2, uint64_t arg3);
 uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3);
 uint64_t sys_getdents (uint64_t fd, uint64_t buf, uint64_t count);
+uint64_t sys_fstat (uint64_t fd, uint64_t buf, uint64_t arg3);
+uint64_t sys_stat (uint64_t path, uint64_t buf, uint64_t arg3);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);

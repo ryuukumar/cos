@@ -1,18 +1,21 @@
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/ramfs.h>
+#include <kernel/fs/stat.h>
+#include <kernel/fs/vfs.h>
 #include <liballoc/liballoc.h>
 
 static inode*	root_inode;
 static uint64_t next_inode = 1;
 
-static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create};
+static inode_operations i_ops = {.lookup = lookup, .mkdir = mkdir, .create = create, .stat = istat};
 static file_operations	f_ops = {.read = read,
 								 .write = write,
 								 .seek = seek,
 								 .open = nullptr,
 								 .close = nullptr,
-								 .getdents = getdents};
+								 .getdents = getdents,
+								 .fstat = fstat};
 
 int mkdir (char* dirname, inode** result, inode* root) {
 	// requires: guarantee that vfs input is valid
@@ -210,6 +213,23 @@ int getdents (inode* node, file* f, void* buf, size_t count) {
 	}
 
 	return (int)bytes_written;
+}
+
+int istat (inode* node, stat* buf) {
+	kmemset (buf, 0, sizeof (stat));
+	buf->st_ino = node->i_no;
+	if (node->i_type == DIRECTORY) buf->st_mode = S_IRWXALL | IFDIR;
+	if (node->i_type == EFILE) buf->st_mode = S_IRWXALL | IFREG;
+	if (node->i_type == LINK) buf->st_mode = S_IRWXALL | IFLNK;
+	buf->st_size = node->i_sz;
+	buf->st_blocks = node->i_sz / S_BLKSIZE;
+	buf->st_blksize = S_BLKSIZE;
+	return 0;
+}
+
+int fstat (inode* node, file* f, stat* buf) {
+	(void)f;
+	return istat (node, buf);
 }
 
 inode* init_ramfs_root (void) {

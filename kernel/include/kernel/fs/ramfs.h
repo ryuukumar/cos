@@ -11,6 +11,8 @@ int read (inode* node, file* f, void* buffer, size_t size);
 int write (inode* node, file* f, void* buffer, size_t size);
 int seek (inode* node, file* f, size_t offset, int whence);
 int getdents (inode* node, file* f, void* buf, size_t count);
+int istat (inode* node, stat* buf);
+int fstat (inode* node, file* f, stat* buf);
 
 typedef struct {
 	char*  c_name;
