@@ -118,6 +118,24 @@ int lookup (char* filename, inode** result, inode* root) {
 	return -EPNOEXIST;
 }
 
+int lookup_by_ino (char* buf, size_t bufsz, uint64_t ino, inode* root) {
+	if (!root || !buf) return -EINVARG;
+
+	dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
+	for (uint64_t i = 0; i < dir_content->d_count; i++) {
+		child_t* d_child = &dir_content->d_children[i];
+		if (!d_child->c_inode || !d_child->c_name) continue;
+		if (d_child->c_inode->i_no == ino) {
+			size_t namelen = kstrlen (d_child->c_name);
+			if (namelen + 1 > bufsz) return -ERANGE;
+			kmemcpy (buf, d_child->c_name, namelen + 1);
+			return 0;
+		}
+	}
+
+	return -EPNOEXIST;
+}
+
 int read (inode* node, file* f, void* buffer, size_t size) {
 	if (f->f_pos >= node->i_sz) return 0; // EOF
 
