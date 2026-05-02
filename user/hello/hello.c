@@ -20,7 +20,7 @@ void list_dir (const char* path) {
 
 int main (int argc, char* argv[]) {
 	printf ("Hello from USERLAND using newlib!!!\n");
-	list_dir ("/");
+	list_dir (".");
 	list_dir ("/usr/lib");
 	return 0;
 }
