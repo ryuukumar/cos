@@ -67,6 +67,7 @@ int	 vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** 
 bool filename_has_invalid_chars (char* filename);
 
 int do_mkdir (char* dirname, inode** result, inode* parent);
+int do_chdir (const char* path);
 int do_create (char* filename, inode** result, inode* parent);
 int do_lookup (char* filename, inode** result, inode* root, inode* cwd);
 
@@ -85,6 +86,7 @@ uint64_t sys_seek (uint64_t fd, uint64_t offset, uint64_t whence);
 uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode);
 uint64_t sys_close (uint64_t fd, uint64_t arg2, uint64_t arg3);
 uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3);
+uint64_t sys_chdir (uint64_t path, uint64_t arg2, uint64_t arg3);
 uint64_t sys_getdents (uint64_t fd, uint64_t buf, uint64_t count);
 uint64_t sys_fstat (uint64_t fd, uint64_t buf, uint64_t arg3);
 uint64_t sys_stat (uint64_t path, uint64_t buf, uint64_t arg3);

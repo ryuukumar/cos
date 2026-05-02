@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 void list_dir (const char* path) {
 	printf ("\nListing: %s\n", path);
@@ -20,6 +21,7 @@ void list_dir (const char* path) {
 
 int main (int argc, char* argv[]) {
 	printf ("Hello from USERLAND using newlib!!!\n");
+	chdir ("usr/lib");
 	list_dir (".");
 	list_dir ("/usr/lib");
 	return 0;

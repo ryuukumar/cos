@@ -26,6 +26,7 @@ ssize_t write (int fd, const void* buf, size_t count);
 off_t	lseek (int fd, off_t offset, int whence);
 
 int mkdir (const char* pathname, mode_t mode);
+int chdir (const char* __path);
 int getdents (int fd, void* dp, int count);
 
 uint64_t brk (void* addr);
