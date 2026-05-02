@@ -31,8 +31,10 @@ int getdents (int fd, void* dp, int count);
 uint64_t brk (void* addr);
 void*	 sbrk (ptrdiff_t incr);
 
-// TODO: implement stubs
 int fstat (int file, struct stat* st);
+int stat (const char* restrict path, struct stat* restrict st);
+
+// TODO: implement stubs
 int isatty (int file);
 int kill (int pid, int sig);
 

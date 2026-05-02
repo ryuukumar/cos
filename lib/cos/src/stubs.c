@@ -9,11 +9,6 @@ extern int errno;
 // declaration
 int fcntl (int fd, int cmd, ...);
 
-int fstat (int file, struct stat* st) {
-	st->st_mode = S_IFCHR;
-	return 0;
-}
-
 int kill (int pid, int sig) {
 	errno = EINVAL;
 	return -1;
