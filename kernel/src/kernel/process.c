@@ -223,6 +223,8 @@ int process_fork (process* source_process, process** dest_ptr) {
 	varray_push (source_process->p_children, new_process->p_id);
 	new_process->p_children = varray_create (0);
 	new_process->p_parent = source_process;
+	new_process->p_waiting = kmalloc (sizeof (process_queue));
+	kmemset (new_process->p_waiting, 0, sizeof (process_queue));
 
 	errno = enqueue_process (get_ready_queue (), new_process);
 	if (errno != 0) {

@@ -193,6 +193,8 @@ void _start (void) {
 	hashmap_set (get_pid_map (), stage2_proc->p_id, stage2_proc);
 	enqueue_process (get_ready_queue (), stage2_proc);
 	stage2_proc->p_children = varray_create (0);
+	stage2_proc->p_waiting = kmalloc (sizeof (process_queue));
+	kmemset (stage2_proc->p_waiting, 0, sizeof (process_queue));
 
 	kserial_printf ("\n[Stage 1] Hands off to scheduler.\n");
 	asm ("sti");
