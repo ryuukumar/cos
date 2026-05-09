@@ -10,8 +10,10 @@
 process_queue ready_queue;
 uint64_t	  next_free_pid;
 process*	  current_process;
+hashmap32*	  pid_map;
 
 process_queue* get_ready_queue (void) { return &ready_queue; }
+hashmap32*	   get_pid_map (void) { return pid_map; }
 
 int dequeue_process (process_queue* queue, process** result) {
 	if (!queue) return -EINVARG;
@@ -169,6 +171,8 @@ int process_fork (process* source_process, process** dest_ptr) {
 	for (int i = 0; i < MAX_FDS; i++)
 		if (new_process->p_fds[i]) new_process->p_fds[i]->f_cnt++;
 
+	hashmap_set (pid_map, new_process->p_id, new_process);
+
 	errno = enqueue_process (get_ready_queue (), new_process);
 	if (errno != 0) {
 		free_vpages (new_kstack, STACK_SIZE / PAGE_SIZE);
@@ -225,6 +229,8 @@ static uint64_t sys_sched_yield (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = nullptr;
 	next_free_pid = 2ll;
+	pid_map = hashmap_create (16);
+	if (!pid_map) return;
 
 	register_syscall (SYSCALL_SYS_EXIT, sys_exit);
 	register_syscall (SYSCALL_SYS_FORK, sys_fork);

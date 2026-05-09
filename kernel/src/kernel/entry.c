@@ -24,6 +24,7 @@
 #include <liballoc/liballoc.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <utils/hashmap32.h>
 
 #define FONT_SIZE 2
 
@@ -188,6 +189,7 @@ void _start (void) {
 
 	stage2_proc->p_sp = (uintptr_t)init_sp;
 
+	hashmap_set (get_pid_map (), stage2_proc->p_id, stage2_proc);
 	enqueue_process (get_ready_queue (), stage2_proc);
 
 	kserial_printf ("\n[Stage 1] Hands off to scheduler.\n");

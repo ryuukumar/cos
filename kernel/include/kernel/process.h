@@ -4,6 +4,7 @@
 #include <kernel/idt.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <utils/hashmap32.h>
 
 typedef struct process process;
 
@@ -31,6 +32,8 @@ typedef struct {
 
 process_queue* get_ready_queue (void);
 process*	   get_current_process (void);
+
+hashmap32* get_pid_map (void);
 
 int dequeue_process (process_queue* queue, process** result);
 int enqueue_process (process_queue* queue, process* new_process);
