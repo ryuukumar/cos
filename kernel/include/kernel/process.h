@@ -12,6 +12,15 @@ typedef struct process_queue process_queue;
 
 typedef enum { TASK_RUNNING, TASK_READY, TASK_BLOCKED, TASK_DEAD } task_state_t;
 
+typedef union {
+	int32_t raw;
+	struct {
+		uint8_t	 reason;
+		uint8_t	 info;
+		uint16_t unused;
+	};
+} exit_status;
+
 struct process {
 	uint64_t	   p_id;
 	uintptr_t	   p_cr3;
@@ -28,6 +37,8 @@ struct process {
 	uintptr_t	   p_sp;
 	varray*		   p_children;
 	process_queue* p_waiting;
+	process*	   p_parent;
+	exit_status	   p_exitstatus;
 };
 
 struct process_queue {
