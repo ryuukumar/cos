@@ -1,3 +1,4 @@
+#include "utils/varray.h"
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/gdt.h>
@@ -172,6 +173,9 @@ int process_fork (process* source_process, process** dest_ptr) {
 		if (new_process->p_fds[i]) new_process->p_fds[i]->f_cnt++;
 
 	hashmap_set (pid_map, new_process->p_id, new_process);
+	varray_push (source_process->p_children, new_process->p_id);
+	new_process->p_children = varray_create (0);
+	new_process->p_parent = source_process;
 
 	errno = enqueue_process (get_ready_queue (), new_process);
 	if (errno != 0) {
