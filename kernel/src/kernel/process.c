@@ -256,13 +256,26 @@ static uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 }
 
 static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
-	(void)status; // TODO: do something with the status
 	(void)arg2, (void)arg3;
 	process* current = get_current_process ();
 	current->p_state = TASK_DEAD;
+	current->p_exitstatus.info = status;
+	current->p_exitstatus.reason = 0;
 
 	for (int i = 0; i < MAX_FDS; i++)
 		if (current->p_fds[i]) sys_close (i, 0, 0);
+
+	process* blocked_process = nullptr;
+	do {
+		dequeue_process (current->p_waiting, &blocked_process);
+		if (blocked_process) enqueue_process (&ready_queue, blocked_process);
+	} while (blocked_process);
+
+	if (current->p_parent && current->p_parent->p_waitforchild == -1) {
+		current->p_parent->p_state = TASK_READY;
+		current->p_parent->p_waitforchild = current->p_id;
+		enqueue_process (&ready_queue, current->p_parent);
+	}
 
 	schedule (get_latest_r_frame ());
 	return 0;
