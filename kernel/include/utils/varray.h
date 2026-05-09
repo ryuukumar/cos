@@ -3,10 +3,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef uintptr_t varray_elem;
+constexpr size_t varray_default_block_capacity = 5;
 
-#define VARRAY_DEFAULT_BLOCK_CAPACITY 5
-
+typedef uint64_t			varray_elem;
 typedef struct varray_block varray_block;
 
 struct varray_block {

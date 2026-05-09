@@ -32,7 +32,7 @@ varray* varray_create (size_t block_capacity) {
 
 	va->alloc_tail = va->data_tail = va->head = nullptr;
 	va->size = 0;
-	va->block_capacity = block_capacity > 0 ? block_capacity : VARRAY_DEFAULT_BLOCK_CAPACITY;
+	va->block_capacity = block_capacity > 0 ? block_capacity : varray_default_block_capacity;
 	return va;
 }
 
