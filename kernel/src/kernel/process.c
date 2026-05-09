@@ -315,7 +315,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 }
 
 static uint64_t sys_waitpid (uint64_t pid, uint64_t estatus, uint64_t options) {
-	if (estatus > get_hhdm_offset ()) return -EINVARG;
+	if (estatus >= get_hhdm_offset ()) return -EINVARG;
 	return do_waitpid (pid, (exit_status*)estatus, options);
 }
 
