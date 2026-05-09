@@ -7,6 +7,9 @@
 #include <utils/hashmap32.h>
 #include <utils/varray.h>
 
+#define WNOHANG	  1
+#define WUNTRACED 2
+
 typedef struct process		 process;
 typedef struct process_queue process_queue;
 
@@ -39,6 +42,7 @@ struct process {
 	process_queue* p_waiting;
 	process*	   p_parent;
 	exit_status	   p_exitstatus;
+	int64_t		   p_waitforchild;
 };
 
 struct process_queue {

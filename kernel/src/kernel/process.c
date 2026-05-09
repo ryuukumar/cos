@@ -6,6 +6,7 @@
 #include <kernel/stack.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
+#include <stddef.h>
 #include <utils/hashmap32.h>
 #include <utils/varray.h>
 
@@ -249,6 +250,74 @@ void process_unblock (process* p) {
 	enqueue_process (&ready_queue, p);
 }
 
+static bool is_process_child (uint64_t pid, varray* p_children) {
+	size_t p_children_sz = varray_size (p_children);
+	for (size_t i = 0; i < p_children_sz; i++) {
+		varray_elem target = 0;
+		varray_get (p_children, i, &target);
+		if (target == pid) return true;
+	}
+	return false;
+}
+
+static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
+	if (options & ~(WNOHANG | WUNTRACED)) return -EINVARG;
+	if (options & WUNTRACED) return -ENOIMPL;
+
+	process* current = get_current_process ();
+	if (pid == -1) {
+		uint64_t child_pid = 0;
+		size_t	 p_children_sz = varray_size (current->p_children);
+		for (size_t i = 0; i < p_children_sz; i++) {
+			varray_elem target = 0;
+			varray_get (current->p_children, i, &target);
+
+			process* child_tgt = (process*)hashmap_get (pid_map, target);
+			if (child_tgt && child_tgt->p_state == TASK_DEAD) {
+				child_pid = target;
+				goto pidn1_exit;
+			}
+		}
+
+		if (options & WNOHANG) return 0;
+
+		current->p_state = TASK_BLOCKED;
+		current->p_waitforchild = -1;
+		do_sched_yield ();
+		child_pid = current->p_waitforchild;
+
+	pidn1_exit:
+		process* child = (process*)hashmap_get (pid_map, child_pid);
+		if (child) {
+			*estatus = child->p_exitstatus;
+			reap_process (child_pid);
+		}
+		current->p_waitforchild = 0;
+		return child_pid;
+	} else if (pid > 0) {
+		process* waitproc = (process*)hashmap_get (pid_map, pid);
+		if (!is_process_child (pid, current->p_children) || !waitproc) return -EINVARG;
+		if (waitproc->p_state == TASK_DEAD) goto pid0_exit;
+		if (options & WNOHANG) return 0;
+
+		current->p_state = TASK_BLOCKED;
+		do {
+			process_block (waitproc->p_waiting);
+		} while (waitproc->p_state != TASK_DEAD);
+
+	pid0_exit:
+		*estatus = waitproc->p_exitstatus;
+		reap_process (waitproc->p_id);
+		return pid;
+	}
+
+	return -ENOIMPL;
+}
+
+static uint64_t sys_waitpid (uint64_t pid, uint64_t estatus, uint64_t options) {
+	return do_waitpid (pid, (exit_status*)estatus, options);
+}
+
 static uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 	(void)arg1, (void)arg2, (void)arg3; // fork does not use any args
 	process* child = nullptr;
@@ -302,4 +371,5 @@ void init_process (void) {
 	register_syscall (SYSCALL_SYS_FORK, sys_fork);
 	register_syscall (SYSCALL_SYS_GETPID, sys_getpid);
 	register_syscall (SYSCALL_SCHED_YIELD, sys_sched_yield);
+	register_syscall (SYSCALL_SYS_WAITPID, sys_waitpid);
 }
