@@ -102,7 +102,7 @@ static int64_t reap_process (uint64_t pid) {
 		if (child) { // try to reparent to init
 			if (init2) {
 				child->p_parent = init2;
-				varray_push (init2->p_children, child_pid);
+				if (varray_push (init2->p_children, child_pid) == -1) child->p_parent = nullptr;
 			} else
 				child->p_parent = nullptr;
 		}
@@ -280,6 +280,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 		}
 
 		if (options & WNOHANG) return 0;
+		if (p_children_sz == 0) return -ECHILD;
 
 		current->p_state = TASK_BLOCKED;
 		current->p_waitforchild = -1;
@@ -300,7 +301,6 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 		if (waitproc->p_state == TASK_DEAD) goto pid0_exit;
 		if (options & WNOHANG) return 0;
 
-		current->p_state = TASK_BLOCKED;
 		do {
 			process_block (waitproc->p_waiting);
 		} while (waitproc->p_state != TASK_DEAD);
@@ -315,6 +315,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 }
 
 static uint64_t sys_waitpid (uint64_t pid, uint64_t estatus, uint64_t options) {
+	if (estatus > get_hhdm_offset ()) return -EINVARG;
 	return do_waitpid (pid, (exit_status*)estatus, options);
 }
 
