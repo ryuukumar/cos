@@ -1,4 +1,3 @@
-#include "utils/varray.h"
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/gdt.h>
@@ -7,6 +6,8 @@
 #include <kernel/stack.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
+#include <utils/hashmap32.h>
+#include <utils/varray.h>
 
 process_queue ready_queue;
 uint64_t	  next_free_pid;
@@ -83,6 +84,52 @@ void schedule (registers_t* registers) {
 		uintptr_t dummy_sp;
 		switch_to (&dummy_sp, upcoming_process->p_sp, upcoming_process->p_cr3);
 	}
+}
+
+static int64_t reap_process (uint64_t pid) {
+	process* p_reap = (process*)hashmap_get (pid_map, pid);
+	if (!p_reap || p_reap->p_state != TASK_DEAD) return (uint64_t)-1;
+
+	free_vpages ((void*)(p_reap->p_kstack - STACK_SIZE), STACK_SIZE / PAGE_SIZE);
+	dealloc_by_cr3 (p_reap->p_cr3, 0, (1ULL << 39) / PAGE_SIZE);
+
+	process* init2 = (process*)hashmap_get (pid_map, 2);
+	while (varray_size (p_reap->p_children) != 0) {
+		uint64_t child_pid = 0;
+		varray_pop (p_reap->p_children, &child_pid);
+		process* child = (process*)hashmap_get (pid_map, child_pid);
+		if (child) { // try to reparent to init
+			if (init2) {
+				child->p_parent = init2;
+				varray_push (init2->p_children, child_pid);
+			} else
+				child->p_parent = nullptr;
+		}
+	}
+	varray_destroy (p_reap->p_children);
+
+	if (p_reap->p_parent) {
+		size_t children_size = varray_size (p_reap->p_parent->p_children);
+		if (children_size > 0) {
+			for (size_t i = 0; i < children_size; i++) {
+				varray_elem target = 0;
+				varray_get (p_reap->p_parent->p_children, i, &target);
+				if (target == pid) {
+					varray_pop (p_reap->p_parent->p_children, &target);
+					if (i != children_size - 1)
+						varray_set (p_reap->p_parent->p_children, i, target);
+					break;
+				}
+			}
+		}
+	}
+
+	kfree (p_reap->p_waiting);
+	hashmap_remove (pid_map, pid);
+
+	kfree (p_reap);
+
+	return pid;
 }
 
 static int do_sched_yield (void) {
