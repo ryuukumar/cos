@@ -27,5 +27,8 @@
 // Empty queue
 #define EEMPQ 602
 
+// Invalid child
+#define ECHILD 651
+
 // Cannot execute
 #define ENOEXEC 701
