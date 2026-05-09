@@ -2,11 +2,12 @@
 #include <utils/varray.h>
 
 static void varray_trim (varray_block* block) {
-	if (block == nullptr) return;
-
-	varray_trim (block->next);
-	kfree (block->data);
-	kfree (block);
+	while (block) {
+		varray_block* next = block->next;
+		kfree (block->data);
+		kfree (block);
+		block = next;
+	}
 }
 
 static varray_block* alloc_block (size_t capacity) {
