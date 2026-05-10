@@ -17,6 +17,8 @@ int dispatch_builtin (size_t argc, char** argv) {
 		return 1;
 	else if (strcmp (argv[0], "false") == 0)
 		return 0;
+	else if (strcmp (argv[0], "echo") == 0)
+		return builtin_echo (argc, argv);
 
 	return -1;
 }
