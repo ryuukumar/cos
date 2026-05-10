@@ -27,6 +27,8 @@ int dispatch_builtin (size_t argc, char** argv) {
 		return builtin_getpid (argc, argv);
 	else if (strcmp (argv[0], "touch") == 0)
 		return builtin_touch (argc, argv);
+	else if (strcmp (argv[0], "eval") == 0)
+		return builtin_eval (argc, argv);
 
 	return -1;
 }

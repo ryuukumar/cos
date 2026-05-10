@@ -46,7 +46,7 @@ static void strip_comment (char* buf) {
 	}
 }
 
-static int run_line (char* line) {
+int run_line (char* line) {
 	int	  last = 0;
 	char* p = line;
 	char* seg = p;
