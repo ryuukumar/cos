@@ -4,7 +4,7 @@
 
 int do_seek (struct file* f, size_t offset, int whence) {
 	if (!f || whence >= 3 || whence < 0) return -EINVAL;
-	if (!f->f_fops || !f->f_fops->seek) return -INTERNAL_ENOIMPL;
+	if (!f->f_fops || !f->f_fops->seek) return -ENOSYS;
 	return f->f_fops->seek (f->f_inode, f, offset, whence);
 }
 

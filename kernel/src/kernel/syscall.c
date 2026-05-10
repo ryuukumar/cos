@@ -20,7 +20,7 @@ void syscall_handler (registers_t* registers) {
 		registers->rax = syscall_handlers[vector](registers->rdi, registers->rsi, registers->rdx);
 	} else {
 		kserial_printf ("Unhandled syscall 0x%x!\n", vector);
-		registers->rax = -INTERNAL_ENOIMPL;
+		registers->rax = -ENOSYS;
 	}
 
 	if (current) current->p_registers_ptr = prev_regs;

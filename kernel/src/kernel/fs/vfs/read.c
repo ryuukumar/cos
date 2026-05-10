@@ -11,7 +11,7 @@
  */
 int do_read (struct file* f, void* buf, size_t size) {
 	if (!f || !buf) return -EINVAL;
-	if (!f->f_fops || !f->f_fops->read) return -INTERNAL_ENOIMPL;
+	if (!f->f_fops || !f->f_fops->read) return -ENOSYS;
 	return f->f_fops->read (f->f_inode, f, buf, size);
 }
 

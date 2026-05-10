@@ -5,7 +5,7 @@
 
 int do_fstat (struct file* fd, stat* buf) {
 	if (!fd || !buf) return -EINVAL;
-	if (!fd->f_fops || !fd->f_fops->fstat) return -INTERNAL_ENOIMPL;
+	if (!fd->f_fops || !fd->f_fops->fstat) return -ENOSYS;
 	return fd->f_fops->fstat (fd->f_inode, fd, buf);
 }
 

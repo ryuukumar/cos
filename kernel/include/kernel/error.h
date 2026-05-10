@@ -86,8 +86,6 @@
 #define EOWNERDEAD		142	   /* Previous owner died */
 #define EWOULDBLOCK		EAGAIN /* Operation would block */
 
-// Not implemented
-#define INTERNAL_ENOIMPL 2101
 // Out of memory
 #define INTERNAL_ENOMEM 2102
 // Buffer too small

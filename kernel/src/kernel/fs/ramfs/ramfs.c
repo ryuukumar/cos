@@ -194,7 +194,7 @@ int seek (inode* node, file* f, size_t offset, int whence) {
 	else if (whence == SEEK_CUR)
 		f->f_pos += offset;
 	else if (whence == SEEK_END)
-		return -INTERNAL_ENOIMPL;
+		return -ENOSYS;
 	return f->f_pos;
 }
 

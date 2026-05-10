@@ -264,7 +264,7 @@ static bool is_process_child (uint64_t pid, varray* p_children) {
 
 static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 	if (options & ~(WNOHANG | WUNTRACED)) return -EINVAL;
-	if (options & WUNTRACED) return -INTERNAL_ENOIMPL;
+	if (options & WUNTRACED) return -ENOSYS;
 
 	process* current = get_current_process ();
 	if (pid == -1) {
@@ -313,7 +313,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 		return pid;
 	}
 
-	return -INTERNAL_ENOIMPL;
+	return -ENOSYS;
 }
 
 static uint64_t sys_waitpid (uint64_t pid, uint64_t estatus, uint64_t options) {

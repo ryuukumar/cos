@@ -5,7 +5,7 @@
 
 int do_getdents (struct file* f, void* buf, size_t count) {
 	if (!f || !buf) return -EINVAL;
-	if (!f->f_fops || !f->f_fops->getdents) return -INTERNAL_ENOIMPL;
+	if (!f->f_fops || !f->f_fops->getdents) return -ENOSYS;
 	return f->f_fops->getdents (f->f_inode, f, buf, count);
 }
 

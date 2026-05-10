@@ -14,7 +14,7 @@ int do_stat (const char* restrict path, stat* restrict buf) {
 	int error = do_lookup ((char*)path, &node, current->p_root, current->p_wd);
 	if (error != 0) return error;
 
-	if (!node->i_iops || !node->i_iops->stat) return -INTERNAL_ENOIMPL;
+	if (!node->i_iops || !node->i_iops->stat) return -ENOSYS;
 	return node->i_iops->stat (node, buf);
 }
 
