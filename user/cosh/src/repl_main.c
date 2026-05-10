@@ -1,3 +1,4 @@
+#include <dispatch.h>
 #include <gen_argv.h>
 #include <repl.h>
 #include <stdio.h>
@@ -19,8 +20,10 @@ int repl_loop (void) {
 	cmdbuf[strcspn (cmdbuf, "\n")] = '\0';
 	if (cmdbuf[0] == '\0') return 0;
 
-	printf ("eval %s\n", cmdbuf);
-	gen_argv (cmdbuf);
+	size_t argc = 0;
+	char** argv = gen_argv (cmdbuf, &argc);
+	dispatch (argc, argv);
+
 	return 0;
 }
 

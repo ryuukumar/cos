@@ -135,11 +135,6 @@ char** gen_argv (const char* input, size_t* argc) {
 		nextarg = get_next_arg (nextarg);
 	}
 
-	printf ("Arguments received: ");
-	for (uint64_t i = 0; i < arg_count; i++)
-		printf ("\"%s\" ", ret_argv[i]);
-	printf ("\n");
-
 	*argc = arg_count;
 	return ret_argv;
 }
