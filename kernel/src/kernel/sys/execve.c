@@ -44,7 +44,7 @@ static int do_execve (const char* path, char* const argv[], char* const envp[]) 
 
 	vaddr_t	  us_base_vaddr = {254, 255, 0, 0, 0};
 	uintptr_t user_stack_base = (uintptr_t)vaddr_t_to_ptr (&us_base_vaddr);
-	size_t	  stack_pages = 16;
+	size_t	  stack_pages = 4;
 	alloc_by_cr3 (get_current_process ()->p_cr3, user_stack_base - (stack_pages * PAGE_SIZE),
 				  stack_pages, true);
 

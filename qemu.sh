@@ -19,6 +19,6 @@ function heading() {
 heading "Running QEMU" "1;33"
 
 echo "Running image.iso as CD-ROM image."
-qemu-system-x86_64 -cdrom image.iso -vga std -machine accel=tcg -serial file:serial.log -s -S
+qemu-system-x86_64 -cdrom image.iso -vga std -serial file:serial.log
 
 heading "Run complete" "1;32"
