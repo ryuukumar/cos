@@ -90,8 +90,6 @@
 #define INTERNAL_ENOROOT 2500
 // Need an absolute path
 #define INTERNAL_ENEEDABS 2502
-// Invalid path
-#define INTERNAL_EINVPATH 2503
 
 // Corrupt queue
 #define INTERNAL_ECORRQ 2601

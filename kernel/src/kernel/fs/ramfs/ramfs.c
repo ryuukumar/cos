@@ -90,7 +90,7 @@ int create (char* filename, inode** result, inode* root) {
 int lookup (char* filename, inode** result, inode* root) {
 	if (!root) return -INTERNAL_ENOROOT;
 	if (!filename || filename[0] == '\0') return -EINVAL;
-	if (root->i_type != DIRECTORY) return -INTERNAL_EINVPATH;
+	if (root->i_type != DIRECTORY) return -ENOTDIR;
 
 	// case '.'
 	if (kstrcmp (filename, ".") == 0) {
@@ -199,7 +199,7 @@ int seek (inode* node, file* f, size_t offset, int whence) {
 }
 
 int getdents (inode* node, file* f, void* buf, size_t count) {
-	if (node->i_type != DIRECTORY) return -INTERNAL_EINVPATH;
+	if (node->i_type != DIRECTORY) return -ENOTDIR;
 
 	dir_content_t* dir = (dir_content_t*)node->i_pvt;
 	if (!dir || !dir->d_children) return 0;
