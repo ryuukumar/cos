@@ -97,6 +97,3 @@
 #define INTERNAL_ECORRQ 2601
 // Empty queue
 #define INTERNAL_EEMPQ 2602
-
-// Cannot execute
-#define INTERNAL_ENOEXEC 2701
