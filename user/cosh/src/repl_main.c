@@ -22,7 +22,8 @@ int repl_loop (void) {
 
 	size_t argc = 0;
 	char** argv = gen_argv (cmdbuf, &argc);
-	dispatch (argc, argv);
+	int	   result = dispatch (argc, argv);
+	if (result != 0) printf ("exited with non-zero status: %i\n", result);
 
 	return 0;
 }
