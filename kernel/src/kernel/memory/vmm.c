@@ -310,6 +310,7 @@ void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, bool write) 
 	(void)write; // TODO: set rw flag
 
 	pml4_base_ptr = original_ptr;
+	write_cr3 (read_cr3 ());
 }
 
 void dealloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages) {
@@ -321,6 +322,7 @@ void dealloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages) {
 	free_all_vpages_in_range (get_vaddr_t_from_ptr ((void*)start),
 							  get_vaddr_t_from_ptr ((void*)last_page_base));
 	pml4_base_ptr = original_ptr;
+	write_cr3 (read_cr3 ());
 }
 
 void init_vmm (pml4t_entry_t* kernel_pml4) { pml4_base_ptr = kernel_pml4; }
