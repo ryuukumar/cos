@@ -86,9 +86,6 @@
 #define EOWNERDEAD		142	   /* Previous owner died */
 #define EWOULDBLOCK		EAGAIN /* Operation would block */
 
-// Buffer too small
-#define INTERNAL_ERANGE 2103
-
 // No root inode
 #define INTERNAL_ENOROOT 2500
 // Need an absolute path

@@ -131,7 +131,7 @@ int lookup_by_ino (char* buf, size_t bufsz, uint64_t ino, inode* root) {
 		if (!d_child->c_inode || !d_child->c_name) continue;
 		if (d_child->c_inode->i_no == ino) {
 			size_t namelen = kstrlen (d_child->c_name);
-			if (namelen + 1 > bufsz) return -INTERNAL_ERANGE;
+			if (namelen + 1 > bufsz) return -ERANGE;
 			kmemcpy (buf, d_child->c_name, namelen + 1);
 			return 0;
 		}
