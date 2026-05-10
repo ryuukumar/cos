@@ -89,7 +89,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 	if (error == 0 && child_name && kstrlen (child_name) > 0) {
 		inode* result = nullptr;
 		error = do_mkdir (child_name, &result, parent_dir);
-		if (error == -INTERNAL_EPEXISTS) error = 0;
+		if (error == -EISDIR) error = 0;
 	}
 
 	if (child_name) kfree (child_name);

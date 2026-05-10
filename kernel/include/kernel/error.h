@@ -92,8 +92,6 @@
 #define INTERNAL_ENEEDABS 2502
 // Invalid path
 #define INTERNAL_EINVPATH 2503
-// Path already exists
-#define INTERNAL_EPEXISTS 2505
 // Too many open files
 #define INTERNAL_EMFILE 2506
 

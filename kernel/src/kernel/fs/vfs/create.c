@@ -29,7 +29,12 @@ int do_create (char* filename, inode** result, inode* parent) {
 	// case filename already exists
 	inode* lookup_result = nullptr;
 	int	   error = parent->i_iops->lookup (filename, &lookup_result, parent);
-	if (error == 0) return -INTERNAL_EPEXISTS;
+	if (error == 0) {
+		if (lookup_result->i_type == DIRECTORY)
+			return -EISDIR;
+		else
+			return -EEXIST;
+	}
 	if (error != -ENOENT) return error;
 
 	// case filename valid, parent exists and dirname does not yet
