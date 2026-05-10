@@ -29,6 +29,8 @@ int dispatch_builtin (size_t argc, char** argv) {
 		return builtin_touch (argc, argv);
 	else if (strcmp (argv[0], "eval") == 0)
 		return builtin_eval (argc, argv);
+	else if (strcmp (argv[0], "source") == 0)
+		return builtin_source (argc, argv);
 
 	return -1;
 }
