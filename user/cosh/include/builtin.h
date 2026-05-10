@@ -10,3 +10,4 @@ int builtin_exit (int argc, char** argv);
 int builtin_ls (int argc, char** argv);
 int builtin_mkdir (int argc, char** argv);
 int builtin_pwd (int argc, char** argv);
+int builtin_stat (int argc, char** argv);

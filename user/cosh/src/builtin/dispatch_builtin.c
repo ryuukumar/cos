@@ -21,6 +21,8 @@ int dispatch_builtin (size_t argc, char** argv) {
 		return builtin_echo (argc, argv);
 	else if (strcmp (argv[0], "mkdir") == 0)
 		return builtin_mkdir (argc, argv);
+	else if (strcmp (argv[0], "stat") == 0)
+		return builtin_stat (argc, argv);
 
 	return -1;
 }
