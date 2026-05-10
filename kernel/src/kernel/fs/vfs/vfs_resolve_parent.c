@@ -13,10 +13,10 @@
  */
 int vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** r_parent,
 						char** r_name) {
-	if (!path_arg || path_arg[0] == 0) return -EINVARG;
+	if (!path_arg || path_arg[0] == 0) return -INTERNAL_EINVARG;
 
 	char* path = kstrdup (path_arg);
-	if (!path) return -ENOMEM;
+	if (!path) return -INTERNAL_ENOMEM;
 
 	char* last_slash = kstrrchr (path, '/');
 
@@ -24,7 +24,7 @@ int vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** r
 		*r_name = kstrdup (path_arg);
 		*r_parent = cwd;
 		kfree (path);
-		return cwd ? 0 : -EINVARG;
+		return cwd ? 0 : -INTERNAL_EINVARG;
 	}
 
 	*r_name = kstrdup (last_slash + 1);

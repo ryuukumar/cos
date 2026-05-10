@@ -19,7 +19,7 @@ process_queue* get_ready_queue (void) { return &ready_queue; }
 hashmap32*	   get_pid_map (void) { return pid_map; }
 
 int dequeue_process (process_queue* queue, process** result) {
-	if (!queue) return -EINVARG;
+	if (!queue) return -INTERNAL_EINVARG;
 	if (queue->head == queue->tail) {
 		if (queue->head == nullptr) { // empty queue
 			*result = nullptr;
@@ -30,7 +30,8 @@ int dequeue_process (process_queue* queue, process** result) {
 			return 0;
 		}
 	}
-	if (queue->head == nullptr) return -ECORRQ; // invalid head, valid tail should not happen
+	if (queue->head == nullptr)
+		return -INTERNAL_ECORRQ; // invalid head, valid tail should not happen
 
 	*result = queue->head;
 	queue->head = queue->head->next;
@@ -38,12 +39,13 @@ int dequeue_process (process_queue* queue, process** result) {
 }
 
 int enqueue_process (process_queue* queue, process* new_process) {
-	if (!queue || !new_process) return -EINVARG;
+	if (!queue || !new_process) return -INTERNAL_EINVARG;
 	new_process->next = nullptr;
 	if (queue->head == nullptr) // queue is empty
 		queue->head = queue->tail = new_process;
 	else {
-		if (queue->tail == nullptr) return -ECORRQ; // valid head, invalid tail should not happen
+		if (queue->tail == nullptr)
+			return -INTERNAL_ECORRQ; // valid head, invalid tail should not happen
 		queue->tail = queue->tail->next = new_process;
 	}
 	return 0;
@@ -140,12 +142,12 @@ static int do_sched_yield (void) {
 
 int process_fork (process* source_process, process** dest_ptr) {
 	process* new_process = kmalloc (sizeof (process));
-	if (!new_process) return -ENOMEM;
+	if (!new_process) return -INTERNAL_ENOMEM;
 
 	kmemcpy ((void*)new_process, (void*)source_process, sizeof (process));
 
 	void* new_kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, false);
-	if (!new_kstack) return -ENOMEM;
+	if (!new_kstack) return -INTERNAL_ENOMEM;
 
 	new_process->p_kstack = (uintptr_t)new_kstack + STACK_SIZE;
 	new_process->p_id = next_free_pid++;
@@ -261,8 +263,8 @@ static bool is_process_child (uint64_t pid, varray* p_children) {
 }
 
 static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
-	if (options & ~(WNOHANG | WUNTRACED)) return -EINVARG;
-	if (options & WUNTRACED) return -ENOIMPL;
+	if (options & ~(WNOHANG | WUNTRACED)) return -INTERNAL_EINVARG;
+	if (options & WUNTRACED) return -INTERNAL_ENOIMPL;
 
 	process* current = get_current_process ();
 	if (pid == -1) {
@@ -280,7 +282,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 		}
 
 		if (options & WNOHANG) return 0;
-		if (p_children_sz == 0) return -ECHILD;
+		if (p_children_sz == 0) return -INTERNAL_ECHILD;
 
 		current->p_state = TASK_BLOCKED;
 		current->p_waitforchild = -1;
@@ -297,7 +299,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 		return child_pid;
 	} else if (pid > 0) {
 		process* waitproc = (process*)hashmap_get (pid_map, pid);
-		if (!is_process_child (pid, current->p_children) || !waitproc) return -EINVARG;
+		if (!is_process_child (pid, current->p_children) || !waitproc) return -INTERNAL_EINVARG;
 		if (waitproc->p_state == TASK_DEAD) goto pid0_exit;
 		if (options & WNOHANG) return 0;
 
@@ -311,11 +313,11 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 		return pid;
 	}
 
-	return -ENOIMPL;
+	return -INTERNAL_ENOIMPL;
 }
 
 static uint64_t sys_waitpid (uint64_t pid, uint64_t estatus, uint64_t options) {
-	if (estatus >= get_hhdm_offset ()) return -EINVARG;
+	if (estatus >= get_hhdm_offset ()) return -INTERNAL_EINVARG;
 	return do_waitpid (pid, (exit_status*)estatus, options);
 }
 

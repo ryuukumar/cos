@@ -27,7 +27,7 @@ int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest) {
 
 	pml4t_entry_t* src_pml4_table = (pml4t_entry_t*)(cr3_src + hhdm_offset);
 	paddr_t		   dest_pml4_phys = alloc_ppage ();
-	if (!dest_pml4_phys) return -ENOMEM;
+	if (!dest_pml4_phys) return -INTERNAL_ENOMEM;
 
 	pml4t_entry_t* dest_pml4_table = (pml4t_entry_t*)((uint64_t)dest_pml4_phys + hhdm_offset);
 	kmemset (dest_pml4_table, 0, PAGE_SIZE);
@@ -44,7 +44,7 @@ int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest) {
 		// 512gb pages (yet)!!!!
 
 		paddr_t dest_pdpt_phys = alloc_ppage ();
-		if (!dest_pdpt_phys) return -ENOMEM;
+		if (!dest_pdpt_phys) return -INTERNAL_ENOMEM;
 		pdpt_entry_t* dest_pdpt = (pdpt_entry_t*)((uint64_t)dest_pdpt_phys + hhdm_offset);
 		kmemset (dest_pdpt, 0, PAGE_SIZE);
 
@@ -60,7 +60,7 @@ int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest) {
 			if (src_pdpt_entry->page_size) {
 				paddr_t dest_frame_phys =
 					clone_pframes ((paddr_t)(src_pdpt_entry->pd_base_address * PAGE_SIZE), 262144);
-				if (!dest_frame_phys) return -ENOMEM;
+				if (!dest_frame_phys) return -INTERNAL_ENOMEM;
 
 				dest_pdpt[pdpt_idx] = *src_pdpt_entry;
 				dest_pdpt[pdpt_idx].pd_base_address = (uint64_t)dest_frame_phys / PAGE_SIZE;
@@ -68,7 +68,7 @@ int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest) {
 			}
 
 			paddr_t dest_pd_phys = alloc_ppage ();
-			if (!dest_pd_phys) return -ENOMEM;
+			if (!dest_pd_phys) return -INTERNAL_ENOMEM;
 			pd_entry_t* dest_pd = (pd_entry_t*)((uint64_t)dest_pd_phys + hhdm_offset);
 			kmemset (dest_pd, 0, PAGE_SIZE);
 
@@ -85,7 +85,7 @@ int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest) {
 				if (src_pd_entry->page_size) {
 					paddr_t dest_frame_phys =
 						clone_pframes ((paddr_t)(src_pd_entry->pt_base_address * PAGE_SIZE), 512);
-					if (!dest_frame_phys) return -ENOMEM;
+					if (!dest_frame_phys) return -INTERNAL_ENOMEM;
 
 					dest_pd[pd_idx] = *src_pd_entry;
 					dest_pd[pd_idx].pt_base_address = (uint64_t)dest_frame_phys / PAGE_SIZE;
@@ -93,7 +93,7 @@ int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest) {
 				}
 
 				paddr_t dest_pt_phys = alloc_ppage ();
-				if (!dest_pt_phys) return -ENOMEM;
+				if (!dest_pt_phys) return -INTERNAL_ENOMEM;
 				pt_entry_t* dest_pt = (pt_entry_t*)((uint64_t)dest_pt_phys + hhdm_offset);
 				kmemset (dest_pt, 0, PAGE_SIZE);
 
@@ -109,7 +109,7 @@ int clone_user_memory (uint64_t cr3_src, uint64_t* cr3_dest) {
 
 					paddr_t dest_frame_phys =
 						clone_pframes ((paddr_t)(src_pt_entry->frame_base_address * PAGE_SIZE), 1);
-					if (!dest_frame_phys) return -ENOMEM;
+					if (!dest_frame_phys) return -INTERNAL_ENOMEM;
 
 					dest_pt[pt_idx] = *src_pt_entry;
 					dest_pt[pt_idx].frame_base_address = (uint64_t)dest_frame_phys / PAGE_SIZE;

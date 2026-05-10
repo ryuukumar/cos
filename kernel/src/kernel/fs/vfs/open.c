@@ -11,8 +11,8 @@
  * @return 0 if successful, error (<0) otherwise
  */
 int do_open (inode* filei, struct file* dest_fd) {
-	if (!filei) return -EINVARG;
-	if (filei->i_type == DIRECTORY) return -EINVARG;
+	if (!filei) return -INTERNAL_EINVARG;
+	if (filei->i_type == DIRECTORY) return -INTERNAL_EINVARG;
 	kmemset (dest_fd, 0, sizeof (struct file));
 
 	filei->i_cnt++;
@@ -37,22 +37,22 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
 	(void)mode; // TODO: consider mode when opening file
 
 	char* filename = (char*)filename_ptr;
-	if (!filename) return -EINVARG;
+	if (!filename) return -INTERNAL_EINVARG;
 
 	process* current = get_current_process ();
-	if (!current) return -EINVARG;
+	if (!current) return -INTERNAL_EINVARG;
 
 	int fd = -1;
 	for (int i = 0; i < MAX_FDS && fd == -1; i++)
 		if (current->p_fds[i] == nullptr) fd = i;
-	if (fd < 0) return -EMFILE;
+	if (fd < 0) return -INTERNAL_EMFILE;
 
 	current->p_fds[fd] = kmalloc (sizeof (struct file)); // reserve the file entry
-	if (!current->p_fds[fd]) return -ENOMEM;
+	if (!current->p_fds[fd]) return -INTERNAL_ENOMEM;
 
 	inode* target_inode = nullptr;
 	int	   error = do_lookup (filename, &target_inode, current->p_root, current->p_wd);
-	if (error == -EPNOEXIST && (flags & O_CREAT)) {
+	if (error == -INTERNAL_EPNOEXIST && (flags & O_CREAT)) {
 		inode* parent;
 		char*  name;
 		error = vfs_resolve_parent (filename, current->p_root, current->p_wd, &parent, &name);

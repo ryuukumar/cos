@@ -1,34 +1,34 @@
 #pragma once
 
 // Invalid argument
-#define EINVARG 100
+#define INTERNAL_EINVARG 100
 // Not implemented
-#define ENOIMPL 101
+#define INTERNAL_ENOIMPL 101
 // Out of memory
-#define ENOMEM 102
+#define INTERNAL_ENOMEM 102
 // Buffer too small
-#define ERANGE 103
+#define INTERNAL_ERANGE 103
 
 // No root inode
-#define ENOROOT 500
+#define INTERNAL_ENOROOT 500
 // Need an absolute path
-#define ENEEDABS 502
+#define INTERNAL_ENEEDABS 502
 // Invalid path
-#define EINVPATH 503
+#define INTERNAL_EINVPATH 503
 // Path does not exist
-#define EPNOEXIST 504
+#define INTERNAL_EPNOEXIST 504
 // Path already exists
-#define EPEXISTS 505
+#define INTERNAL_EPEXISTS 505
 // Too many open files
-#define EMFILE 506
+#define INTERNAL_EMFILE 506
 
 // Corrupt queue
-#define ECORRQ 601
+#define INTERNAL_ECORRQ 601
 // Empty queue
-#define EEMPQ 602
+#define INTERNAL_EEMPQ 602
 
 // Invalid child
-#define ECHILD 651
+#define INTERNAL_ECHILD 651
 
 // Cannot execute
-#define ENOEXEC 701
+#define INTERNAL_ENOEXEC 701

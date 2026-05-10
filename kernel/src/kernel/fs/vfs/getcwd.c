@@ -12,21 +12,21 @@ static int do_getcwd_recurse (char* buf, size_t size, inode* dir, inode* root) {
 
 	size_t occupied = kstrlen (buf);
 	inode* parent = dir->i_parent;
-	if (occupied + 1 >= size) return -ERANGE;
+	if (occupied + 1 >= size) return -INTERNAL_ERANGE;
 
 	buf[occupied] = '/';
-	if (!parent->i_iops || !parent->i_iops->lookup_by_ino) return -ENOIMPL;
+	if (!parent->i_iops || !parent->i_iops->lookup_by_ino) return -INTERNAL_ENOIMPL;
 	return parent->i_iops->lookup_by_ino ((char*)&buf[occupied + 1], size - (occupied + 1),
 										  dir->i_no, parent);
 }
 
 int do_getcwd (char* buf, size_t size) {
-	if (!buf) return -EINVARG;
+	if (!buf) return -INTERNAL_EINVARG;
 	process* current = get_current_process ();
 
 	// special case: we are in root
 	if (current->p_root == current->p_wd) {
-		if (size < 2) return -ERANGE;
+		if (size < 2) return -INTERNAL_ERANGE;
 		buf[0] = '/', buf[1] = 0;
 		return 0;
 	}

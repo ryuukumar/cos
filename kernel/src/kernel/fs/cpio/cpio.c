@@ -49,11 +49,11 @@ static void* jump_next_file (void* pos) {
 }
 
 static int mkdir_if_required (const char* dir, inode* root) {
-	if (!dir) return -EINVARG;
-	if (dir[0] != '/') return -ENEEDABS;
+	if (!dir) return -INTERNAL_EINVARG;
+	if (dir[0] != '/') return -INTERNAL_ENEEDABS;
 
 	char* path = kstrdup (dir);
-	if (!path) return -ENOMEM;
+	if (!path) return -INTERNAL_ENOMEM;
 
 	size_t len = kstrlen (path);
 	while (len > 1 && path[len - 1] == '/') {
@@ -70,7 +70,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 	char*  child_name = nullptr;
 	int	   error = vfs_resolve_parent (path, root, root, &parent_dir, &child_name);
 
-	if (error == -EPNOEXIST) {
+	if (error == -INTERNAL_EPNOEXIST) {
 		child_name = nullptr;
 
 		char* last_slash = kstrrchr (path, '/');
@@ -89,7 +89,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 	if (error == 0 && child_name && kstrlen (child_name) > 0) {
 		inode* result = nullptr;
 		error = do_mkdir (child_name, &result, parent_dir);
-		if (error == -EPEXISTS) error = 0;
+		if (error == -INTERNAL_EPEXISTS) error = 0;
 	}
 
 	if (child_name) kfree (child_name);
@@ -98,7 +98,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 }
 
 static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_path) {
-	if (!header || !out_path) return -EINVARG;
+	if (!header || !out_path) return -INTERNAL_EINVARG;
 
 	inode* root_dir = nullptr;
 	int	   error = do_lookup ((char*)out_path, &root_dir, get_current_process ()->p_root,
@@ -110,7 +110,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	uint64_t filemode = hex_to_u64 (header->c_mode);
 	uint64_t filetype = filemode & 0170000;
 
-	if (namesize == 0) return -EINVARG;
+	if (namesize == 0) return -INTERNAL_EINVARG;
 
 	char* filename = kmalloc (namesize + 1);
 	kmemcpy ((void*)(filename + 1), (void*)(header + 1), namesize);

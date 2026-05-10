@@ -88,9 +88,9 @@ int create (char* filename, inode** result, inode* root) {
 }
 
 int lookup (char* filename, inode** result, inode* root) {
-	if (!root) return -ENOROOT;
-	if (!filename || filename[0] == '\0') return -EINVARG;
-	if (root->i_type != DIRECTORY) return -EINVPATH;
+	if (!root) return -INTERNAL_ENOROOT;
+	if (!filename || filename[0] == '\0') return -INTERNAL_EINVARG;
+	if (root->i_type != DIRECTORY) return -INTERNAL_EINVPATH;
 
 	// case '.'
 	if (kstrcmp (filename, ".") == 0) {
@@ -99,12 +99,12 @@ int lookup (char* filename, inode** result, inode* root) {
 	}
 
 	// case '*' , root is empty
-	if (!root->i_pvt) return -EPNOEXIST;
+	if (!root->i_pvt) return -INTERNAL_EPNOEXIST;
 
 	dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
 
 	// case '*' , root is empty
-	if (!dir_content->d_children) return -EPNOEXIST;
+	if (!dir_content->d_children) return -INTERNAL_EPNOEXIST;
 
 	for (uint64_t i = 0; i < dir_content->d_count; i++) {
 		child_t* d_child = &dir_content->d_children[i];
@@ -119,11 +119,11 @@ int lookup (char* filename, inode** result, inode* root) {
 	}
 
 	// case valid path, but object simply does not exist
-	return -EPNOEXIST;
+	return -INTERNAL_EPNOEXIST;
 }
 
 int lookup_by_ino (char* buf, size_t bufsz, uint64_t ino, inode* root) {
-	if (!root || !buf) return -EINVARG;
+	if (!root || !buf) return -INTERNAL_EINVARG;
 
 	dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
 	for (uint64_t i = 0; i < dir_content->d_count; i++) {
@@ -131,13 +131,13 @@ int lookup_by_ino (char* buf, size_t bufsz, uint64_t ino, inode* root) {
 		if (!d_child->c_inode || !d_child->c_name) continue;
 		if (d_child->c_inode->i_no == ino) {
 			size_t namelen = kstrlen (d_child->c_name);
-			if (namelen + 1 > bufsz) return -ERANGE;
+			if (namelen + 1 > bufsz) return -INTERNAL_ERANGE;
 			kmemcpy (buf, d_child->c_name, namelen + 1);
 			return 0;
 		}
 	}
 
-	return -EPNOEXIST;
+	return -INTERNAL_EPNOEXIST;
 }
 
 int read (inode* node, file* f, void* buffer, size_t size) {
@@ -157,7 +157,7 @@ int write (inode* node, file* f, void* buffer, size_t size) {
 	// check if we need to expand buffer first
 	if (!node->i_fsinfo) {
 		node->i_fsinfo = kmalloc (sizeof (fs_info_t));
-		if (!node->i_fsinfo) return -ENOMEM;
+		if (!node->i_fsinfo) return -INTERNAL_ENOMEM;
 		kmemset (node->i_fsinfo, 0, sizeof (fs_info_t));
 	}
 
@@ -188,18 +188,18 @@ int write (inode* node, file* f, void* buffer, size_t size) {
 }
 
 int seek (inode* node, file* f, size_t offset, int whence) {
-	if (!node || !f) return -EINVARG;
+	if (!node || !f) return -INTERNAL_EINVARG;
 	if (whence == SEEK_SET)
 		f->f_pos = offset;
 	else if (whence == SEEK_CUR)
 		f->f_pos += offset;
 	else if (whence == SEEK_END)
-		return -ENOIMPL;
+		return -INTERNAL_ENOIMPL;
 	return f->f_pos;
 }
 
 int getdents (inode* node, file* f, void* buf, size_t count) {
-	if (node->i_type != DIRECTORY) return -EINVPATH;
+	if (node->i_type != DIRECTORY) return -INTERNAL_EINVPATH;
 
 	dir_content_t* dir = (dir_content_t*)node->i_pvt;
 	if (!dir || !dir->d_children) return 0;
@@ -214,7 +214,7 @@ int getdents (inode* node, file* f, void* buf, size_t count) {
 		size_t reclen = ALIGN_UP (sizeof (linux_dirent64) + name_len + 1, 8);
 
 		if (bytes_written + reclen > count) {
-			if (bytes_written == 0) return -EINVARG;
+			if (bytes_written == 0) return -INTERNAL_EINVARG;
 			break;
 		}
 

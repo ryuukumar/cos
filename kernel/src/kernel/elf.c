@@ -43,7 +43,7 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 
 	if (bytes_read != sizeof (elf64_header_t) || !verify_elf_loadable (&elf_header)) {
 		sys_close ((uint64_t)fd, 0, 0);
-		return -ENOEXEC;
+		return -INTERNAL_ENOEXEC;
 	}
 
 	dealloc_by_cr3 (target_process->p_cr3, 0, (1ULL << 39) / PAGE_SIZE);
@@ -57,7 +57,7 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 	if (err < 0)
 		return err;
 	else if (err != (int64_t)ph_size)
-		return -ENOEXEC;
+		return -INTERNAL_ENOEXEC;
 
 	uintptr_t init_break = 0;
 
@@ -82,7 +82,7 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 		if (err < 0)
 			return err;
 		else if (err != (int64_t)ph->p_filesz)
-			return -ENOEXEC;
+			return -INTERNAL_ENOEXEC;
 
 		if (ph->p_memsz > ph->p_filesz)
 			kmemset_explicit ((void*)(ph->p_vaddr + ph->p_filesz), 0, ph->p_memsz - ph->p_filesz);

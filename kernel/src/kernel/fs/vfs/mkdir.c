@@ -14,25 +14,25 @@
  */
 int do_mkdir (char* dirname, inode** result, inode* parent) {
 	// case parent not provided
-	if (!parent) return -EINVARG;
+	if (!parent) return -INTERNAL_EINVARG;
 
 	// case parent is not a directory
-	if (parent->i_type != DIRECTORY) return -EINVARG;
+	if (parent->i_type != DIRECTORY) return -INTERNAL_EINVARG;
 
 	// case dirname is absent or 0 chars long
-	if (!dirname || *dirname == 0) return -EINVARG;
+	if (!dirname || *dirname == 0) return -INTERNAL_EINVARG;
 
 	// case dirname has invalid characters
-	if (filename_has_invalid_chars (dirname)) return -EINVARG;
+	if (filename_has_invalid_chars (dirname)) return -INTERNAL_EINVARG;
 
 	// case dirname is '.' or '..'
-	if (kstrcmp (dirname, ".") == 0 || kstrcmp (dirname, "..") == 0) return -EINVARG;
+	if (kstrcmp (dirname, ".") == 0 || kstrcmp (dirname, "..") == 0) return -INTERNAL_EINVARG;
 
 	// case dirname already exists
 	inode* lookup_result = nullptr;
 	int	   error = parent->i_iops->lookup (dirname, &lookup_result, parent);
-	if (error == 0) return -EPEXISTS;
-	if (error != -EPNOEXIST) return error;
+	if (error == 0) return -INTERNAL_EPEXISTS;
+	if (error != -INTERNAL_EPNOEXIST) return error;
 
 	// case dirname valid, parent exists and dirname does not yet
 	return parent->i_iops->mkdir (dirname, result, parent);
@@ -49,7 +49,7 @@ uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3) {
 	(void)arg3;
 
 	process* current = get_current_process ();
-	if (!current) return -EINVARG;
+	if (!current) return -INTERNAL_EINVARG;
 
 	inode* parent;
 	char*  name;

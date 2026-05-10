@@ -34,7 +34,7 @@ static int do_execve (const char* path, char* const argv[], char* const envp[]) 
 	char**		envp_cp = arg_deep_copy (envp);
 
 	if (!path_cp || !argv_cp || !envp_cp) {
-		err = -ENOMEM;
+		err = -INTERNAL_ENOMEM;
 		goto cleanup_envc_argc_path;
 	}
 
@@ -58,7 +58,7 @@ static int do_execve (const char* path, char* const argv[], char* const envp[]) 
 	uintptr_t  sp = user_stack_base;
 
 	if (!argv_ptrs || !envp_ptrs) {
-		err = -ENOMEM;
+		err = -INTERNAL_ENOMEM;
 		goto cleanup_all;
 	}
 

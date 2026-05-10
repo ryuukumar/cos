@@ -12,25 +12,25 @@
  */
 int do_create (char* filename, inode** result, inode* parent) {
 	// case parent not provided
-	if (!parent) return -EINVARG;
+	if (!parent) return -INTERNAL_EINVARG;
 
 	// case parent is not a directory
-	if (parent->i_type != DIRECTORY) return -EINVARG;
+	if (parent->i_type != DIRECTORY) return -INTERNAL_EINVARG;
 
 	// case filename is absent or 0 chars long
-	if (!filename || *filename == 0) return -EINVARG;
+	if (!filename || *filename == 0) return -INTERNAL_EINVARG;
 
 	// case filename has invalid characters
-	if (filename_has_invalid_chars (filename)) return -EINVARG;
+	if (filename_has_invalid_chars (filename)) return -INTERNAL_EINVARG;
 
 	// case filename is '.' or '..'
-	if (kstrcmp (filename, ".") == 0 || kstrcmp (filename, "..") == 0) return -EINVARG;
+	if (kstrcmp (filename, ".") == 0 || kstrcmp (filename, "..") == 0) return -INTERNAL_EINVARG;
 
 	// case filename already exists
 	inode* lookup_result = nullptr;
 	int	   error = parent->i_iops->lookup (filename, &lookup_result, parent);
-	if (error == 0) return -EPEXISTS;
-	if (error != -EPNOEXIST) return error;
+	if (error == 0) return -INTERNAL_EPEXISTS;
+	if (error != -INTERNAL_EPNOEXIST) return error;
 
 	// case filename valid, parent exists and dirname does not yet
 	return parent->i_iops->create (filename, result, parent);
