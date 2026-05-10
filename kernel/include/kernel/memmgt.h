@@ -115,6 +115,7 @@ void dealloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages);
 void  init_memmgt (uint64_t, struct limine_memmap_response*);
 void  walk_pagetable (void);
 void* get_paddr (void* vaddr);
+void* get_paddr_from_cr3 (uintptr_t cr3, void* vaddr);
 
 uintptr_t	   get_kernel_cr3 (void);
 uint64_t	   get_hhdm_offset (void);
