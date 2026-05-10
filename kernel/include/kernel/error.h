@@ -98,8 +98,5 @@
 // Empty queue
 #define INTERNAL_EEMPQ 2602
 
-// Invalid child
-#define INTERNAL_ECHILD 2651
-
 // Cannot execute
 #define INTERNAL_ENOEXEC 2701

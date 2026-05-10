@@ -282,7 +282,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 		}
 
 		if (options & WNOHANG) return 0;
-		if (p_children_sz == 0) return -INTERNAL_ECHILD;
+		if (p_children_sz == 0) return -ECHILD;
 
 		current->p_state = TASK_BLOCKED;
 		current->p_waitforchild = -1;
