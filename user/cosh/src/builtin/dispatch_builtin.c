@@ -13,6 +13,10 @@ int dispatch_builtin (size_t argc, char** argv) {
 		return builtin_pwd (argc, argv);
 	else if (strcmp (argv[0], "ls") == 0)
 		return builtin_ls (argc, argv);
+	else if (strcmp (argv[0], "true") == 0)
+		return 1;
+	else if (strcmp (argv[0], "false") == 0)
+		return 0;
 
 	return -1;
 }
