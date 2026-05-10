@@ -70,7 +70,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 	char*  child_name = nullptr;
 	int	   error = vfs_resolve_parent (path, root, root, &parent_dir, &child_name);
 
-	if (error == -INTERNAL_EPNOEXIST) {
+	if (error == -ENOENT) {
 		child_name = nullptr;
 
 		char* last_slash = kstrrchr (path, '/');

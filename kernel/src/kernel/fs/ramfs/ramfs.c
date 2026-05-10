@@ -99,12 +99,12 @@ int lookup (char* filename, inode** result, inode* root) {
 	}
 
 	// case '*' , root is empty
-	if (!root->i_pvt) return -INTERNAL_EPNOEXIST;
+	if (!root->i_pvt) return -ENOENT;
 
 	dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
 
 	// case '*' , root is empty
-	if (!dir_content->d_children) return -INTERNAL_EPNOEXIST;
+	if (!dir_content->d_children) return -ENOENT;
 
 	for (uint64_t i = 0; i < dir_content->d_count; i++) {
 		child_t* d_child = &dir_content->d_children[i];
@@ -119,7 +119,7 @@ int lookup (char* filename, inode** result, inode* root) {
 	}
 
 	// case valid path, but object simply does not exist
-	return -INTERNAL_EPNOEXIST;
+	return -ENOENT;
 }
 
 int lookup_by_ino (char* buf, size_t bufsz, uint64_t ino, inode* root) {
@@ -137,7 +137,7 @@ int lookup_by_ino (char* buf, size_t bufsz, uint64_t ino, inode* root) {
 		}
 	}
 
-	return -INTERNAL_EPNOEXIST;
+	return -ENOENT;
 }
 
 int read (inode* node, file* f, void* buffer, size_t size) {

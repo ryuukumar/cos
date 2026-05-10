@@ -32,7 +32,7 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
 	inode* lookup_result = nullptr;
 	int	   error = parent->i_iops->lookup (dirname, &lookup_result, parent);
 	if (error == 0) return -INTERNAL_EPEXISTS;
-	if (error != -INTERNAL_EPNOEXIST) return error;
+	if (error != -ENOENT) return error;
 
 	// case dirname valid, parent exists and dirname does not yet
 	return parent->i_iops->mkdir (dirname, result, parent);
