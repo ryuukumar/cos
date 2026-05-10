@@ -21,7 +21,7 @@ static int do_getcwd_recurse (char* buf, size_t size, inode* dir, inode* root) {
 }
 
 int do_getcwd (char* buf, size_t size) {
-	if (!buf) return -INTERNAL_EINVARG;
+	if (!buf) return -EINVAL;
 	process* current = get_current_process ();
 
 	// special case: we are in root

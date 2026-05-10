@@ -49,7 +49,7 @@ static void* jump_next_file (void* pos) {
 }
 
 static int mkdir_if_required (const char* dir, inode* root) {
-	if (!dir) return -INTERNAL_EINVARG;
+	if (!dir) return -EINVAL;
 	if (dir[0] != '/') return -INTERNAL_ENEEDABS;
 
 	char* path = kstrdup (dir);
@@ -98,7 +98,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 }
 
 static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_path) {
-	if (!header || !out_path) return -INTERNAL_EINVARG;
+	if (!header || !out_path) return -EINVAL;
 
 	inode* root_dir = nullptr;
 	int	   error = do_lookup ((char*)out_path, &root_dir, get_current_process ()->p_root,
@@ -110,7 +110,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	uint64_t filemode = hex_to_u64 (header->c_mode);
 	uint64_t filetype = filemode & 0170000;
 
-	if (namesize == 0) return -INTERNAL_EINVARG;
+	if (namesize == 0) return -EINVAL;
 
 	char* filename = kmalloc (namesize + 1);
 	kmemcpy ((void*)(filename + 1), (void*)(header + 1), namesize);

@@ -3,7 +3,7 @@
 #include <kernel/process.h>
 
 int do_chdir (const char* path) {
-	if (!path) return -INTERNAL_EINVARG;
+	if (!path) return -EINVAL;
 	inode*	 new_dir = nullptr;
 	process* current = get_current_process ();
 

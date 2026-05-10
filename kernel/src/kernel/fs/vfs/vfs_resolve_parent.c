@@ -13,7 +13,7 @@
  */
 int vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** r_parent,
 						char** r_name) {
-	if (!path_arg || path_arg[0] == 0) return -INTERNAL_EINVARG;
+	if (!path_arg || path_arg[0] == 0) return -EINVAL;
 
 	char* path = kstrdup (path_arg);
 	if (!path) return -INTERNAL_ENOMEM;
@@ -24,7 +24,7 @@ int vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** r
 		*r_name = kstrdup (path_arg);
 		*r_parent = cwd;
 		kfree (path);
-		return cwd ? 0 : -INTERNAL_EINVARG;
+		return cwd ? 0 : -EINVAL;
 	}
 
 	*r_name = kstrdup (last_slash + 1);

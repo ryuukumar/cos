@@ -11,8 +11,8 @@
  * @return 0 if successful, error (<0) otherwise
  */
 int do_open (inode* filei, struct file* dest_fd) {
-	if (!filei) return -INTERNAL_EINVARG;
-	if (filei->i_type == DIRECTORY) return -INTERNAL_EINVARG;
+	if (!filei) return -EINVAL;
+	if (filei->i_type == DIRECTORY) return -EINVAL;
 	kmemset (dest_fd, 0, sizeof (struct file));
 
 	filei->i_cnt++;
@@ -37,10 +37,10 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
 	(void)mode; // TODO: consider mode when opening file
 
 	char* filename = (char*)filename_ptr;
-	if (!filename) return -INTERNAL_EINVARG;
+	if (!filename) return -EINVAL;
 
 	process* current = get_current_process ();
-	if (!current) return -INTERNAL_EINVARG;
+	if (!current) return -EINVAL;
 
 	int fd = -1;
 	for (int i = 0; i < MAX_FDS && fd == -1; i++)

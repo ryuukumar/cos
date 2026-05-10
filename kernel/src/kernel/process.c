@@ -19,7 +19,7 @@ process_queue* get_ready_queue (void) { return &ready_queue; }
 hashmap32*	   get_pid_map (void) { return pid_map; }
 
 int dequeue_process (process_queue* queue, process** result) {
-	if (!queue) return -INTERNAL_EINVARG;
+	if (!queue) return -EINVAL;
 	if (queue->head == queue->tail) {
 		if (queue->head == nullptr) { // empty queue
 			*result = nullptr;
@@ -39,7 +39,7 @@ int dequeue_process (process_queue* queue, process** result) {
 }
 
 int enqueue_process (process_queue* queue, process* new_process) {
-	if (!queue || !new_process) return -INTERNAL_EINVARG;
+	if (!queue || !new_process) return -EINVAL;
 	new_process->next = nullptr;
 	if (queue->head == nullptr) // queue is empty
 		queue->head = queue->tail = new_process;
@@ -263,7 +263,7 @@ static bool is_process_child (uint64_t pid, varray* p_children) {
 }
 
 static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
-	if (options & ~(WNOHANG | WUNTRACED)) return -INTERNAL_EINVARG;
+	if (options & ~(WNOHANG | WUNTRACED)) return -EINVAL;
 	if (options & WUNTRACED) return -INTERNAL_ENOIMPL;
 
 	process* current = get_current_process ();
@@ -299,7 +299,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 		return child_pid;
 	} else if (pid > 0) {
 		process* waitproc = (process*)hashmap_get (pid_map, pid);
-		if (!is_process_child (pid, current->p_children) || !waitproc) return -INTERNAL_EINVARG;
+		if (!is_process_child (pid, current->p_children) || !waitproc) return -EINVAL;
 		if (waitproc->p_state == TASK_DEAD) goto pid0_exit;
 		if (options & WNOHANG) return 0;
 
@@ -317,7 +317,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 }
 
 static uint64_t sys_waitpid (uint64_t pid, uint64_t estatus, uint64_t options) {
-	if (estatus >= get_hhdm_offset ()) return -INTERNAL_EINVARG;
+	if (estatus >= get_hhdm_offset ()) return -EINVAL;
 	return do_waitpid (pid, (exit_status*)estatus, options);
 }
 

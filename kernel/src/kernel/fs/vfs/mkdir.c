@@ -14,19 +14,19 @@
  */
 int do_mkdir (char* dirname, inode** result, inode* parent) {
 	// case parent not provided
-	if (!parent) return -INTERNAL_EINVARG;
+	if (!parent) return -EINVAL;
 
 	// case parent is not a directory
-	if (parent->i_type != DIRECTORY) return -INTERNAL_EINVARG;
+	if (parent->i_type != DIRECTORY) return -EINVAL;
 
 	// case dirname is absent or 0 chars long
-	if (!dirname || *dirname == 0) return -INTERNAL_EINVARG;
+	if (!dirname || *dirname == 0) return -EINVAL;
 
 	// case dirname has invalid characters
-	if (filename_has_invalid_chars (dirname)) return -INTERNAL_EINVARG;
+	if (filename_has_invalid_chars (dirname)) return -EINVAL;
 
 	// case dirname is '.' or '..'
-	if (kstrcmp (dirname, ".") == 0 || kstrcmp (dirname, "..") == 0) return -INTERNAL_EINVARG;
+	if (kstrcmp (dirname, ".") == 0 || kstrcmp (dirname, "..") == 0) return -EINVAL;
 
 	// case dirname already exists
 	inode* lookup_result = nullptr;
@@ -49,7 +49,7 @@ uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3) {
 	(void)arg3;
 
 	process* current = get_current_process ();
-	if (!current) return -INTERNAL_EINVARG;
+	if (!current) return -EINVAL;
 
 	inode* parent;
 	char*  name;

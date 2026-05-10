@@ -6,7 +6,7 @@
 #include <stddef.h>
 
 int do_stat (const char* restrict path, stat* restrict buf) {
-	if (!path || !buf) return -INTERNAL_EINVARG;
+	if (!path || !buf) return -EINVAL;
 
 	process* current = get_current_process ();
 	inode*	 node = nullptr;

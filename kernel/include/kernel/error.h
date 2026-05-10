@@ -86,8 +86,6 @@
 #define EOWNERDEAD		142	   /* Previous owner died */
 #define EWOULDBLOCK		EAGAIN /* Operation would block */
 
-// Invalid argument
-#define INTERNAL_EINVARG 2100
 // Not implemented
 #define INTERNAL_ENOIMPL 2101
 // Out of memory
