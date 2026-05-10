@@ -49,6 +49,29 @@ static size_t get_full_arglen (char* arg, size_t* arglen_parsed) {
 	return arg - start;
 }
 
+static char parse_escape_char (char c) {
+	switch (c) {
+	case 'n':
+		return '\n';
+	case 't':
+		return '\t';
+	case 'b':
+		return '\b';
+	case 'r':
+		return '\r';
+	case '\\':
+		return '\\';
+	case '\'':
+		return '\'';
+	case '\"':
+		return '\"';
+	case '0':
+		return '\0';
+	default:
+		return c;
+	}
+}
+
 static char* parse_next_arg (char* arg) {
 	size_t parsed_len = 0;
 	get_full_arglen (arg, &parsed_len);
@@ -68,9 +91,13 @@ static char* parse_next_arg (char* arg) {
 	} else if (in_doublequotes) {
 		arg++;
 		do {
-			if (*arg == '\\') arg++;
-			if (*arg == 0) break;
-			*ptr++ = *arg;
+			if (*arg == '\\') {
+				arg++;
+				if (*arg == 0) break;
+				*ptr++ = parse_escape_char (*arg);
+			} else {
+				*ptr++ = *arg;
+			}
 			arg++;
 		} while (*arg != '\"');
 		arg++;
