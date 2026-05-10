@@ -92,8 +92,6 @@
 #define INTERNAL_ENEEDABS 2502
 // Invalid path
 #define INTERNAL_EINVPATH 2503
-// Too many open files
-#define INTERNAL_EMFILE 2506
 
 // Corrupt queue
 #define INTERNAL_ECORRQ 2601

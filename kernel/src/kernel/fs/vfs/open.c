@@ -45,7 +45,7 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
 	int fd = -1;
 	for (int i = 0; i < MAX_FDS && fd == -1; i++)
 		if (current->p_fds[i] == nullptr) fd = i;
-	if (fd < 0) return -INTERNAL_EMFILE;
+	if (fd < 0) return -ENFILE;
 
 	current->p_fds[fd] = kmalloc (sizeof (struct file)); // reserve the file entry
 	if (!current->p_fds[fd]) return -ENOMEM;
