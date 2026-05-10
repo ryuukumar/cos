@@ -52,6 +52,7 @@ int run_line (char* line) {
 	char* seg = p;
 	bool  in_single = false, in_double = false;
 
+	strip_comment (line);
 	for (;;) {
 		if (*p == '\'' && !in_double) in_single = !in_single;
 		if (*p == '"' && !in_single) in_double = !in_double;
@@ -90,7 +91,6 @@ int repl_loop (void) {
 
 	cmdbuf[strcspn (cmdbuf, "\n")] = '\0';
 	if (cmdbuf[0] == '\0') return 0;
-	strip_comment (cmdbuf);
 	last_exit = run_line (cmdbuf);
 	if (last_exit != 0) printf ("exited with non-zero status: %i\n", last_exit);
 
