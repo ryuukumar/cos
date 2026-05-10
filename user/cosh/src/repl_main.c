@@ -47,24 +47,59 @@ static void strip_comment (char* buf) {
 }
 
 int run_line (char* line) {
+	typedef enum { SEP_ALWAYS, SEP_AND, SEP_OR } sep_t;
+
 	int	  last = 0;
 	char* p = line;
 	char* seg = p;
 	bool  in_single = false, in_double = false;
+	sep_t pending = SEP_ALWAYS;
 
 	strip_comment (line);
+
 	for (;;) {
 		if (*p == '\'' && !in_double) in_single = !in_single;
 		if (*p == '"' && !in_single) in_double = !in_double;
 
-		if ((*p == ';' && !in_single && !in_double) || *p == '\0') {
+		bool  is_boundary = (*p == '\0');
+		int	  sep_len = 1;
+		sep_t next_sep = SEP_ALWAYS;
+
+		if (!in_single && !in_double) {
+			if (*p == ';') {
+				is_boundary = true;
+			} else if (*p == '&' && *(p + 1) == '&') {
+				is_boundary = true;
+				next_sep = SEP_AND;
+				sep_len = 2;
+			} else if (*p == '|' && *(p + 1) == '|') {
+				is_boundary = true;
+				next_sep = SEP_OR;
+				sep_len = 2;
+			}
+		}
+
+		if (is_boundary) {
 			bool done = (*p == '\0');
 			*p = '\0';
 
 			while (*seg == ' ' || *seg == '\t')
 				seg++;
 
-			if (*seg != '\0') {
+			bool should_run;
+			switch (pending) {
+			case SEP_AND:
+				should_run = (last == 0);
+				break;
+			case SEP_OR:
+				should_run = (last != 0);
+				break;
+			default:
+				should_run = true;
+				break;
+			}
+
+			if (should_run && *seg != '\0') {
 				char*  expanded = expand_vars (seg);
 				size_t argc = 0;
 				char** argv = gen_argv (expanded, &argc);
@@ -73,7 +108,9 @@ int run_line (char* line) {
 			}
 
 			if (done) break;
-			seg = ++p;
+			p += sep_len;
+			seg = p;
+			pending = next_sep;
 		} else {
 			p++;
 		}
