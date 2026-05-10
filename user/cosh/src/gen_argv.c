@@ -114,7 +114,7 @@ static char* parse_next_arg (char* arg) {
 	return ret;
 }
 
-char** gen_argv (const char* input) {
+char** gen_argv (const char* input, size_t* argc) {
 	uint64_t arg_count = 0;
 	char*	 nextarg = get_next_arg ((char*)input);
 	while (nextarg) {
@@ -140,5 +140,6 @@ char** gen_argv (const char* input) {
 		printf ("\"%s\" ", ret_argv[i]);
 	printf ("\n");
 
+	*argc = arg_count;
 	return ret_argv;
 }

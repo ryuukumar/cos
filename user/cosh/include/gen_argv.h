@@ -1,3 +1,5 @@
 #pragma once
 
-char** gen_argv (const char* input);
+#include <stddef.h>
+
+char** gen_argv (const char* input, size_t* argc);
