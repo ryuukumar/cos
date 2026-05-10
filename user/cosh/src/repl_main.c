@@ -1,3 +1,4 @@
+#include <gen_argv.h>
 #include <repl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,9 +16,11 @@ int repl_loop (void) {
 
 	if (fgets (cmdbuf, 1000, stdin) == nullptr) return -1;
 
+	cmdbuf[strcspn (cmdbuf, "\n")] = '\0';
 	if (cmdbuf[0] == '\0') return 0;
 
 	printf ("eval %s\n", cmdbuf);
+	gen_argv (cmdbuf);
 	return 0;
 }
 
