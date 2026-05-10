@@ -9,6 +9,8 @@ int dispatch_builtin (size_t argc, char** argv) {
 		return builtin_chdir (argc, argv);
 	else if (strcmp (argv[0], "chdir") == 0)
 		return builtin_chdir (argc, argv);
+	else if (strcmp (argv[0], "pwd") == 0)
+		return builtin_pwd (argc, argv);
 
 	return -1;
 }
