@@ -9,6 +9,18 @@
 char* pathbuf = nullptr;
 char* cmdbuf = nullptr;
 
+static void strip_comment (char* buf) {
+	bool in_single = false, in_double = false;
+	for (char* p = buf; *p; p++) {
+		if (*p == '\'' && !in_double) in_single = !in_single;
+		if (*p == '"' && !in_single) in_double = !in_double;
+		if (*p == '#' && !in_single && !in_double) {
+			*p = '\0';
+			break;
+		}
+	}
+}
+
 int repl_loop (void) {
 	if (!pathbuf || !cmdbuf) return -1;
 
@@ -19,6 +31,7 @@ int repl_loop (void) {
 
 	cmdbuf[strcspn (cmdbuf, "\n")] = '\0';
 	if (cmdbuf[0] == '\0') return 0;
+	strip_comment (cmdbuf);
 
 	size_t argc = 0;
 	char** argv = gen_argv (cmdbuf, &argc);
