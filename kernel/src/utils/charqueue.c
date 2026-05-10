@@ -40,7 +40,7 @@ int push_charqueue (charqueue* queue, unsigned char insert) {
 	charqueue_page_t* new_page = nullptr;
 	if (queue->tail.current_page == nullptr || queue->tail.offset > max_offset) {
 		new_page = alloc_vpage (false);
-		if (new_page == nullptr) return -INTERNAL_ENOMEM;
+		if (new_page == nullptr) return -ENOMEM;
 		new_page->next = nullptr;
 	}
 
@@ -51,7 +51,7 @@ int push_charqueue (charqueue* queue, unsigned char insert) {
 			new_page = alloc_vpage (false);
 			if (new_page == nullptr) {
 				spinlock_release (&queue->lock, flags);
-				return -INTERNAL_ENOMEM;
+				return -ENOMEM;
 			}
 			new_page->next = nullptr;
 		}

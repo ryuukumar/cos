@@ -48,7 +48,7 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
 	if (fd < 0) return -INTERNAL_EMFILE;
 
 	current->p_fds[fd] = kmalloc (sizeof (struct file)); // reserve the file entry
-	if (!current->p_fds[fd]) return -INTERNAL_ENOMEM;
+	if (!current->p_fds[fd]) return -ENOMEM;
 
 	inode* target_inode = nullptr;
 	int	   error = do_lookup (filename, &target_inode, current->p_root, current->p_wd);

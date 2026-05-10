@@ -142,12 +142,12 @@ static int do_sched_yield (void) {
 
 int process_fork (process* source_process, process** dest_ptr) {
 	process* new_process = kmalloc (sizeof (process));
-	if (!new_process) return -INTERNAL_ENOMEM;
+	if (!new_process) return -ENOMEM;
 
 	kmemcpy ((void*)new_process, (void*)source_process, sizeof (process));
 
 	void* new_kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, false);
-	if (!new_kstack) return -INTERNAL_ENOMEM;
+	if (!new_kstack) return -ENOMEM;
 
 	new_process->p_kstack = (uintptr_t)new_kstack + STACK_SIZE;
 	new_process->p_id = next_free_pid++;

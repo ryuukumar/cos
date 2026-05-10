@@ -53,7 +53,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 	if (dir[0] != '/') return -INTERNAL_ENEEDABS;
 
 	char* path = kstrdup (dir);
-	if (!path) return -INTERNAL_ENOMEM;
+	if (!path) return -ENOMEM;
 
 	size_t len = kstrlen (path);
 	while (len > 1 && path[len - 1] == '/') {

@@ -157,7 +157,7 @@ int write (inode* node, file* f, void* buffer, size_t size) {
 	// check if we need to expand buffer first
 	if (!node->i_fsinfo) {
 		node->i_fsinfo = kmalloc (sizeof (fs_info_t));
-		if (!node->i_fsinfo) return -INTERNAL_ENOMEM;
+		if (!node->i_fsinfo) return -ENOMEM;
 		kmemset (node->i_fsinfo, 0, sizeof (fs_info_t));
 	}
 
