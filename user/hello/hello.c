@@ -10,7 +10,8 @@ int main (int argc, char* argv[]) {
 	int pid = fork ();
 	if (pid == 0) {
 		char* argv_pass[] = {"/bin/cosh", nullptr};
-		execv ("/bin/cosh", argv_pass);
+		char* envp_pass[] = {"PATH=/bin", nullptr};
+		execve ("/bin/cosh", argv_pass, envp_pass);
 	} else {
 		int exit_stat = 0;
 		waitpid (pid, &exit_stat, 0);
