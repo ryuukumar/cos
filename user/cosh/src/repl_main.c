@@ -139,10 +139,10 @@ int repl (void) {
 	pathbuf = malloc (100);
 	cmdbuf = malloc (1000);
 
+	if (!pathbuf || !cmdbuf) return -127;
+
 	memset (pathbuf, 0, 100);
 	memset (cmdbuf, 0, 1000);
-
-	if (!pathbuf || !cmdbuf) return -1;
 
 	do {
 		exit_stat = repl_loop ();
