@@ -88,6 +88,8 @@ $(BUILD_DIR)/$(TARGET): $(OBJ)
 	@$(LD) $(SYSROOT)/usr/lib/crt0.o $(OBJ) $(LDFLAGS) -lc -lcos -o $@
 	@mkdir -p $(INITRAMFS_DIR)
 	@cp $(BUILD_DIR)/$(TARGET) $(INITRAMFS_DIR)
+	@mkdir -p $(INITRAMFS_DIR)/../home/jos
+	@cp utils/*.sh $(INITRAMFS_DIR)/../home/jos
 
 -include $(HEADER_DEPS)
 
