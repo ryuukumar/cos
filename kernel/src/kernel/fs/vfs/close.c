@@ -9,7 +9,7 @@
  * @return 0 if successful, error (<0) otherwise
  */
 int do_close (struct file* fd) {
-	if (!fd) return -EINVARG;
+	if (!fd) return -EINVAL;
 	if (--fd->f_cnt == 0) {
 		if (fd->f_fops && fd->f_fops->close) fd->f_fops->close (fd->f_inode, fd);
 		fd->f_inode->i_cnt--;
@@ -28,7 +28,7 @@ uint64_t sys_close (uint64_t fd, uint64_t arg2, uint64_t arg3) {
 	(void)arg2, (void)arg3; // unused args
 
 	process* current = get_current_process ();
-	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
+	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVAL;
 
 	struct file* f = current->p_fds[fd];
 	current->p_fds[fd] = nullptr;

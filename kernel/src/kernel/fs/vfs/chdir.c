@@ -3,14 +3,14 @@
 #include <kernel/process.h>
 
 int do_chdir (const char* path) {
-	if (!path) return -EINVARG;
+	if (!path) return -EINVAL;
 	inode*	 new_dir = nullptr;
 	process* current = get_current_process ();
 
 	int error = do_lookup ((char*)path, &new_dir, current->p_root, current->p_wd);
 	if (error != 0) return error;
 
-	if (new_dir->i_type != DIRECTORY) return -EINVPATH;
+	if (new_dir->i_type != DIRECTORY) return -ENOTDIR;
 	current->p_wd = new_dir;
 	return 0;
 }

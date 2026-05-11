@@ -1,7 +1,6 @@
 #pragma once
 
 #include <stddef.h>
-#include <stdint.h>
 #include <sys/stat.h>
 
 typedef long		 ssize_t;
@@ -30,8 +29,8 @@ int	  chdir (const char* __path);
 int	  getdents (int fd, void* dp, int count);
 char* getcwd (char* __buf, size_t __size);
 
-uint64_t brk (void* addr);
-void*	 sbrk (ptrdiff_t incr);
+long  brk (void* addr);
+void* sbrk (ptrdiff_t incr);
 
 int fstat (int file, struct stat* st);
 int stat (const char* restrict path, struct stat* restrict st);
