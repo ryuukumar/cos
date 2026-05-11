@@ -9,7 +9,7 @@ typedef struct {
 
 typedef struct {
 	short		   st_dev;
-	uint64_t	   st_ino;
+	unsigned short st_ino;
 	uint32_t	   st_mode;
 	unsigned short st_nlink;
 	unsigned short st_uid;
