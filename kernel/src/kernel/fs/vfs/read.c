@@ -10,8 +10,8 @@
  * @return actual bytes read if successful, error (<0) otherwise
  */
 int do_read (struct file* f, void* buf, size_t size) {
-	if (!f || !buf) return -EINVARG;
-	if (!f->f_fops || !f->f_fops->read) return -ENOIMPL;
+	if (!f || !buf) return -EINVAL;
+	if (!f->f_fops || !f->f_fops->read) return -ENOSYS;
 	return f->f_fops->read (f->f_inode, f, buf, size);
 }
 
@@ -24,6 +24,6 @@ int do_read (struct file* f, void* buf, size_t size) {
  */
 uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size) {
 	process* current = get_current_process ();
-	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
+	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVAL;
 	return do_read (current->p_fds[fd], (void*)buf, (size_t)size);
 }

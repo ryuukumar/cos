@@ -83,7 +83,7 @@ int pop_charqueue (charqueue* queue, unsigned char* ret) {
 	uint64_t flags = spinlock_acquire (&queue->lock);
 	if (is_empty_charqueue (queue)) {
 		spinlock_release (&queue->lock, flags);
-		return -EEMPQ;
+		return -INTERNAL_EEMPQ;
 	}
 	*ret = queue->head.current_page->data[queue->head.offset++];
 	charqueue_page_t* page_to_free = nullptr;
@@ -117,7 +117,7 @@ int peek_charqueue (charqueue* queue, unsigned char* ret) {
 	uint64_t flags = spinlock_acquire (&queue->lock);
 	if (is_empty_charqueue (queue)) {
 		spinlock_release (&queue->lock, flags);
-		return -EEMPQ;
+		return -INTERNAL_EEMPQ;
 	}
 	*ret = queue->head.current_page->data[queue->head.offset];
 	spinlock_release (&queue->lock, flags);

@@ -3,8 +3,8 @@
 #include <kernel/process.h>
 
 int do_seek (struct file* f, size_t offset, int whence) {
-	if (!f || whence >= 3 || whence < 0) return -EINVARG;
-	if (!f->f_fops || !f->f_fops->seek) return -ENOIMPL;
+	if (!f || whence >= 3 || whence < 0) return -EINVAL;
+	if (!f->f_fops || !f->f_fops->seek) return -ENOSYS;
 	return f->f_fops->seek (f->f_inode, f, offset, whence);
 }
 
@@ -18,6 +18,6 @@ int do_seek (struct file* f, size_t offset, int whence) {
  */
 uint64_t sys_seek (uint64_t fd, uint64_t offset, uint64_t whence) {
 	process* current = get_current_process ();
-	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVARG;
+	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVAL;
 	return do_seek (current->p_fds[fd], (size_t)offset, (int)whence);
 }

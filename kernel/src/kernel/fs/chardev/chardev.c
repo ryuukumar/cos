@@ -75,7 +75,7 @@ static int chardev_fstat (inode* node, file* f, stat* buf) {
 void init_tty1 (inode* absolute_root) {
 	inode* dev_dir = nullptr;
 	int	   error = do_mkdir ("dev", &dev_dir, absolute_root);
-	if (!(error == 0 || error == -EPEXISTS)) return;
+	if (!(error == 0 || error == -EISDIR || error == -EEXIST)) return;
 
 	inode* tty1_file = nullptr;
 	error = do_create ("tty1", &tty1_file, dev_dir);

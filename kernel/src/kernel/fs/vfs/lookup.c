@@ -14,8 +14,8 @@
  * @return 0 if found, else an error code from error.h
  */
 int do_lookup (char* filename, inode** result, inode* root, inode* cwd) {
-	if (!root || !cwd || !filename || filename[0] == 0) return -EINVARG;
-	if (cwd->i_type != DIRECTORY) return -EINVPATH;
+	if (!root || !cwd || !filename || filename[0] == 0) return -EINVAL;
+	if (cwd->i_type != DIRECTORY) return -ENOTDIR;
 
 	inode* dirsrch_start = (filename[0] == '/') ? root : cwd;
 	inode* dirsrch_res = dirsrch_start;
