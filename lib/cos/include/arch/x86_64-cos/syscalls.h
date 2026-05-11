@@ -1,5 +1,6 @@
 #pragma once
 
+#include <errno.h>
 #include <stdint.h>
 
 #define SYSCALL_SYS_EXIT	1
@@ -36,5 +37,13 @@ static inline uint64_t syscall3 (uint64_t num, uint64_t arg1, uint64_t arg2, uin
 					  : "=a"(ret)
 					  : "a"(num), "D"(arg1), "S"(arg2), "d"(arg3) // rdi, rsi, rdx
 					  : "memory");
+	return ret;
+}
+
+static inline long syscall_ret (long ret) {
+	if (ret < 0 && ret > -4096) {
+		errno = -(int)ret;
+		return -1;
+	}
 	return ret;
 }
