@@ -1,9 +1,11 @@
 #include <kclib/stdio.h>
 #include <kernel/handlers.h>
+#include <kernel/idt.h>
+#include <kernel/process.h>
 
 void handle_gpf (registers_t* registers) {
-	(void)registers;
-	kserial_printf ("\nOopsy! Looks like someone tried to execute a disallowed instruction!");
+	kserial_printf ("Triggered GPF on PID #%lld\n", get_current_process ()->p_id);
+	log_registers_to_serial (registers);
 	for (;;)
 		;
 }

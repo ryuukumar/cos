@@ -1,6 +1,7 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
 #include <kernel/error.h>
+#include <kernel/exec.h>
 #include <kernel/process.h>
 #include <kernel/syscall.h>
 
@@ -11,15 +12,18 @@ void syscall_handler (registers_t* registers) {
 	uint64_t vector = registers->rax;
 	latest_frame = registers;
 
-	process* current = get_current_process ();
+	process*	 current = get_current_process ();
+	registers_t* prev_regs = current ? current->p_registers_ptr : nullptr;
 	if (current) current->p_registers_ptr = registers;
 
 	if (syscall_handlers[vector]) {
 		registers->rax = syscall_handlers[vector](registers->rdi, registers->rsi, registers->rdx);
 	} else {
 		kserial_printf ("Unhandled syscall 0x%x!\n", vector);
-		registers->rax = -ENOIMPL;
+		registers->rax = -ENOSYS;
 	}
+
+	if (current) current->p_registers_ptr = prev_regs;
 }
 
 uint64_t do_syscall (uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
@@ -43,4 +47,7 @@ void init_syscalls (void) {
 	idt_register_handler (0x80, syscall_handler);
 	idt_set_flags (0x80, 0x0E, 3, 0);
 	kmemset (syscall_handlers, 0, SYSCALL_COUNT * sizeof (syscall_handler_t));
+
+	// Register some syscalls
+	register_syscall (SYSCALL_SYS_EXECVE, sys_execve);
 }

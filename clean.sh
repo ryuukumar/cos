@@ -16,10 +16,13 @@ function heading() {
 	fi
 }
 
+heading "Unpatching submodules" "1;33"
+
+git -C lib/newlib-cygwin checkout .
+
 heading "Removing all build files" "1;33"
 
 rm -rvf build
-rm -rvf limine
 
 heading "Removing ISO image" "1;33"
 

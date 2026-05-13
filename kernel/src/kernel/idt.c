@@ -32,33 +32,33 @@ static void idt_set_gate (uint8_t vector, void* isr, uint8_t gate_type, uint8_t 
 	descriptor->present = present & 0x01;
 }
 
-static void log_registers_to_serial (registers_t* registers) {
+void log_registers_to_serial (registers_t* registers) {
 	kserial_printf ("\n--- Interrupt/Exception Caught ---\n");
 
 	kserial_printf ("interrupt_number: 0x%llx\n", registers->interrupt_number);
 	kserial_printf ("error_code: 0x%llx\n", registers->error_code);
-	kserial_printf ("rip: 0x%llx\n", registers->rip);
-	kserial_printf ("cs: 0x%llx\n", registers->cs);
-	kserial_printf ("rflags: 0x%llx\n", registers->rflags);
-	kserial_printf ("rsp: 0x%llx\n", registers->rsp);
-	kserial_printf ("ss: 0x%llx\n\n", registers->ss);
+	kserial_printf ("rip 0x%016llx ", registers->rip);
+	kserial_printf ("cs  0x%016llx ", registers->cs);
+	kserial_printf ("rflags 0x%016llx\n", registers->rflags);
+	kserial_printf ("rsp 0x%016llx ", registers->rsp);
+	kserial_printf ("ss  0x%016llx\n\n", registers->ss);
 
-	kserial_printf ("rax: 0x%llx\n", registers->rax);
-	kserial_printf ("rbx: 0x%llx\n", registers->rbx);
-	kserial_printf ("rcx: 0x%llx\n", registers->rcx);
-	kserial_printf ("rdx: 0x%llx\n", registers->rdx);
-	kserial_printf ("rsi: 0x%llx\n", registers->rsi);
-	kserial_printf ("rdi: 0x%llx\n", registers->rdi);
-	kserial_printf ("rbp: 0x%llx\n\n", registers->rbp);
+	kserial_printf ("rax 0x%016llx ", registers->rax);
+	kserial_printf ("rbx 0x%016llx ", registers->rbx);
+	kserial_printf ("rcx 0x%016llx ", registers->rcx);
+	kserial_printf ("rdx 0x%016llx\n", registers->rdx);
+	kserial_printf ("rsi 0x%016llx ", registers->rsi);
+	kserial_printf ("rdi 0x%016llx ", registers->rdi);
+	kserial_printf ("rbp 0x%016llx\n\n", registers->rbp);
 
-	kserial_printf ("r8: 0x%llx\n", registers->r8);
-	kserial_printf ("r9: 0x%llx\n", registers->r9);
-	kserial_printf ("r10: 0x%llx\n", registers->r10);
-	kserial_printf ("r11: 0x%llx\n", registers->r11);
-	kserial_printf ("r12: 0x%llx\n", registers->r12);
-	kserial_printf ("r13: 0x%llx\n", registers->r13);
-	kserial_printf ("r14: 0x%llx\n", registers->r14);
-	kserial_printf ("r15: 0x%llx\n", registers->r15);
+	kserial_printf ("r8  0x%016llx ", registers->r8);
+	kserial_printf ("r9  0x%016llx ", registers->r9);
+	kserial_printf ("r10 0x%016llx ", registers->r10);
+	kserial_printf ("r11 0x%016llx\n", registers->r11);
+	kserial_printf ("r12 0x%016llx ", registers->r12);
+	kserial_printf ("r13 0x%016llx ", registers->r13);
+	kserial_printf ("r14 0x%016llx ", registers->r14);
+	kserial_printf ("r15 0x%016llx\n", registers->r15);
 
 	kserial_printf ("----------------------------------\n\n");
 }

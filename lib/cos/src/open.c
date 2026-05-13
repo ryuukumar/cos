@@ -13,5 +13,6 @@ int open (const char* pathname, int flags, ...) {
 		va_end (args);
 	}
 
-	return (int)syscall3 (SYSCALL_SYS_OPEN, (long)pathname, (long)flags, (long)mode);
+	return (int)syscall_ret (
+		(long)syscall3 (SYSCALL_SYS_OPEN, (long)pathname, (long)flags, (long)mode));
 }

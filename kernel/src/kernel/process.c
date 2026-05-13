@@ -6,15 +6,20 @@
 #include <kernel/stack.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
+#include <stddef.h>
+#include <utils/hashmap32.h>
+#include <utils/varray.h>
 
 process_queue ready_queue;
 uint64_t	  next_free_pid;
 process*	  current_process;
+hashmap32*	  pid_map;
 
 process_queue* get_ready_queue (void) { return &ready_queue; }
+hashmap32*	   get_pid_map (void) { return pid_map; }
 
 int dequeue_process (process_queue* queue, process** result) {
-	if (!queue) return -EINVARG;
+	if (!queue) return -EINVAL;
 	if (queue->head == queue->tail) {
 		if (queue->head == nullptr) { // empty queue
 			*result = nullptr;
@@ -25,7 +30,8 @@ int dequeue_process (process_queue* queue, process** result) {
 			return 0;
 		}
 	}
-	if (queue->head == nullptr) return -ECORRQ; // invalid head, valid tail should not happen
+	if (queue->head == nullptr)
+		return -INTERNAL_ECORRQ; // invalid head, valid tail should not happen
 
 	*result = queue->head;
 	queue->head = queue->head->next;
@@ -33,12 +39,13 @@ int dequeue_process (process_queue* queue, process** result) {
 }
 
 int enqueue_process (process_queue* queue, process* new_process) {
-	if (!queue || !new_process) return -EINVARG;
+	if (!queue || !new_process) return -EINVAL;
 	new_process->next = nullptr;
 	if (queue->head == nullptr) // queue is empty
 		queue->head = queue->tail = new_process;
 	else {
-		if (queue->tail == nullptr) return -ECORRQ; // valid head, invalid tail should not happen
+		if (queue->tail == nullptr)
+			return -INTERNAL_ECORRQ; // valid head, invalid tail should not happen
 		queue->tail = queue->tail->next = new_process;
 	}
 	return 0;
@@ -80,6 +87,52 @@ void schedule (registers_t* registers) {
 		uintptr_t dummy_sp;
 		switch_to (&dummy_sp, upcoming_process->p_sp, upcoming_process->p_cr3);
 	}
+}
+
+static int64_t reap_process (uint64_t pid) {
+	process* p_reap = (process*)hashmap_get (pid_map, pid);
+	if (!p_reap || p_reap->p_state != TASK_DEAD) return (uint64_t)-1;
+
+	free_vpages ((void*)(p_reap->p_kstack - STACK_SIZE), STACK_SIZE / PAGE_SIZE);
+	dealloc_by_cr3 (p_reap->p_cr3, 0, (1ULL << 39) / PAGE_SIZE);
+
+	process* init2 = (process*)hashmap_get (pid_map, 2);
+	while (varray_size (p_reap->p_children) != 0) {
+		uint64_t child_pid = 0;
+		varray_pop (p_reap->p_children, &child_pid);
+		process* child = (process*)hashmap_get (pid_map, child_pid);
+		if (child) { // try to reparent to init
+			if (init2) {
+				child->p_parent = init2;
+				if (varray_push (init2->p_children, child_pid) == -1) child->p_parent = nullptr;
+			} else
+				child->p_parent = nullptr;
+		}
+	}
+	varray_destroy (p_reap->p_children);
+
+	if (p_reap->p_parent) {
+		size_t children_size = varray_size (p_reap->p_parent->p_children);
+		if (children_size > 0) {
+			for (size_t i = 0; i < children_size; i++) {
+				varray_elem target = 0;
+				varray_get (p_reap->p_parent->p_children, i, &target);
+				if (target == pid) {
+					varray_pop (p_reap->p_parent->p_children, &target);
+					if (i != children_size - 1)
+						varray_set (p_reap->p_parent->p_children, i, target);
+					break;
+				}
+			}
+		}
+	}
+
+	kfree (p_reap->p_waiting);
+	hashmap_remove (pid_map, pid);
+
+	kfree (p_reap);
+
+	return pid;
 }
 
 static int do_sched_yield (void) {
@@ -169,6 +222,13 @@ int process_fork (process* source_process, process** dest_ptr) {
 	for (int i = 0; i < MAX_FDS; i++)
 		if (new_process->p_fds[i]) new_process->p_fds[i]->f_cnt++;
 
+	hashmap_set (pid_map, new_process->p_id, new_process);
+	varray_push (source_process->p_children, new_process->p_id);
+	new_process->p_children = varray_create (0);
+	new_process->p_parent = source_process;
+	new_process->p_waiting = kmalloc (sizeof (process_queue));
+	kmemset (new_process->p_waiting, 0, sizeof (process_queue));
+
 	errno = enqueue_process (get_ready_queue (), new_process);
 	if (errno != 0) {
 		free_vpages (new_kstack, STACK_SIZE / PAGE_SIZE);
@@ -192,6 +252,75 @@ void process_unblock (process* p) {
 	enqueue_process (&ready_queue, p);
 }
 
+static bool is_process_child (uint64_t pid, varray* p_children) {
+	size_t p_children_sz = varray_size (p_children);
+	for (size_t i = 0; i < p_children_sz; i++) {
+		varray_elem target = 0;
+		varray_get (p_children, i, &target);
+		if (target == pid) return true;
+	}
+	return false;
+}
+
+static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
+	if (options & ~(WNOHANG | WUNTRACED)) return -EINVAL;
+	if (options & WUNTRACED) return -ENOSYS;
+
+	process* current = get_current_process ();
+	if (pid == -1) {
+		uint64_t child_pid = 0;
+		size_t	 p_children_sz = varray_size (current->p_children);
+		for (size_t i = 0; i < p_children_sz; i++) {
+			varray_elem target = 0;
+			varray_get (current->p_children, i, &target);
+
+			process* child_tgt = (process*)hashmap_get (pid_map, target);
+			if (child_tgt && child_tgt->p_state == TASK_DEAD) {
+				child_pid = target;
+				goto pidn1_exit;
+			}
+		}
+
+		if (options & WNOHANG) return 0;
+		if (p_children_sz == 0) return -ECHILD;
+
+		current->p_state = TASK_BLOCKED;
+		current->p_waitforchild = -1;
+		do_sched_yield ();
+		child_pid = current->p_waitforchild;
+
+	pidn1_exit:
+		process* child = (process*)hashmap_get (pid_map, child_pid);
+		if (child) {
+			*estatus = child->p_exitstatus;
+			reap_process (child_pid);
+		}
+		current->p_waitforchild = 0;
+		return child_pid;
+	} else if (pid > 0) {
+		process* waitproc = (process*)hashmap_get (pid_map, pid);
+		if (!is_process_child (pid, current->p_children) || !waitproc) return -EINVAL;
+		if (waitproc->p_state == TASK_DEAD) goto pid0_exit;
+		if (options & WNOHANG) return 0;
+
+		do {
+			process_block (waitproc->p_waiting);
+		} while (waitproc->p_state != TASK_DEAD);
+
+	pid0_exit:
+		*estatus = waitproc->p_exitstatus;
+		reap_process (waitproc->p_id);
+		return pid;
+	}
+
+	return -ENOSYS;
+}
+
+static uint64_t sys_waitpid (uint64_t pid, uint64_t estatus, uint64_t options) {
+	if (estatus >= get_hhdm_offset ()) return -EINVAL;
+	return do_waitpid (pid, (exit_status*)estatus, options);
+}
+
 static uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 	(void)arg1, (void)arg2, (void)arg3; // fork does not use any args
 	process* child = nullptr;
@@ -199,13 +328,26 @@ static uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 }
 
 static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
-	(void)status; // TODO: do something with the status
 	(void)arg2, (void)arg3;
 	process* current = get_current_process ();
 	current->p_state = TASK_DEAD;
+	current->p_exitstatus.info = status;
+	current->p_exitstatus.reason = 0;
 
 	for (int i = 0; i < MAX_FDS; i++)
 		if (current->p_fds[i]) sys_close (i, 0, 0);
+
+	process* blocked_process = nullptr;
+	do {
+		dequeue_process (current->p_waiting, &blocked_process);
+		if (blocked_process) enqueue_process (&ready_queue, blocked_process);
+	} while (blocked_process);
+
+	if (current->p_parent && current->p_parent->p_waitforchild == -1) {
+		current->p_parent->p_state = TASK_READY;
+		current->p_parent->p_waitforchild = current->p_id;
+		enqueue_process (&ready_queue, current->p_parent);
+	}
 
 	schedule (get_latest_r_frame ());
 	return 0;
@@ -225,9 +367,12 @@ static uint64_t sys_sched_yield (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = nullptr;
 	next_free_pid = 2ll;
+	pid_map = hashmap_create (16);
+	if (!pid_map) return;
 
 	register_syscall (SYSCALL_SYS_EXIT, sys_exit);
 	register_syscall (SYSCALL_SYS_FORK, sys_fork);
 	register_syscall (SYSCALL_SYS_GETPID, sys_getpid);
 	register_syscall (SYSCALL_SCHED_YIELD, sys_sched_yield);
+	register_syscall (SYSCALL_SYS_WAITPID, sys_waitpid);
 }

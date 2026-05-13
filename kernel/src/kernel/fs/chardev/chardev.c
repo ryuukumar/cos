@@ -4,6 +4,7 @@
 #include <kernel/console.h>
 #include <kernel/error.h>
 #include <kernel/fs/chardev.h>
+#include <kernel/fs/stat.h>
 #include <kernel/hw/keyboard.h>
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
@@ -62,10 +63,19 @@ static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 	return (int)bytes_read;
 }
 
+static int chardev_fstat (inode* node, file* f, stat* buf) {
+	(void)f;
+	kmemset (buf, 0, sizeof (stat));
+	buf->st_ino = node->i_no;
+	buf->st_mode = S_IRWXALL | IFCHR;
+	// buf->st_blksize = 2048;
+	return 0;
+}
+
 void init_tty1 (inode* absolute_root) {
 	inode* dev_dir = nullptr;
 	int	   error = do_mkdir ("dev", &dev_dir, absolute_root);
-	if (!(error == 0 || error == -EPEXISTS)) return;
+	if (!(error == 0 || error == -EISDIR || error == -EEXIST)) return;
 
 	inode* tty1_file = nullptr;
 	error = do_create ("tty1", &tty1_file, dev_dir);
@@ -77,6 +87,7 @@ void init_tty1 (inode* absolute_root) {
 	kmemset (tty1_fops, 0, sizeof (file_operations));
 	tty1_fops->write = stdout_write;
 	tty1_fops->read = stdin_read;
+	tty1_fops->fstat = chardev_fstat;
 
 	chardev_info_t* tty1_info = kmalloc (sizeof (chardev_info_t));
 	kmemset (tty1_info, 0, sizeof (chardev_info_t));

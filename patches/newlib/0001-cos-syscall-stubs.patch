@@ -1,0 +1,122 @@
+diff --git a/newlib/configure.host b/newlib/configure.host
+index 960cca215..8a1828463 100644
+--- a/newlib/configure.host
++++ b/newlib/configure.host
+@@ -592,6 +592,15 @@ case "${host}" in
+   z8k-*-coff)
+ 	sys_dir=z8ksim
+ 	;;
++  x86_64-*-elf*)
++    sys_dir=cos
++    posix_dir=posix
++    newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
++    newlib_cflags="${newlib_cflags} -D_NO_GLOB"
++    newlib_cflags="${newlib_cflags} -Dlstat=stat"
++    newlib_cflags="${newlib_cflags} -D_NO_POSIX_SPAWN"
++    have_crt0="no"
++    ;;
+ esac
+ 
+ # Host specific flag settings -- usually for features that are not
+diff --git a/newlib/libc/acinclude.m4 b/newlib/libc/acinclude.m4
+index a1040386b..7098f2def 100644
+--- a/newlib/libc/acinclude.m4
++++ b/newlib/libc/acinclude.m4
+@@ -13,6 +13,7 @@ AM_CONDITIONAL(HAVE_UNIX_DIR, test x${unix_dir} != x)
+ dnl We always recur into sys and machine, and let them decide what to do.
+ m4_foreach_w([SYS_DIR], [
+   a29khif amdgcn arm
++  cos
+   d10v
+   epiphany
+   h8300hms h8500hms
+diff --git a/newlib/libc/sys/Makefile.inc b/newlib/libc/sys/Makefile.inc
+index 9f8758934..2e0d30bf2 100644
+--- a/newlib/libc/sys/Makefile.inc
++++ b/newlib/libc/sys/Makefile.inc
+@@ -7,6 +7,9 @@ endif
+ if HAVE_LIBC_SYS_ARM_DIR
+ include %D%/arm/Makefile.inc
+ endif
++if HAVE_LIBC_SYS_COS_DIR
++include %D%/cos/Makefile.inc
++endif
+ if HAVE_LIBC_SYS_D10V_DIR
+ include %D%/d10v/Makefile.inc
+ endif
+diff --git a/newlib/libc/sys/cos/Makefile.inc b/newlib/libc/sys/cos/Makefile.inc
+new file mode 100644
+index 000000000..83136d2a6
+--- /dev/null
++++ b/newlib/libc/sys/cos/Makefile.inc
+@@ -0,0 +1,2 @@
++# No C sources needed — syscall stubs live in libcos, not here.
++# This file just triggers header installation.
+\ No newline at end of file
+diff --git a/newlib/libc/sys/cos/sys/dirent.h b/newlib/libc/sys/cos/sys/dirent.h
+new file mode 100644
+index 000000000..f1c8236d0
+--- /dev/null
++++ b/newlib/libc/sys/cos/sys/dirent.h
+@@ -0,0 +1,60 @@
++#ifndef _SYS_DIRENT_H
++#define _SYS_DIRENT_H
++
++#include <sys/cdefs.h>
++#include <sys/_types.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#ifndef _SSIZE_T_DECLARED
++typedef _ssize_t ssize_t;
++#define _SSIZE_T_DECLARED
++#endif
++
++#ifndef _INO_T_DECLARED
++typedef __uint64_t ino_t;
++#define _INO_T_DECLARED
++#endif
++
++/* Matches kernel's linux_dirent64 exactly */
++struct dirent {
++    __uint64_t  d_ino;
++    __int64_t   d_off;
++    __uint16_t  d_reclen;
++    __uint8_t   d_type;
++    char        d_name[256];
++};
++
++/* Internal DIR state used by newlib's posix/opendir,readdir,closedir */
++typedef struct {
++    int    dd_fd;
++    long   dd_loc;
++    long   dd_size;
++    char  *dd_buf;
++    int    dd_len;
++    long   dd_seek;
++} DIR;
++
++#define __dirfd(dp) ((dp)->dd_fd)
++
++#define DT_UNKNOWN   0
++#define DT_FIFO      1
++#define DT_CHR       2
++#define DT_DIR       4
++#define DT_BLK       6
++#define DT_REG       8
++#define DT_LNK      10
++#define DT_SOCK     12
++#define DT_WHT      14
++
++#if __BSD_VISIBLE
++#define MAXNAMLEN 255
++#endif
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif /* _SYS_DIRENT_H */
+\ No newline at end of file

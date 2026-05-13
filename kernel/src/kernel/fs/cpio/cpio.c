@@ -49,8 +49,8 @@ static void* jump_next_file (void* pos) {
 }
 
 static int mkdir_if_required (const char* dir, inode* root) {
-	if (!dir) return -EINVARG;
-	if (dir[0] != '/') return -ENEEDABS;
+	if (!dir) return -EINVAL;
+	if (dir[0] != '/') return -INTERNAL_ENEEDABS;
 
 	char* path = kstrdup (dir);
 	if (!path) return -ENOMEM;
@@ -68,9 +68,9 @@ static int mkdir_if_required (const char* dir, inode* root) {
 
 	inode* parent_dir = nullptr;
 	char*  child_name = nullptr;
-	int	   error = vfs_resolve_parent (path, root, &parent_dir, &child_name);
+	int	   error = vfs_resolve_parent (path, root, root, &parent_dir, &child_name);
 
-	if (error == -EPNOEXIST) {
+	if (error == -ENOENT) {
 		child_name = nullptr;
 
 		char* last_slash = kstrrchr (path, '/');
@@ -81,7 +81,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 			*last_slash = '/';
 		}
 
-		if (error == 0) error = vfs_resolve_parent (path, root, &parent_dir, &child_name);
+		if (error == 0) error = vfs_resolve_parent (path, root, root, &parent_dir, &child_name);
 	} else if (error != 0) {
 		child_name = nullptr;
 	}
@@ -89,7 +89,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 	if (error == 0 && child_name && kstrlen (child_name) > 0) {
 		inode* result = nullptr;
 		error = do_mkdir (child_name, &result, parent_dir);
-		if (error == -EPEXISTS) error = 0;
+		if (error == -EISDIR) error = 0;
 	}
 
 	if (child_name) kfree (child_name);
@@ -98,10 +98,11 @@ static int mkdir_if_required (const char* dir, inode* root) {
 }
 
 static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_path) {
-	if (!header || !out_path) return -EINVARG;
+	if (!header || !out_path) return -EINVAL;
 
 	inode* root_dir = nullptr;
-	int	   error = do_lookup ((char*)out_path, &root_dir, get_current_process ()->p_root);
+	int	   error = do_lookup ((char*)out_path, &root_dir, get_current_process ()->p_root,
+							  get_current_process ()->p_wd);
 	if (error || !root_dir) return error;
 
 	uint64_t namesize = hex_to_u64 (header->c_namesize);
@@ -109,7 +110,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	uint64_t filemode = hex_to_u64 (header->c_mode);
 	uint64_t filetype = filemode & 0170000;
 
-	if (namesize == 0) return -EINVARG;
+	if (namesize == 0) return -EINVAL;
 
 	char* filename = kmalloc (namesize + 1);
 	kmemcpy ((void*)(filename + 1), (void*)(header + 1), namesize);

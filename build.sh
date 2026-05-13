@@ -97,11 +97,20 @@ if [ "$BUILD_DOCS" = true ]; then
 	doxygen Doxyfile
 fi
 
+heading "Applying patches" "1;33"
+
+if git -C "$ROOTDIR/lib/newlib-cygwin" apply --check --reverse "$ROOTDIR/patches/newlib/0001-cos-syscall-stubs.patch" 2>/dev/null; then
+	printf "Already applied: $ROOTDIR/patches/newlib/0001-cos-syscall-stubs.patch\n"
+else
+	git -C "$ROOTDIR/lib/newlib-cygwin" apply "$ROOTDIR/patches/newlib/0001-cos-syscall-stubs.patch"
+	printf "Applied: $ROOTDIR/patches/newlib/0001-cos-syscall-stubs.patch\n"
+fi
+
 heading "Configuring libc" "1;33"
 
 mkdir -p build/lib/newlib
 cd build/lib/newlib
-../../../lib/newlib-cygwin/configure --target=x86_64-elf --prefix=/usr --disable-multilib
+[ -f Makefile ] || ../../../lib/newlib-cygwin/configure --target=x86_64-elf --prefix=/usr --disable-multilib
 
 heading "Building libc" "1;33"
 
@@ -142,10 +151,6 @@ printf "\ninitramfs.cpio generated with size $(wc -c <"build/initramfs.cpio") by
 
 heading "Building Limine-deploy" "1;33"
 
-# Download the latest Limine binary release.
-git clone https://github.com/limine-bootloader/limine.git --branch=v9.x-binary --depth=1
- 
-# Build limine-deploy.
 $MAKE -C limine
 
 if [ $? -ne 0 ]; then

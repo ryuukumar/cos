@@ -9,9 +9,8 @@ Documentation is sparse, but you can use doxygen to build it from the in-code co
 ## Capabilities
 
 - It boots up on most modern-day 64-bit systems that support x86_64 (so no ARM)
-- It can print stuff on your screen
-- It can manage upto 512GB of virtual memory
-- It can read an initramfs and enter user mode
+- It can run a simple bash-like shell that allows you to execute ELF executables and perform some elementary scripting
+- It can host C applications that can compile with newlib as libc, and exposes 26 system calls for file operations, memory management, process management, etc.
 - More to come
 
 ## Setup
@@ -42,4 +41,4 @@ chmod +x build.sh
 
 This will generate a file `image.iso` inside your working directory. Use VMWare or your favourite VM emulator (or put it on a liveCD if you're brave enough) to run and test it out. Or run `qemu.sh` to run it on QEMU.
 
-![An image of COS saying 'Hello, world!'](images/hello%20world.png)
+![An image of COS saying 'Hello, world!'](images/hello%20world%20with%20cosh.png)

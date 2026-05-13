@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stddef.h>
-#include <stdint.h>
+#include <sys/stat.h>
 
 typedef long		 ssize_t;
 typedef long		 off_t;
@@ -23,13 +23,18 @@ ssize_t read (int fd, void* buf, size_t count);
 ssize_t write (int fd, const void* buf, size_t count);
 off_t	lseek (int fd, off_t offset, int whence);
 
-int mkdir (const char* pathname, mode_t mode);
+int	  mkdir (const char* pathname, mode_t mode);
+int	  chdir (const char* __path);
+int	  getdents (int fd, void* dp, int count);
+char* getcwd (char* __buf, size_t __size);
 
-uint64_t brk (void* addr);
-void*	 sbrk (ptrdiff_t incr);
+long  brk (void* addr);
+void* sbrk (ptrdiff_t incr);
+
+int fstat (int file, struct stat* st);
+int stat (const char* restrict path, struct stat* restrict st);
 
 // TODO: implement stubs
-int fstat (int file, struct stat* st);
 int isatty (int file);
 int kill (int pid, int sig);
 
