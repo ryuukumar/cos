@@ -108,12 +108,13 @@ int console_delete (console_t** console) {
  * Write a character at the current cursor position. Increments idx to the sequentially next value.
  *
  * In the case that character \n is supplied, no update is made to actual console charaters, instead
- * idx is directly set to width * height + 1, potentially falling through to the following case.
- * This is the canonical way of adding new lines to the console.
+ * idx is directly set to (0, height), potentially falling through to the following case. This is
+ * the canonical way of adding new lines to the console.
  *
- * In the case that after incrementing, the condition idx >= width * height holds true, a new line
- * is added at the bottom and the console is scrolled to accomodate. In the case that after addition
- * of a new line, the scrollback exceeds CON_SCROLLBACK_LIMIT, the oldest line is freed.
+ * In the case that after incrementing, the condition idx.y >= height holds true, new lines are
+ * added at the bottom and the console is scrolled to accomodate until the condition is no longer
+ * true. In the case that after addition of a new line, the scrollback exceeds CON_SCROLLBACK_LIMIT,
+ * the oldest line is freed until the condition is no longer true.
  *
  * This function does not call write_to_gfx.
  *
@@ -128,7 +129,7 @@ int console_putchar (console_t** console, unsigned char c) {
 	console_scrolldown (console, deque_size ((*console)->scrollfront));
 
 	if (c == '\n') {
-		(*console)->idx = CON_IDX_GEN (0, (*console)->params.height + 1);
+		(*console)->idx = CON_IDX_GEN (0, (*console)->params.height);
 	} else {
 		console_char_t* target =
 			&(*console)->display[CON_IDX_Y ((*console)->idx)]->chars[CON_IDX_X ((*console)->idx)];
@@ -144,6 +145,7 @@ int console_putchar (console_t** console, unsigned char c) {
 
 		new_line->chars = kmalloc ((*console)->params.width * sizeof (console_char_t));
 		if (!new_line->chars) return -ENOMEM;
+		kmemset (new_line->chars, 0, (*console)->params.width * sizeof (console_char_t));
 
 		new_line->dirty = 0;
 		new_line->width = (*console)->params.width;
