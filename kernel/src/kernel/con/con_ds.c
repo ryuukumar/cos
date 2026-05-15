@@ -56,6 +56,7 @@ int console_putchar (console_t** console, unsigned char c) {
 		&(*console)->display[CON_IDX_Y ((*console)->idx)]->chars[CON_IDX_X ((*console)->idx)];
 	target->character = c;
 	target->color = (*console)->current_color;
+	(*console)->display[CON_IDX_Y ((*console)->idx)]->dirty = 1;
 
 	return 0;
 }
@@ -89,9 +90,13 @@ int console_scrollup (console_t** console, size_t howmuch) {
 								  (deque_elem)(*console)->display[(*console)->params.height - 1]);
 		if (error) return error;
 
-		for (size_t j = (*console)->params.height - 1; j > 0; j--)
+		for (size_t j = (*console)->params.height - 1; j > 0; j--) {
 			(*console)->display[j] = (*console)->display[j - 1];
+			(*console)->display[j]->dirty = 1;
+		}
+
 		(*console)->display[0] = popped;
+		(*console)->display[0]->dirty = 1;
 	}
 
 	return 0;
@@ -111,9 +116,13 @@ int console_scrolldown (console_t** console, size_t howmuch) {
 		error = deque_push_front ((*console)->scrollback, (deque_elem)(*console)->display[0]);
 		if (error) return error;
 
-		for (size_t j = 0; j < (*console)->params.height - 1; j++)
+		for (size_t j = 0; j < (*console)->params.height - 1; j++) {
 			(*console)->display[j] = (*console)->display[j + 1];
+			(*console)->display[j]->dirty = 1;
+		}
+
 		(*console)->display[(*console)->params.height - 1] = popped;
+		(*console)->display[(*console)->params.height - 1]->dirty = 1;
 	}
 
 	return 0;
@@ -154,6 +163,8 @@ int write_to_gfx (console_t** console) {
 						 params->ypad + (params->font_size * i * (8 + params->line_spacing)),
 						 params->font_size, CON_COL_RGB (target[j].color));
 		}
+
+		(*console)->display[i]->dirty = 0;
 	}
 
 	return 0;
