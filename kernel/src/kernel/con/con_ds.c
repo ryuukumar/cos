@@ -5,6 +5,7 @@
 #include <kernel/hardfonts/classic.h>
 #include <liballoc/liballoc.h>
 #include <stddef.h>
+#include <utils/deque.h>
 
 #define CON_SCROLLBACK_LIMIT 10000
 
@@ -57,6 +58,23 @@ int console_putchar (console_t** console, unsigned char c) {
 	target->character = c;
 	target->color = (*console)->current_color;
 	(*console)->display[CON_IDX_Y ((*console)->idx)]->dirty = 1;
+
+	(*console)->idx++;
+	if ((*console)->idx > (*console)->params.width * (*console)->params.height) { 
+		console_line_t* new_line = kmalloc (sizeof (console_line_t));
+		if (!new_line) return -ENOMEM;
+
+		new_line->chars = kmalloc ((*console)->params.width * sizeof (console_char_t));
+		if (!new_line->chars) return -ENOMEM;
+
+		new_line->dirty = 0;
+		new_line->width = (*console)->params.width;
+
+		int error = deque_push_front ((*console)->scrollfront, (deque_elem)new_line);
+		if (error) return error;
+
+		console_scrolldown (console, 1);
+	}
 
 	return 0;
 }
