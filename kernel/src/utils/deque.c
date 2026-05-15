@@ -1,3 +1,4 @@
+#include <kernel/error.h>
 #include <liballoc/liballoc.h>
 #include <utils/deque.h>
 
@@ -47,7 +48,7 @@ void deque_destroy (deque* dq) {
 int deque_push_back (deque* dq, deque_elem value) {
 	if (!dq->back || dq->back->head + dq->back->count == dq->back->capacity) {
 		deque_block* newblock = alloc_block (dq->block_capacity);
-		if (!newblock) return -1;
+		if (!newblock) return -ENOMEM;
 
 		newblock->head = 0;
 		if (dq->back) {
@@ -69,7 +70,7 @@ int deque_push_back (deque* dq, deque_elem value) {
 int deque_push_front (deque* dq, deque_elem value) {
 	if (!dq->front || dq->front->head == 0) {
 		deque_block* newblock = alloc_block (dq->block_capacity);
-		if (!newblock) return -1;
+		if (!newblock) return -ENOMEM;
 
 		newblock->head = dq->block_capacity;
 		if (dq->front) {
@@ -90,7 +91,7 @@ int deque_push_front (deque* dq, deque_elem value) {
 }
 
 int deque_pop_front (deque* dq, deque_elem* out) {
-	if (dq->size == 0) return -1;
+	if (dq->size == 0) return -INTERNAL_EEMPQ;
 
 	deque_block* b = dq->front;
 	*out = b->data[b->head];
@@ -110,7 +111,7 @@ int deque_pop_front (deque* dq, deque_elem* out) {
 }
 
 int deque_pop_back (deque* dq, deque_elem* out) {
-	if (dq->size == 0) return -1;
+	if (dq->size == 0) return -INTERNAL_EEMPQ;
 
 	deque_block* b = dq->back;
 	b->count--;
@@ -129,13 +130,13 @@ int deque_pop_back (deque* dq, deque_elem* out) {
 }
 
 int deque_peek_front (const deque* dq, deque_elem* out) {
-	if (dq->size == 0) return -1;
+	if (dq->size == 0) return -INTERNAL_EEMPQ;
 	*out = dq->front->data[dq->front->head];
 	return 0;
 }
 
 int deque_peek_back (const deque* dq, deque_elem* out) {
-	if (dq->size == 0) return -1;
+	if (dq->size == 0) return -INTERNAL_EEMPQ;
 	deque_block* b = dq->back;
 	*out = b->data[b->head + b->count - 1];
 	return 0;
