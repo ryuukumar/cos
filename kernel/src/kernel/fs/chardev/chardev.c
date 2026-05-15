@@ -50,6 +50,8 @@ static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 			} else {
 				i--;
 			}
+		} else if (c == '\t') {
+			i--; // ignore tab input
 		} else if (c < 0x80) {
 			cbuffer[i] = c;
 			bytes_read++;
