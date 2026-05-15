@@ -52,7 +52,12 @@ int console_delete (console_t** console) {
 
 int console_putchar (console_t** console, unsigned char c) {
 	if (!console || !(*console)) return -EINVAL;
-	return -ENOSYS;
+
+	console_char_t* target = &(*console)->display[CON_IDX_Y((*console)->idx)]->chars[CON_IDX_X((*console)->idx)];
+	target->character = c;
+	target->color = (*console)->current_color;
+
+	return 0;
 }
 
 int console_setcolor (console_t** console, uint8_t red, uint8_t green, uint8_t blue) {
@@ -116,7 +121,19 @@ int console_scrolldown (console_t** console, size_t howmuch) {
 
 int console_clearscrollback (console_t** console) {
 	if (!console || !(*console)) return -EINVAL;
-	return -ENOSYS;
+
+	console_line_t* popped = nullptr;
+	do {
+		int error = deque_pop_front ((*console)->scrollback, (deque_elem*)&popped);
+		if (error == -INTERNAL_EEMPQ)
+			break;
+		else if (error != 0)
+			return error;
+		kfree(popped->chars);
+		kfree(popped);
+	} while (1);
+
+	return 0;
 }
 
 idx_t console_getidx (console_t** console) { return (*console)->idx; }
