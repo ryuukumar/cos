@@ -9,6 +9,12 @@
 
 #define CON_SCROLLBACK_LIMIT 10000
 
+/*!
+ * Allocate and initialise a new console object.
+ * @param console pointer to console_t* which will hold the reference to created console
+ * @param params initialisation parameters for the console
+ * @return 0 if successful, else -EINVAL or -ENOMEM
+ */
 int console_create (console_t** console, console_parameters_t* params) {
 	if (!console || !params) return -EINVAL;
 
@@ -45,24 +51,50 @@ int console_create (console_t** console, console_parameters_t* params) {
 	return 0;
 }
 
+/*!
+ * Deallocate an existing console object.
+ * @param console pointer to console_t* which holds the reference to console
+ * @return 0 if successful, else -EINVAL
+ */
 int console_delete (console_t** console) {
 	if (!console || !(*console)) return -EINVAL;
 	return -ENOSYS;
 }
 
+/*!
+ * Write a character at the current cursor position. Increments idx to the sequentially next value.
+ *
+ * In the case that character \n is supplied, no update is made to actual console charaters, instead
+ * idx is directly set to width * height + 1, potentially falling through to the following case.
+ * This is the canonical way of adding new lines to the console.
+ *
+ * In the case that after incrementing, the condition idx >= width * height holds true, a new line
+ * is added at the bottom and the console is scrolled to accomodate. In the case that after addition
+ * of a new line, the scrollback exceeds CON_SCROLLBACK_LIMIT, the oldest line is freed.
+ *
+ * This function does not call write_to_gfx.
+ *
+ * @param console pointer to console_t* which holds the reference to console
+ * @param c character to put at index
+ * @return 0 if successful, else -EINVAL, -ENOMEM or other errors
+ */
 int console_putchar (console_t** console, unsigned char c) {
 	if (!console || !(*console)) return -EINVAL;
 
 	// clear the scrollfront so we are always printing on the newest line
 	console_scrolldown (console, deque_size ((*console)->scrollfront));
 
-	console_char_t* target =
-		&(*console)->display[CON_IDX_Y ((*console)->idx)]->chars[CON_IDX_X ((*console)->idx)];
-	target->character = c;
-	target->color = (*console)->current_color;
-	(*console)->display[CON_IDX_Y ((*console)->idx)]->dirty = 1;
+	if (c == '\n') {
+		(*console)->idx = (*console)->params.width * ((*console)->params.height + 1);
+	} else {
+		console_char_t* target =
+			&(*console)->display[CON_IDX_Y ((*console)->idx)]->chars[CON_IDX_X ((*console)->idx)];
+		target->character = c;
+		target->color = (*console)->current_color;
+		(*console)->display[CON_IDX_Y ((*console)->idx)]->dirty = 1;
+		(*console)->idx++;
+	}
 
-	(*console)->idx++;
 	if ((*console)->idx > (*console)->params.width * (*console)->params.height) {
 		console_line_t* new_line = kmalloc (sizeof (console_line_t));
 		if (!new_line) return -ENOMEM;
@@ -92,6 +124,14 @@ int console_putchar (console_t** console, unsigned char c) {
 	return 0;
 }
 
+/*!
+ * Set the color that will be used by putchar for following characters.
+ * @param console pointer to console_t* which holds the reference to console
+ * @param red 8-bit value for red channel
+ * @param green 8-bit value for green channel
+ * @param blue 8-but value for blue channel
+ * @return 0 if successful, else -EINVAL
+ */
 int console_setcolor (console_t** console, uint8_t red, uint8_t green, uint8_t blue) {
 	if (!console || !(*console)) return -EINVAL;
 	(*console)->current_color.red = red;
@@ -100,12 +140,29 @@ int console_setcolor (console_t** console, uint8_t red, uint8_t green, uint8_t b
 	return 0;
 }
 
+/*!
+ * Move the cursor to another position.
+ * @param console pointer to console_t* which holds the reference to console
+ * @param x x-index to seek (left-right)
+ * @param y y-index to seek (top-down)
+ * @return 0 if successful, else -EINVAL
+ */
 int console_goto (console_t** console, uint32_t x, uint32_t y) {
 	if (!console || !(*console)) return -EINVAL;
 	(*console)->idx = ((uint64_t)y << 32) | (uint64_t)x;
 	return 0;
 }
 
+/*!
+ * Scroll the whole console to reveal a line from the scrollback deque.
+ *
+ * If there are fewer lines in the scrollback than requested by the howmuch parameter, no new lines
+ * will be created and scrolling will terminate once the scrollback deque is empty.
+ *
+ * @param console pointer to console_t* which holds the reference to console
+ * @param howmuch how many lines to scroll
+ * @return 0 if successful, else -EINVAL or other errors
+ */
 int console_scrollup (console_t** console, size_t howmuch) {
 	if (!console || !(*console)) return -EINVAL;
 
@@ -133,6 +190,16 @@ int console_scrollup (console_t** console, size_t howmuch) {
 	return 0;
 }
 
+/*!
+ * Scroll the whole console to reveal a line from the scrollfront deque.
+ *
+ * If there are fewer lines in the scrollfront than requested by the howmuch parameter, no new lines
+ * will be created and scrolling will terminate once the scrollfront deque is empty.
+ *
+ * @param console pointer to console_t* which holds the reference to console
+ * @param howmuch how many lines to scroll
+ * @return 0 if successful, else -EINVAL or other errors
+ */
 int console_scrolldown (console_t** console, size_t howmuch) {
 	if (!console || !(*console)) return -EINVAL;
 
@@ -159,6 +226,11 @@ int console_scrolldown (console_t** console, size_t howmuch) {
 	return 0;
 }
 
+/*!
+ * Free the scrollback deque.
+ * @param console pointer to console_t* which holds the reference to console
+ * @return 0 if successful, else -EINVAL or other errors
+ */
 int console_clearscrollback (console_t** console) {
 	if (!console || !(*console)) return -EINVAL;
 
@@ -176,10 +248,26 @@ int console_clearscrollback (console_t** console) {
 	return 0;
 }
 
+/*!
+ * Get the position of the cursor. Behavior undefined if console parameter is invalid
+ * @param console pointer to console_t* which holds the reference to console
+ * @return index
+ */
 idx_t console_getidx (console_t** console) { return (*console)->idx; }
 
+/*!
+ * Get the color that will be used when printing the following characters. Behavior undefined if
+ * console parameter is invalid
+ * @param console pointer to console_t* which holds the reference to console
+ * @return color
+ */
 console_color_t console_getcolor (console_t** console) { return (*console)->current_color; }
 
+/*!
+ * Update the screenbuffer to match the contents of the console structure's internal display.
+ * @param console pointer to console_t* which holds the reference to console
+ * @return 0 if successful, else -EINVAL
+ */
 int write_to_gfx (console_t** console) {
 	if (!console || !(*console)) return -EINVAL;
 
