@@ -1,8 +1,8 @@
 #include <kclib/ctype.h>
 #include <kclib/string.h>
-#include <kernel/oldconsole.h>
 #include <kernel/graphics.h>
 #include <kernel/hardfonts/classic.h>
+#include <kernel/oldconsole.h>
 #include <stddef.h>
 #include <stdint.h>
 

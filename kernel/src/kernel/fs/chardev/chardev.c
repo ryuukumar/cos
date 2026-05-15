@@ -1,11 +1,11 @@
 #include <kclib/ctype.h>
 #include <kclib/stdio.h>
 #include <kclib/string.h>
-#include <kernel/oldconsole.h>
 #include <kernel/error.h>
 #include <kernel/fs/chardev.h>
 #include <kernel/fs/stat.h>
 #include <kernel/hw/keyboard.h>
+#include <kernel/oldconsole.h>
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
 
