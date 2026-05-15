@@ -155,4 +155,6 @@ int write_to_gfx (console_t** console) {
 						 params->font_size, CON_COL_RGB (target[j].color));
 		}
 	}
+
+	return 0;
 }
