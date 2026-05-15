@@ -1,7 +1,7 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
 #include <kernel/acpi/acpi.h>
-#include <kernel/console.h>
+#include <kernel/oldconsole.h>
 #include <kernel/elf.h>
 #include <kernel/exec.h>
 #include <kernel/fs/chardev.h>

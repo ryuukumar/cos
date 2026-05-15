@@ -1,6 +1,6 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
-#include <kernel/console.h>
+#include <kernel/oldconsole.h>
 #include <kernel/serial.h>
 #include <liballoc/liballoc.h>
 
