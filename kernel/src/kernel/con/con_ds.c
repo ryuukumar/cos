@@ -10,6 +10,17 @@
 #define CON_SCROLLBACK_LIMIT 10000
 
 /*!
+ * Increment idx_t index.
+ * @param idx index to be incremented
+ * @param width width of the console
+ * @return incremented idx_t index
+ */
+static inline idx_t increment_idx (idx_t idx, size_t width) {
+	return CON_IDX_GEN (CON_IDX_X (idx) == width - 1 ? 0 : CON_IDX_X (idx) + 1,
+						CON_IDX_Y (idx) + (CON_IDX_X (idx) == width - 1));
+}
+
+/*!
  * Allocate and initialise a new console object.
  * @param console pointer to console_t* which will hold the reference to created console
  * @param params initialisation parameters for the console
@@ -36,6 +47,7 @@ int console_create (console_t** console, console_parameters_t* params) {
 
 		new_console->display[i]->chars = kmalloc (params->width * sizeof (console_char_t));
 		if (!new_console->display[i]->chars) return -ENOMEM;
+		kmemset (new_console->display[i]->chars, 0, params->width * sizeof (console_char_t));
 
 		new_console->display[i]->dirty = 0;
 		new_console->display[i]->width = params->width;
@@ -87,6 +99,7 @@ int console_delete (console_t** console) {
 
 	kfree ((*console)->display);
 	kfree (*console);
+	*console = nullptr;
 
 	return 0;
 }
@@ -115,17 +128,17 @@ int console_putchar (console_t** console, unsigned char c) {
 	console_scrolldown (console, deque_size ((*console)->scrollfront));
 
 	if (c == '\n') {
-		(*console)->idx = (*console)->params.width * ((*console)->params.height + 1);
+		(*console)->idx = CON_IDX_GEN (0, (*console)->params.height + 1);
 	} else {
 		console_char_t* target =
 			&(*console)->display[CON_IDX_Y ((*console)->idx)]->chars[CON_IDX_X ((*console)->idx)];
 		target->character = c;
 		target->color = (*console)->current_color;
 		(*console)->display[CON_IDX_Y ((*console)->idx)]->dirty = 1;
-		(*console)->idx++;
+		(*console)->idx = increment_idx ((*console)->idx, (*console)->params.width);
 	}
 
-	if ((*console)->idx > (*console)->params.width * (*console)->params.height) {
+	while (CON_IDX_Y ((*console)->idx) >= (*console)->params.height) {
 		console_line_t* new_line = kmalloc (sizeof (console_line_t));
 		if (!new_line) return -ENOMEM;
 
@@ -139,16 +152,20 @@ int console_putchar (console_t** console, unsigned char c) {
 		if (error) return error;
 
 		console_scrolldown (console, 1);
-		(*console)->idx -= (*console)->params.width;
+		(*console)->idx =
+			CON_IDX_GEN (CON_IDX_X ((*console)->idx), CON_IDX_Y ((*console)->idx) - 1);
 	}
 
 	while (deque_size ((*console)->scrollback) > CON_SCROLLBACK_LIMIT) {
-		deque_elem* buf = nullptr;
-		int			error = deque_pop_back ((*console)->scrollback, buf);
+		console_line_t* buf = nullptr;
+		int				error = deque_pop_back ((*console)->scrollback, (deque_elem*)&buf);
 		if (error == -INTERNAL_EEMPQ)
 			break;
 		else if (error != 0)
 			return error;
+
+		kfree (buf->chars);
+		kfree (buf);
 	}
 
 	return 0;
@@ -179,7 +196,7 @@ int console_setcolor (console_t** console, uint8_t red, uint8_t green, uint8_t b
  */
 int console_goto (console_t** console, uint32_t x, uint32_t y) {
 	if (!console || !(*console)) return -EINVAL;
-	(*console)->idx = ((uint64_t)y << 32) | (uint64_t)x;
+	(*console)->idx = CON_IDX_GEN (x, y);
 	return 0;
 }
 

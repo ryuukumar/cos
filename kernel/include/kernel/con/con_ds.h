@@ -4,9 +4,10 @@
 #include <stdint.h>
 #include <utils/deque.h>
 
+#define CON_IDX_GEN(x, y)  (((uint64_t)(y) << 32) | (x))
 #define CON_IDX_X(idx)	   (idx & 0xFFFFFFFF)
 #define CON_IDX_Y(idx)	   ((idx & (0xFFFFFFFFull << 32)) >> 32)
-#define CON_COL_RGB(color) ((color.red << 16) & (color.green << 8) & color.blue)
+#define CON_COL_RGB(color) ((color.red << 16) | (color.green << 8) | color.blue)
 
 typedef uint64_t idx_t;
 
