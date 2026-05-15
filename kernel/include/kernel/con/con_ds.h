@@ -5,7 +5,7 @@
 #include <utils/varray.h>
 
 #define CON_IDX_X(idx) (idx & 0xFFFFFFFF)
-#define CON_IDX_Y(idx) ((idx & (0xFFFFFFFF << 32)) >> 32)
+#define CON_IDX_Y(idx) ((idx & (0xFFFFFFFFull << 32)) >> 32)
 
 typedef uint64_t idx_t;
 

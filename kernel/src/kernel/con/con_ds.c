@@ -4,6 +4,8 @@
 #include <kernel/error.h>
 #include <liballoc/liballoc.h>
 
+#define CON_SCROLLBACK_LIMIT 10000
+
 int console_create (console_t** console, size_t width, size_t height) {
 	if (!console) return -EINVAL;
 
@@ -11,7 +13,7 @@ int console_create (console_t** console, size_t width, size_t height) {
 	if (!new_console) return -ENOMEM;
 
 	kmemset (new_console, 0, sizeof (console));
-	new_console->lines = varray_create (width);
+	new_console->lines = varray_create (height);
 	if (!new_console->lines) return -ENOMEM;
 
 	new_console->con_width = width;
@@ -32,8 +34,14 @@ int console_delete (console_t** console) {
 	return -ENOSYS;
 }
 
+static console_char_t* console_resolve_chidx (console_t** console, idx_t idx) {
+	size_t lines_idx = varray_size((*console)->lines)-1 - (*console)->currline_offset_from_bottom + CON_IDX_Y(idx);
+	size_t char_idx = CON_IDX_X(idx);
+
+	return nullptr;
+}
+
 int console_putchar (console_t** console, unsigned char c) {
-	(void)c;
 	if (!console || !(*console)) return -EINVAL;
 	return -ENOSYS;
 }
@@ -53,15 +61,15 @@ int console_goto (console_t** console, uint32_t x, uint32_t y) {
 }
 
 int console_scrollup (console_t** console, size_t howmuch) {
-	(void)howmuch;
 	if (!console || !(*console)) return -EINVAL;
-	return -ENOSYS;
+	(*console)->currline_offset_from_bottom -= howmuch;
+	return 0;
 }
 
 int console_scrolldown (console_t** console, size_t howmuch) {
-	(void)howmuch;
 	if (!console || !(*console)) return -EINVAL;
-	return -ENOSYS;
+	(*console)->currline_offset_from_bottom += howmuch;
+	return 0;
 }
 
 int console_setbottomoffset (console_t** console, size_t howmuch) {
