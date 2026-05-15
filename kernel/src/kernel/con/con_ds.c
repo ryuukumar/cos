@@ -58,7 +58,37 @@ int console_create (console_t** console, console_parameters_t* params) {
  */
 int console_delete (console_t** console) {
 	if (!console || !(*console)) return -EINVAL;
-	return -ENOSYS;
+
+	while (deque_size ((*console)->scrollback)) {
+		console_line_t* popped = nullptr;
+		int				error = deque_pop_front ((*console)->scrollback, (deque_elem*)&popped);
+		if (error) break;
+
+		kfree (popped->chars);
+		kfree (popped);
+	}
+
+	while (deque_size ((*console)->scrollfront)) {
+		console_line_t* popped = nullptr;
+		int				error = deque_pop_front ((*console)->scrollfront, (deque_elem*)&popped);
+		if (error) break;
+
+		kfree (popped->chars);
+		kfree (popped);
+	}
+
+	deque_destroy ((*console)->scrollback);
+	deque_destroy ((*console)->scrollfront);
+
+	for (size_t i = 0; i < (*console)->params.height; i++) {
+		kfree ((*console)->display[i]->chars);
+		kfree ((*console)->display[i]);
+	}
+
+	kfree ((*console)->display);
+	kfree (*console);
+
+	return 0;
 }
 
 /*!
