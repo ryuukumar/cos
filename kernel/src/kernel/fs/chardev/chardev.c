@@ -41,15 +41,17 @@ static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 		unsigned char c = 255;
 		while ((c = pop_next_char ()) == 255)
 			process_block (&tty1_ptr->i_info.chardev_info->rsrc_wait_queue);
-		if (c == '\b') {
+		if (c == '\x7F') {
 			if (i > 0) {
 				i -= 2;
 				bytes_read--;
-				putchar ('\b');
+				putchar ('\x7F');
 				update ();
 			} else {
 				i--;
 			}
+		} else if (c == '\t') {
+			i--; // ignore tab input
 		} else if (c < 0x80) {
 			cbuffer[i] = c;
 			bytes_read++;
