@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <utils/varray.h>
+#include <utils/deque.h>
 
 #define CON_IDX_X(idx) (idx & 0xFFFFFFFF)
 #define CON_IDX_Y(idx) ((idx & (0xFFFFFFFFull << 32)) >> 32)
@@ -27,12 +27,12 @@ typedef struct __attribute__ ((packed)) {
 } console_line_t;
 
 typedef struct __attribute__ ((packed)) {
-	varray*			lines;
-	size_t			count_lines;
-	size_t			con_width, con_height;
-	idx_t			idx;
-	console_color_t current_color;
-	size_t			currline_offset_from_bottom;
+	size_t			 width, height;
+	console_line_t** display;
+	deque*			 scrollback;
+	deque*			 scrollfront;
+	idx_t			 idx;
+	console_color_t	 current_color;
 } console_t;
 
 int console_create (console_t** console, size_t width, size_t height);
@@ -44,7 +44,6 @@ int console_goto (console_t** console, uint32_t x, uint32_t y);
 
 int console_scrollup (console_t** console, size_t howmuch);
 int console_scrolldown (console_t** console, size_t howmuch);
-int console_setbottomoffset (console_t** console, size_t howmuch);
 int console_clearscrollback (console_t** console);
 
 idx_t			console_getidx (console_t** console);
