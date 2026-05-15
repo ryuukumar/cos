@@ -53,6 +53,9 @@ int console_delete (console_t** console) {
 int console_putchar (console_t** console, unsigned char c) {
 	if (!console || !(*console)) return -EINVAL;
 
+	// clear the scrollfront so we are always printing on the newest line
+	console_scrolldown (console, deque_size ((*console)->scrollfront));
+
 	console_char_t* target =
 		&(*console)->display[CON_IDX_Y ((*console)->idx)]->chars[CON_IDX_X ((*console)->idx)];
 	target->character = c;
@@ -60,7 +63,7 @@ int console_putchar (console_t** console, unsigned char c) {
 	(*console)->display[CON_IDX_Y ((*console)->idx)]->dirty = 1;
 
 	(*console)->idx++;
-	if ((*console)->idx > (*console)->params.width * (*console)->params.height) { 
+	if ((*console)->idx > (*console)->params.width * (*console)->params.height) {
 		console_line_t* new_line = kmalloc (sizeof (console_line_t));
 		if (!new_line) return -ENOMEM;
 
@@ -74,6 +77,16 @@ int console_putchar (console_t** console, unsigned char c) {
 		if (error) return error;
 
 		console_scrolldown (console, 1);
+		(*console)->idx -= (*console)->params.width;
+	}
+
+	while (deque_size ((*console)->scrollback) > CON_SCROLLBACK_LIMIT) {
+		deque_elem* buf = nullptr;
+		int			error = deque_pop_back ((*console)->scrollback, buf);
+		if (error == -INTERNAL_EEMPQ)
+			break;
+		else if (error != 0)
+			return error;
 	}
 
 	return 0;
