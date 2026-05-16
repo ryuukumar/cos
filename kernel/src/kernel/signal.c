@@ -114,8 +114,6 @@ void deliver_pending_signals (registers_t* registers) {
 	user_rsp -= sizeof (uintptr_t);
 	*((uintptr_t*)user_rsp) = (uintptr_t)frame->trampoline;
 
-	p->p_sigmask |= action->sa_mask;
-
 	registers->rip = (uintptr_t)action->sa_handler;
 	registers->rdi = signum;
 	registers->rsp = user_rsp;
