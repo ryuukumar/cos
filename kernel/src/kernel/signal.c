@@ -72,6 +72,7 @@ void deliver_pending_signals (registers_t* registers) {
 
 	if (action->sa_handler == SIG_IGN) return;
 	if (action->sa_handler == SIG_DFL) {
+		if (signum == SIGCHLD || signum == SIGURG || signum == SIGWINCH) return;
 		p->p_state = TASK_DEAD;
 		schedule (registers);
 		return;
