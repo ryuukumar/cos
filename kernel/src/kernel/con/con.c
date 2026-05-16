@@ -2,10 +2,27 @@
 #include <kernel/con/con_ds.h>
 
 static console_t* console = nullptr;
+static bool		  update_flag = true;
+
+bool con_update_cache_set (void) {
+	bool cached = update_flag;
+	update_flag = true;
+	return cached;
+}
+
+bool con_update_cache_clear (void) {
+	bool cached = update_flag;
+	update_flag = false;
+	return cached;
+}
+
+void con_update_upd (bool cached) { update_flag = cached; }
+
+int con_update (void) { return write_to_gfx (&console); }
 
 int add_char (unsigned char c) {
 	int error = console_putchar (&console, c);
-	write_to_gfx (&console);
+	if (update_flag) write_to_gfx (&console);
 	return error;
 }
 

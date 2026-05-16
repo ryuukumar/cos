@@ -13,14 +13,13 @@ inode* tty1_ptr = nullptr;
 
 static int stdout_write (inode* node, file* f, void* buf, size_t len) {
 	(void)node, (void)f; // args not used
-	// bool stdio_buf = get_update_on_putch ();
-	// set_update_on_putch (false);
+	bool stdio_buf = con_update_cache_clear ();
 
 	for (size_t i = 0; i < len; i++)
 		add_char (((char*)buf)[i]);
 
-	// update ();
-	// set_update_on_putch (stdio_buf);
+	con_update ();
+	con_update_upd (stdio_buf);
 	return len;
 }
 
@@ -37,6 +36,7 @@ static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 	(void)node, (void)f; // args not used
 	char*  cbuffer = (char*)buffer;
 	size_t bytes_read = 0;
+	bool   stdio_buf = con_update_cache_set ();
 	for (size_t i = 0; i < size; i++) {
 		unsigned char c = 255;
 		while ((c = pop_next_char ()) == 255)
@@ -46,7 +46,6 @@ static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 				i -= 2;
 				bytes_read--;
 				add_char ('\x7F');
-				// update ();
 			} else {
 				i--;
 			}
@@ -56,12 +55,12 @@ static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 			cbuffer[i] = c;
 			bytes_read++;
 			add_char (c);
-			// update ();
 			if (c == '\n') break;
 		} else {
 			i--;
 		}
 	}
+	con_update_upd (stdio_buf);
 	return (int)bytes_read;
 }
 
