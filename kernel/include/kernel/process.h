@@ -64,6 +64,9 @@ int enqueue_process (process_queue* queue, process* new_process);
 
 void process_block (process_queue* wait_queue);
 void process_unblock (process* p);
+void process_signal_wakeup (process* p);
+
+int send_signal (process* target, int signum);
 
 void schedule (registers_t* registers);
 

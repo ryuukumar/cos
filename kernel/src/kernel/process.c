@@ -255,6 +255,27 @@ void process_unblock (process* p) {
 	enqueue_process (&ready_queue, p);
 }
 
+void process_signal_wakeup (process* p) {
+	if (p->p_waiting_on_queue) {
+		process_queue* q = p->p_waiting_on_queue;
+		if (q->head == p) {
+			q->head = p->next;
+			if (q->tail == p) q->tail = nullptr;
+		} else {
+			process* cur = q->head;
+			while (cur && cur->next != p)
+				cur = cur->next;
+			if (cur) {
+				cur->next = p->next;
+				if (q->tail == p) q->tail = cur;
+			}
+		}
+		p->p_waiting_on_queue = nullptr;
+	}
+	p->p_state = TASK_READY;
+	enqueue_process (&ready_queue, p);
+}
+
 static bool is_process_child (uint64_t pid, varray* p_children) {
 	size_t p_children_sz = varray_size (p_children);
 	for (size_t i = 0; i < p_children_sz; i++) {
@@ -308,7 +329,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 
 		do {
 			process_block (waitproc->p_waiting);
-			current = get_current_process();
+			current = get_current_process ();
 			if (current->p_pending & ~current->p_sigmask) return -EINTR;
 		} while (waitproc->p_state != TASK_DEAD);
 
