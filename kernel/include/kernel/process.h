@@ -66,7 +66,8 @@ void process_block (process_queue* wait_queue);
 void process_unblock (process* p);
 void process_signal_wakeup (process* p);
 
-int send_signal (process* target, int signum);
+int	 send_signal (process* target, int signum);
+void deliver_pending_signals (registers_t* registers);
 
 void schedule (registers_t* registers);
 

@@ -37,6 +37,13 @@
 #define SIGUSR2	  31 /* user defined signal 2 */
 #define NSIG	  32 /* signal 0 implied */
 
+#define SIG_DFL ((_sig_func_ptr)0)	  /* Default action */
+#define SIG_IGN ((_sig_func_ptr)1)	  /* Ignore action */
+#define SIG_ERR ((_sig_func_ptr) - 1) /* Error return */
+
+extern uint8_t signal_trampoline_start[];
+extern uint8_t signal_trampoline_end[];
+
 typedef unsigned long sigset_t;
 typedef void (*_sig_func_ptr) (int);
 
@@ -54,4 +61,5 @@ typedef struct {
 	uint64_t rsp;
 	uint64_t cs, ss;
 	uint8_t	 trampoline[8];
+	uint64_t saved_sigmask;
 } signal_frame_t;
