@@ -80,6 +80,21 @@ void deliver_pending_signals (registers_t* registers) {
 		if (signum == SIGCHLD || signum == SIGURG || signum == SIGWINCH) return;
 		p->p_exitstatus.raw = (core_signals >> signum & 1) ? signum | 0x80 : signum;
 		p->p_state = TASK_DEAD;
+
+		process* blocked = nullptr;
+		do {
+			dequeue_process (p->p_waiting, &blocked);
+			if (blocked) enqueue_process (get_ready_queue (), blocked);
+		} while (blocked);
+
+		if (p->p_parent && p->p_parent->p_waitforchild == -1) {
+			p->p_parent->p_state = TASK_READY;
+			p->p_parent->p_waitforchild = p->p_id;
+			enqueue_process (get_ready_queue (), p->p_parent);
+		} else if (p->p_parent) {
+			send_signal (p->p_parent, SIGCHLD);
+		}
+
 		schedule (registers);
 		return;
 	}
