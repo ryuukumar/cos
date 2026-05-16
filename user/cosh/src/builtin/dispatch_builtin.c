@@ -33,6 +33,8 @@ int dispatch_builtin (size_t argc, char** argv) {
 		return builtin_source (argc, argv);
 	else if (strcmp (argv[0], "test") == 0 || strcmp (argv[0], "[") == 0)
 		return builtin_test (argc, argv);
+	else if (strcmp (argv[0], "clear") == 0)
+		return builtin_clear (argc, argv);
 
 	return -1;
 }

@@ -122,14 +122,14 @@ int repl_loop (void) {
 	if (!pathbuf || !cmdbuf) return -1;
 
 	getcwd (pathbuf, 100);
-	printf ("root@cos %s > ", pathbuf);
+	printf ("\033[37mroot@cos \033[36m%s\033[37m > ", pathbuf);
 
 	if (fgets (cmdbuf, 1000, stdin) == nullptr) return -1;
 
 	cmdbuf[strcspn (cmdbuf, "\n")] = '\0';
 	if (cmdbuf[0] == '\0') return 0;
 	last_exit = run_line (cmdbuf);
-	if (last_exit != 0) printf ("exited with non-zero status: %i\n", last_exit);
+	if (last_exit != 0) printf ("\033[31mexited with non-zero status: %i\n", last_exit);
 
 	return 0;
 }

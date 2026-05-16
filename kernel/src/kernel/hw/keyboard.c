@@ -1,4 +1,5 @@
 #include <kclib/string.h>
+#include <kernel/con/con.h>
 #include <kernel/error.h>
 #include <kernel/hw/keyboard.h>
 #include <kernel/hw/keypress_map.h>
@@ -60,7 +61,11 @@ static void kb_handler (registers_t* registers) {
 	if (kb_read_status_register ().out_buffer_full) {
 		unsigned char scancode = inb (kb_ps2_data_port);
 		unsigned char processed = map_keypress (kb_statemachine, scancode);
-		if (processed != 0) {
+		if (processed == kb_action_pgup) {
+			con_scrollup (3);
+		} else if (processed == kb_action_pgdn) {
+			con_scrolldown (3);
+		} else if (processed != 0) {
 			push_charqueue (kb_keypress_charqueue, processed);
 			if (kb_tty_handler) kb_tty_handler (processed);
 		}

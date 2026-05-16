@@ -1,6 +1,6 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
-#include <kernel/console.h>
+#include <kernel/con/con.h>
 #include <kernel/serial.h>
 #include <liballoc/liballoc.h>
 
@@ -164,10 +164,9 @@ static void kvsprintf (char* buf, const char* fmt, va_list* list) {
 	buf[kvsprintf_idx] = '\0';
 }
 
-static void kvprintf (const char* fmt, va_list* list) {
-	kv_core_printf (fmt, list, putchar);
-	update ();
-}
+static void kvprintf_putc (unsigned char c) { add_char (c); }
+
+static void kvprintf (const char* fmt, va_list* list) { kv_core_printf (fmt, list, kvprintf_putc); }
 
 void ksprintf (char* buf, const char* fmt, ...) {
 	va_list ap;

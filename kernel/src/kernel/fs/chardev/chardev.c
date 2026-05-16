@@ -1,7 +1,7 @@
 #include <kclib/ctype.h>
 #include <kclib/stdio.h>
 #include <kclib/string.h>
-#include <kernel/console.h>
+#include <kernel/con/con.h>
 #include <kernel/error.h>
 #include <kernel/fs/chardev.h>
 #include <kernel/fs/stat.h>
@@ -13,14 +13,13 @@ inode* tty1_ptr = nullptr;
 
 static int stdout_write (inode* node, file* f, void* buf, size_t len) {
 	(void)node, (void)f; // args not used
-	bool stdio_buf = get_update_on_putch ();
-	set_update_on_putch (false);
+	bool stdio_buf = con_update_cache_clear ();
 
 	for (size_t i = 0; i < len; i++)
-		putchar (((char*)buf)[i]);
+		add_char (((char*)buf)[i]);
 
-	update ();
-	set_update_on_putch (stdio_buf);
+	con_update ();
+	con_update_upd (stdio_buf);
 	return len;
 }
 
@@ -37,6 +36,7 @@ static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 	(void)node, (void)f; // args not used
 	char*  cbuffer = (char*)buffer;
 	size_t bytes_read = 0;
+	bool   stdio_buf = con_update_cache_set ();
 	for (size_t i = 0; i < size; i++) {
 		unsigned char c = 255;
 		while ((c = pop_next_char ()) == 255)
@@ -45,8 +45,7 @@ static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 			if (i > 0) {
 				i -= 2;
 				bytes_read--;
-				putchar ('\x7F');
-				update ();
+				add_char ('\x7F');
 			} else {
 				i--;
 			}
@@ -55,13 +54,13 @@ static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 		} else if (c < 0x80) {
 			cbuffer[i] = c;
 			bytes_read++;
-			putchar (c);
-			update ();
+			add_char (c);
 			if (c == '\n') break;
 		} else {
 			i--;
 		}
 	}
+	con_update_upd (stdio_buf);
 	return (int)bytes_read;
 }
 
