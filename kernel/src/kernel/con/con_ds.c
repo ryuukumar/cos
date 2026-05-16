@@ -313,6 +313,13 @@ idx_t console_getidx (console_t** console) { return (*console)->idx; }
 console_color_t console_getcolor (console_t** console) { return (*console)->current_color; }
 
 /*!
+ * Get the parameters of the console. Behavior undefined if console parameter is invalid
+ * @param console pointer to console_t* which holds the reference to console
+ * @return parameters
+ */
+console_parameters_t console_getparams (console_t** console) { return (*console)->params; }
+
+/*!
  * Update the screenbuffer to match the contents of the console structure's internal display.
  * @param console pointer to console_t* which holds the reference to console
  * @return 0 if successful, else -EINVAL

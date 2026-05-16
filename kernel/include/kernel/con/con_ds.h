@@ -56,7 +56,8 @@ int console_scrollup (console_t** console, size_t howmuch);
 int console_scrolldown (console_t** console, size_t howmuch);
 int console_clearscrollback (console_t** console);
 
-idx_t			console_getidx (console_t** console);
-console_color_t console_getcolor (console_t** console);
+idx_t				 console_getidx (console_t** console);
+console_color_t		 console_getcolor (console_t** console);
+console_parameters_t console_getparams (console_t** console);
 
 int write_to_gfx (console_t** console);
