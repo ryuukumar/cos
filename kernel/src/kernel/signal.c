@@ -4,6 +4,9 @@
 #include <kernel/signal.h>
 #include <kernel/syscall.h>
 
+constexpr uint64_t core_signals =
+	(1ULL << SIGSEGV) | (1ULL << SIGILL) | (1ULL << SIGFPE) | (1ULL << SIGBUS) | (1ULL << SIGABRT);
+
 int send_signal (process* target, int signum) {
 	if (!target) return -ESRCH;
 	if (signum < 1 || signum >= NSIG) return -EINVAL;
@@ -26,6 +29,7 @@ int send_signal (process* target, int signum) {
 
 	if (signum == SIGKILL) {
 		target->p_state = TASK_DEAD;
+		target->p_exitstatus.raw = SIGKILL;
 		if (target->p_parent) send_signal (target->p_parent, SIGCHLD);
 		if (target == get_current_process ()) schedule (get_latest_r_frame ());
 		return 0;
@@ -74,6 +78,7 @@ void deliver_pending_signals (registers_t* registers) {
 	if (action->sa_handler == SIG_IGN) return;
 	if (action->sa_handler == SIG_DFL) {
 		if (signum == SIGCHLD || signum == SIGURG || signum == SIGWINCH) return;
+		p->p_exitstatus.raw = (core_signals >> signum & 1) ? signum | 0x80 : signum;
 		p->p_state = TASK_DEAD;
 		schedule (registers);
 		return;
