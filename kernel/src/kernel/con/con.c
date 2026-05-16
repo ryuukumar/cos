@@ -24,6 +24,16 @@ void con_update_upd (bool cached) { update_flag = cached; }
 
 int con_update (void) { return write_to_gfx (&console); }
 
+void con_scrollup (size_t howmuch) {
+	console_scrollup (&console, howmuch);
+	write_to_gfx (&console);
+}
+
+void con_scrolldown (size_t howmuch) {
+	console_scrolldown (&console, howmuch);
+	write_to_gfx (&console);
+}
+
 int add_char (unsigned char c) {
 	int					 error = 0;
 	console_parameters_t params = console_getparams (&console);
