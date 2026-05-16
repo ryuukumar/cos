@@ -6,7 +6,6 @@ static console_t* console = nullptr;
 static bool		  update_flag = true;
 
 static bool in_esc = false;
-static bool in_csi = false;
 
 bool con_update_cache_set (void) {
 	bool cached = update_flag;
@@ -45,7 +44,8 @@ int add_char (unsigned char c) {
 				console_putchar (&console, (unsigned char)buf[i]);
 			clear_ansi_buffer ();
 			in_esc = false;
-			in_csi = false;
+		} else if (status == ANSI_VALID) {
+			in_esc = false;
 		}
 	} else if (c == '\x7F') {
 		idx_t idx = console_getidx (&console);
