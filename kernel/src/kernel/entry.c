@@ -1,6 +1,7 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
 #include <kernel/acpi/acpi.h>
+#include <kernel/con/con.h>
 #include <kernel/elf.h>
 #include <kernel/exec.h>
 #include <kernel/fs/chardev.h>
@@ -16,7 +17,6 @@
 #include <kernel/idt.h>
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
-#include <kernel/oldconsole.h>
 #include <kernel/process.h>
 #include <kernel/serial.h>
 #include <kernel/stack.h>
@@ -56,25 +56,25 @@ static void hcf (void) {
 }
 
 static void print_info (void) {
-	drawBorder (20);
-	set_color (0x44eeaa);
+	// drawBorder (20);
+	// set_color (0x44eeaa);
 
 	kprintf ("COS 0.0%d", 7);
 
-	set_color (0xddeecc);
+	// set_color (0xddeecc);
 
 	kprintf ("\n\nHello, World!\n\n");
 
-	set_color (0x88aaee);
+	// set_color (0x88aaee);
 	kprintf ("System info:\n");
 	if (bootinfo_req.response != nullptr) {
-		set_color (0x888888);
+		// set_color (0x888888);
 		kprintf ("Bootloader: %s %s", bootinfo_req.response->name, bootinfo_req.response->version);
 	} else
 		kprintf ("\nDid not receive bootloader info from bootloader.\n");
 
 	if (boottime_req.response != nullptr) {
-		set_color (0x888888);
+		// set_color (0x888888);
 		kprintf ("\nSystem booted at time %ld.\n", boottime_req.response->boot_time);
 	} else
 		kprintf ("\nDid not receive boot time from Limine.\n");
@@ -82,7 +82,7 @@ static void print_info (void) {
 
 __attribute__ ((noreturn)) void _start_stage2 (void) {
 	init_graphics (framebuffer);
-	init_console (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
+	init_con (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
 	init_kb ();
 	init_acpi (rsdp);
 

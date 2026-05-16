@@ -129,7 +129,7 @@ int console_putchar (console_t** console, unsigned char c) {
 	console_scrolldown (console, deque_size ((*console)->scrollfront));
 
 	if (c == '\n') {
-		(*console)->idx = CON_IDX_GEN (0, (*console)->params.height);
+		(*console)->idx = CON_IDX_GEN (0, CON_IDX_Y ((*console)->idx) + 1);
 	} else {
 		console_char_t* target =
 			&(*console)->display[CON_IDX_Y ((*console)->idx)]->chars[CON_IDX_X ((*console)->idx)];
