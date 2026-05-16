@@ -246,6 +246,7 @@ void process_block (process_queue* wait_queue) {
 	current_process->p_waiting_on_queue = wait_queue;
 	enqueue_process (wait_queue, current_process);
 	do_sched_yield ();
+	current_process->p_waiting_on_queue = nullptr;
 }
 
 void process_unblock (process* p) {

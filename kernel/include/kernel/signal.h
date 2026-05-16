@@ -40,11 +40,11 @@
 typedef unsigned long sigset_t;
 typedef void (*_sig_func_ptr) (int);
 
-struct sigaction {
+typedef struct {
 	_sig_func_ptr sa_handler;
 	sigset_t	  sa_mask;
 	int			  sa_flags;
-};
+} sigaction;
 
 typedef struct {
 	uint64_t rax, rbx, rcx, rdx, rbp, rsi, rdi;

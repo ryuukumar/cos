@@ -2,6 +2,7 @@
 
 #include <kernel/fs/vfs.h>
 #include <kernel/idt.h>
+#include <kernel/signal.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <utils/hashmap32.h>
@@ -44,6 +45,9 @@ struct process {
 	exit_status	   p_exitstatus;
 	int64_t		   p_waitforchild;
 	process_queue* p_waiting_on_queue;
+	uint64_t	   p_pending;
+	uint64_t	   p_sigmask;
+	sigaction	   p_sigactions[NSIG];
 };
 
 struct process_queue {
