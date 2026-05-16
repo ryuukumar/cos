@@ -5,6 +5,7 @@
 #include <kernel/memmgt.h>
 #include <kernel/memory/pmm.h>
 #include <kernel/process.h>
+#include <kernel/signal.h>
 #include <kernel/syscall.h>
 
 #define ALIGNUP(x, o) ((x + o - 1) & ~(o - 1))
@@ -40,11 +41,12 @@ static void page_fault_handler (registers_t* registers) {
 	uint64_t cr2;
 	__asm__ volatile ("mov %%cr2, %0" : "=r"(cr2));
 
-	kserial_printf ("\nEncountered a page fault!\nFaulting address: 0x%llx\n", cr2);
+	kserial_printf ("\nEncountered a page fault!\nFaulting address: 0x%llx\nSending SIGSEGV.\n",
+					cr2);
 	log_registers_to_serial (registers);
 
-	for (;;)
-		;
+	send_signal (get_current_process (), SIGSEGV);
+	deliver_pending_signals (registers);
 }
 
 static uint64_t sys_brk (uint64_t addr, uint64_t arg2, uint64_t arg3) {
