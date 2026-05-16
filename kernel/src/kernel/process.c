@@ -243,12 +243,14 @@ int process_fork (process* source_process, process** dest_ptr) {
 
 void process_block (process_queue* wait_queue) {
 	current_process->p_state = TASK_BLOCKED;
+	current_process->p_waiting_on_queue = wait_queue;
 	enqueue_process (wait_queue, current_process);
 	do_sched_yield ();
 }
 
 void process_unblock (process* p) {
 	p->p_state = TASK_READY;
+	p->p_waiting_on_queue = nullptr;
 	enqueue_process (&ready_queue, p);
 }
 

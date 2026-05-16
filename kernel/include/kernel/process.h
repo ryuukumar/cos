@@ -13,7 +13,7 @@
 typedef struct process		 process;
 typedef struct process_queue process_queue;
 
-typedef enum { TASK_RUNNING, TASK_READY, TASK_BLOCKED, TASK_DEAD } task_state_t;
+typedef enum { TASK_RUNNING, TASK_READY, TASK_BLOCKED, TASK_STOPPED, TASK_DEAD } task_state_t;
 
 typedef union {
 	int32_t raw;
@@ -43,6 +43,7 @@ struct process {
 	process*	   p_parent;
 	exit_status	   p_exitstatus;
 	int64_t		   p_waitforchild;
+	process_queue* p_waiting_on_queue;
 };
 
 struct process_queue {
