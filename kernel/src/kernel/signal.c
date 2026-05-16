@@ -110,6 +110,7 @@ void deliver_pending_signals (registers_t* registers) {
 
 	frame->saved_sigmask = p->p_sigmask;
 	p->p_sigmask |= action->sa_mask;
+	p->p_sigmask |= (1ULL << signum);
 
 	user_rsp -= sizeof (uintptr_t);
 	*((uintptr_t*)user_rsp) = (uintptr_t)frame->trampoline;
