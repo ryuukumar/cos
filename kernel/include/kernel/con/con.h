@@ -4,9 +4,7 @@
 #include <stdint.h>
 #include <utils/varray.h>
 
-#ifdef TAB_WIDTH
-#undef TAB_WIDTH
-#endif
+#define TAB_WIDTH 8
 
 bool con_update_cache_set (void);
 bool con_update_cache_clear (void);

@@ -60,6 +60,16 @@ int add_char (unsigned char c) {
 	} else if (c == '\r') {
 		idx_t idx = console_getidx (&console);
 		console_goto (&console, 0, CON_IDX_Y (idx));
+	} else if (c == '\t') {
+		idx_t  idx = console_getidx (&console);
+		size_t x_next_tabstop = TAB_WIDTH * ((CON_IDX_X (idx) + TAB_WIDTH - 1) / TAB_WIDTH);
+		if (x_next_tabstop >= params.width)
+			if (CON_IDX_Y (idx) + 1 == params.height)
+				console_putchar (&console, '\n');
+			else
+				console_goto (&console, 0, CON_IDX_Y (idx) + 1);
+		else
+			console_goto (&console, x_next_tabstop, CON_IDX_Y (idx));
 	} else if (c == '\033') {
 		in_esc = true;
 	} else {
