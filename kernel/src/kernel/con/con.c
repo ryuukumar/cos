@@ -1,4 +1,4 @@
-#include "kernel/memmgt.h"
+#include <kernel/con/ansi.h>
 #include <kernel/con/con.h>
 #include <kernel/con/con_ds.h>
 
@@ -27,7 +27,17 @@ int con_update (void) { return write_to_gfx (&console); }
 int add_char (unsigned char c) {
 	int					 error = 0;
 	console_parameters_t params = console_getparams (&console);
-	if (c == '\x7F') {
+	if (in_esc) {
+		ansi_status_t status = add_to_ansi_parser_buf (c);
+		if (status == ANSI_INVALID) {
+			const char* buf = get_ansi_buffer ();
+			for (size_t i = 0; buf[i]; i++)
+				console_putchar (&console, (unsigned char)buf[i]);
+			clear_ansi_buffer ();
+			in_esc = false;
+			in_csi = false;
+		}
+	} else if (c == '\x7F') {
 		idx_t idx = console_getidx (&console);
 		if (CON_IDX_X (idx) == 0)
 			idx = CON_IDX_GEN (params.width - 1, CON_IDX_Y (idx) - 1);
