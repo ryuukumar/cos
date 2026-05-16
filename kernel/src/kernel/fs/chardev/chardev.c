@@ -41,8 +41,11 @@ static int stdin_read (inode* node, file* f, void* buffer, size_t size) {
 	bool   stdio_buf = con_update_cache_set ();
 	for (size_t i = 0; i < size; i++) {
 		unsigned char c = 255;
-		while ((c = pop_next_char ()) == 255)
+		while ((c = pop_next_char ()) == 255) {
 			process_block (&tty1_ptr->i_info.chardev_info->rsrc_wait_queue);
+			process* current = get_current_process();
+			if (current->p_pending & ~current->p_sigmask) return -EINTR;
+		}
 		if (c == '\x7F') {
 			if (i > 0) {
 				i -= 2;

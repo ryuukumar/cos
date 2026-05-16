@@ -308,6 +308,8 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 
 		do {
 			process_block (waitproc->p_waiting);
+			current = get_current_process();
+			if (current->p_pending & ~current->p_sigmask) return -EINTR;
 		} while (waitproc->p_state != TASK_DEAD);
 
 	pid0_exit:
