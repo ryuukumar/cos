@@ -45,6 +45,7 @@ typedef struct {
 	int (*seek) (inode*, file*, size_t, int);
 	int (*getdents) (inode*, file*, void*, size_t);
 	int (*fstat) (inode*, file*, stat*);
+	int (*ioctl) (inode*, file*, uint64_t, uint64_t);
 } file_operations;
 
 struct inode {
@@ -85,6 +86,7 @@ int do_close (struct file* fd);
 int do_getdents (struct file* f, void* buf, size_t count);
 int do_fstat (struct file* fd, stat* buf);
 int do_stat (const char* restrict path, stat* restrict buf);
+int do_ioctl (struct file* fd, uint64_t req, uint64_t arg);
 
 uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size);
 uint64_t sys_write (uint64_t fd, uint64_t buf, uint64_t size);
@@ -97,6 +99,7 @@ uint64_t sys_getdents (uint64_t fd, uint64_t buf, uint64_t count);
 uint64_t sys_getcwd (uint64_t buf, uint64_t size, uint64_t arg3);
 uint64_t sys_fstat (uint64_t fd, uint64_t buf, uint64_t arg3);
 uint64_t sys_stat (uint64_t path, uint64_t buf, uint64_t arg3);
+uint64_t sys_ioctl (uint64_t fd, uint64_t req, uint64_t arg);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);

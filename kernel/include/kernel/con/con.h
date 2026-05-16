@@ -1,5 +1,6 @@
 #pragma once
 
+#include <kernel/fs/ioctl.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <utils/varray.h>
@@ -13,6 +14,8 @@ int	 con_update (void);
 
 void con_scrollup (size_t howmuch);
 void con_scrolldown (size_t howmuch);
+
+int con_tiocgwinsz (winsize_t* ptr);
 
 int	 add_char (unsigned char c);
 void init_con (size_t screen_width, size_t screen_height, size_t x_padding, size_t y_padding,
