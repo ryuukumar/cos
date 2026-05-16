@@ -66,12 +66,12 @@ void schedule (registers_t* registers) {
 		enqueue_process (get_ready_queue (), current_process);
 	}
 
-	int errno = dequeue_process (get_ready_queue (), &upcoming_process);
-
-	if (upcoming_process == nullptr)
-		for (;;)
-			;
-	if (errno != 0) return;
+	do {
+		dequeue_process (get_ready_queue (), &upcoming_process);
+		if (upcoming_process == nullptr)
+			for (;;)
+				;
+	} while (upcoming_process->p_state == TASK_DEAD);
 
 	current_process = upcoming_process;
 	current_process->p_state = TASK_RUNNING;
