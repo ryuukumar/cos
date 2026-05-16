@@ -365,6 +365,8 @@ static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
 	current->p_exitstatus.info = status;
 	current->p_exitstatus.reason = 0;
 
+	if (current->p_parent) send_signal (current->p_parent, SIGCHLD);
+
 	for (int i = 0; i < MAX_FDS; i++)
 		if (current->p_fds[i]) sys_close (i, 0, 0);
 
