@@ -390,6 +390,13 @@ static uint64_t sys_sched_yield (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 	return do_sched_yield ();
 }
 
+static uint64_t sys_kill(uint64_t pid, uint64_t signum, uint64_t unused) {
+    (void)unused;
+    process* target = (process*)hashmap_get (pid_map, pid);
+    if (!target) return (uint64_t)-ESRCH;
+    return (uint64_t)send_signal(target, (int)signum);
+}
+
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = nullptr;
 	next_free_pid = 2ll;
@@ -401,4 +408,5 @@ void init_process (void) {
 	register_syscall (SYSCALL_SYS_GETPID, sys_getpid);
 	register_syscall (SYSCALL_SCHED_YIELD, sys_sched_yield);
 	register_syscall (SYSCALL_SYS_WAITPID, sys_waitpid);
+	register_syscall (SYSCALL_SYS_KILL, sys_kill);
 }
