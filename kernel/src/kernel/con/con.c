@@ -73,5 +73,6 @@ void init_con (size_t screen_width, size_t screen_height, size_t x_padding, size
 		.height = (screen_height - 2 * y_padding) / ((8 + line_padding) * font_multiplier),
 		.font_size = font_multiplier};
 
+	init_ansi_buffer (&console);
 	console_create (&console, &params);
 };

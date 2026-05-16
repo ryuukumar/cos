@@ -56,33 +56,26 @@ static void hcf (void) {
 }
 
 static void print_info (void) {
-	// drawBorder (20);
-	// set_color (0x44eeaa);
+	kprintf ("\033[38;2;68;238;170mCOS 0.0%d", 7);
+	kprintf ("\033[38;2;221;238;204m\n\nHello, World!\n\n");
+	kprintf ("\033[38;2;136;170;238mSystem info:\n");
 
-	kprintf ("COS 0.0%d", 7);
-
-	// set_color (0xddeecc);
-
-	kprintf ("\n\nHello, World!\n\n");
-
-	// set_color (0x88aaee);
-	kprintf ("System info:\n");
 	if (bootinfo_req.response != nullptr) {
-		// set_color (0x888888);
-		kprintf ("Bootloader: %s %s", bootinfo_req.response->name, bootinfo_req.response->version);
+		kprintf ("\033[38;2;200;200;200mBootloader: %s %s", bootinfo_req.response->name,
+				 bootinfo_req.response->version);
 	} else
 		kprintf ("\nDid not receive bootloader info from bootloader.\n");
 
 	if (boottime_req.response != nullptr) {
-		// set_color (0x888888);
-		kprintf ("\nSystem booted at time %ld.\n", boottime_req.response->boot_time);
+		kprintf ("\n\033[38;2;200;200;200mSystem booted at time %ld.\n",
+				 boottime_req.response->boot_time);
 	} else
 		kprintf ("\nDid not receive boot time from Limine.\n");
 }
 
 __attribute__ ((noreturn)) void _start_stage2 (void) {
 	init_graphics (framebuffer);
-	init_con (framebuffer->width, framebuffer->height, 40, 40, 1, 1, 2);
+	init_con (framebuffer->width, framebuffer->height, 20, 20, 1, 1, 2);
 	init_kb ();
 	init_acpi (rsdp);
 
