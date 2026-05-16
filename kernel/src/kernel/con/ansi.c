@@ -1,5 +1,6 @@
 #include <kclib/string.h>
 #include <kernel/con/ansi.h>
+#include <kernel/con/con.h>
 #include <kernel/con/con_ds.h>
 #include <liballoc/liballoc.h>
 
@@ -103,6 +104,14 @@ static ansi_status_t try_parse_ansi (void) {
 		int64_t mode = (params[0] == -1) ? 0 : params[0];
 		int64_t sx = CON_IDX_X (cur), sy = CON_IDX_Y (cur);
 		int64_t ex = (int64_t)p.width - 1, ey = (int64_t)p.height - 1;
+		bool	con_flag = con_update_cache_clear ();
+
+		if (mode == 3) {
+			console_clearscrollback (ansi_console);
+			con_update_upd (con_flag);
+			break;
+		}
+
 		if (mode == 1) {
 			sx = 0;
 			sy = 0;
@@ -122,12 +131,15 @@ static ansi_status_t try_parse_ansi (void) {
 			}
 		}
 		console_goto (ansi_console, CON_IDX_X (cur), CON_IDX_Y (cur));
+		con_update_upd (con_flag);
 		break;
 	}
 
 	case 'K': { /* Erase in Line (default 0) */
 		int64_t mode = (params[0] == -1) ? 0 : params[0];
 		int64_t lx, rx;
+		bool	con_flag = con_update_cache_clear ();
+
 		if (mode == 0) {
 			lx = CON_IDX_X (cur);
 			rx = (int64_t)p.width - 1;
@@ -143,6 +155,7 @@ static ansi_status_t try_parse_ansi (void) {
 			console_putchar (ansi_console, 0);
 		}
 		console_goto (ansi_console, CON_IDX_X (cur), CON_IDX_Y (cur));
+		con_update_upd (con_flag);
 		break;
 	}
 
