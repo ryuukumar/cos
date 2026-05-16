@@ -11,6 +11,7 @@ int send_signal (process* target, int signum) {
 
 	if (signum == SIGSTOP || signum == SIGTSTP) {
 		target->p_state = TASK_STOPPED;
+		if (target == get_current_process ()) schedule (get_latest_r_frame ());
 		return 0;
 	}
 

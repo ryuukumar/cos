@@ -71,7 +71,7 @@ void schedule (registers_t* registers) {
 		if (upcoming_process == nullptr)
 			for (;;)
 				;
-	} while (upcoming_process->p_state == TASK_DEAD);
+	} while (upcoming_process->p_state == TASK_DEAD || upcoming_process->p_state == TASK_STOPPED);
 
 	current_process = upcoming_process;
 	current_process->p_state = TASK_RUNNING;
