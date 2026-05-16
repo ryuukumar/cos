@@ -1,9 +1,11 @@
+#include "kernel/fs/vfs.h"
 #include <kclib/ctype.h>
 #include <kclib/stdio.h>
 #include <kclib/string.h>
 #include <kernel/con/con.h>
 #include <kernel/error.h>
 #include <kernel/fs/chardev.h>
+#include <kernel/fs/ioctl.h>
 #include <kernel/fs/stat.h>
 #include <kernel/hw/keyboard.h>
 #include <kernel/process.h>
@@ -73,6 +75,13 @@ static int chardev_fstat (inode* node, file* f, stat* buf) {
 	return 0;
 }
 
+static int chardev_ioctl (inode* node, file* f, uint64_t request, uint64_t argument) {
+	(void)node, (void)f;
+	if (request == TIOCGWINSZ) return con_tiocgwinsz ((winsize_t*)argument);
+
+	return -ENOSYS;
+}
+
 void init_tty1 (inode* absolute_root) {
 	inode* dev_dir = nullptr;
 	int	   error = do_mkdir ("dev", &dev_dir, absolute_root);
@@ -89,6 +98,7 @@ void init_tty1 (inode* absolute_root) {
 	tty1_fops->write = stdout_write;
 	tty1_fops->read = stdin_read;
 	tty1_fops->fstat = chardev_fstat;
+	tty1_fops->ioctl = chardev_ioctl;
 
 	chardev_info_t* tty1_info = kmalloc (sizeof (chardev_info_t));
 	kmemset (tty1_info, 0, sizeof (chardev_info_t));

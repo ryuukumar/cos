@@ -1,6 +1,7 @@
 #include <kernel/con/ansi.h>
 #include <kernel/con/con.h>
 #include <kernel/con/con_ds.h>
+#include <kernel/error.h>
 
 static console_t* console = nullptr;
 static bool		  update_flag = true;
@@ -31,6 +32,20 @@ void con_scrollup (size_t howmuch) {
 void con_scrolldown (size_t howmuch) {
 	console_scrolldown (&console, howmuch);
 	write_to_gfx (&console);
+}
+
+int con_tiocgwinsz (winsize_t* ptr) {
+	if (!ptr) return -EINVAL;
+
+	console_parameters_t params = console_getparams (&console);
+	ptr->ws_col = params.width;
+	ptr->ws_row = params.height;
+	ptr->ws_xpixel = (unsigned short)(params.width * (params.glyph_width + params.char_spacing) *
+									  params.font_size);
+	ptr->ws_ypixel = (unsigned short)(params.height * (params.glyph_height + params.line_spacing) *
+									  params.font_size);
+
+	return 0;
 }
 
 int add_char (unsigned char c) {
