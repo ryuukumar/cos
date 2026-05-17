@@ -12,7 +12,9 @@ int liballoc_unlock (void) {
 	return 0;
 }
 
-void* liballoc_alloc (size_t count) { return alloc_vpages (count, false); }
+void* liballoc_alloc (size_t count) {
+	return alloc_vpages (count, M_PG_READ | M_PG_WRITE | M_PG_EXEC);
+}
 
 int liballoc_free (void* ptr, size_t count) {
 	if (is_locked) return -7;

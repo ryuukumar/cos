@@ -1,4 +1,3 @@
-#include "kclib/stdio.h"
 #include <kclib/string.h>
 #include <kernel/memmgt.h>
 #include <kernel/memory/pmm.h>
@@ -12,7 +11,7 @@ static pml4t_entry_t* pml4_base_ptr = nullptr;
  * @param last last virtual address in range
  * @param base_addr base address of physical memory of corresponding size
  */
-void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr) {
+void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr, uint16_t flags) {
 	uint64_t phys_base_track = (uint64_t)base_addr;
 	vaddr_t	 current = first;
 
@@ -57,10 +56,60 @@ void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr) 
 		pt_entry_t* pt_entry = &pt_base[current.pt_index];
 
 		pt_entry->present = 1;
-		pt_entry->rw = 1;
+		pt_entry->rw = M_PG_IS_WRITE (flags) ? 1 : 0;
+		pt_entry->nex = M_PG_IS_EXEC (flags) ? 0 : 1;
 		pt_entry->frame_base_address = phys_base_track / PAGE_SIZE;
 		pt_entry->us = is_vaddr_t_user (&current);
 		phys_base_track += PAGE_SIZE;
+
+		if (!is_vaddr_t_lt (&current, &last)) break;
+
+		current.pt_index++;
+		if (current.pt_index >= 512) {
+			current.pt_index = 0;
+			current.pd_index++;
+			if (current.pd_index >= 512) {
+				current.pd_index = 0;
+				current.pdpt_index++;
+			}
+		}
+	}
+}
+
+/*!
+ * Reflags all virtual pages in given range (inclusive). Terminates if page structures are invalid
+ * or do not exist (i.e., run this only after you have run alloc_all_vpages_in_range or equivalent).
+ * @param first first virtual address in range
+ * @param last last virtual address in range
+ * @param base_addr base address of physical memory of corresponding size
+ */
+void reflag_all_vpages_in_range (vaddr_t first, vaddr_t last, uint16_t flags) {
+	vaddr_t current = first;
+
+	while (true) {
+		pml4t_entry_t* pml4t_entry = &pml4_base_ptr[current.pml4_index];
+
+		if (!pml4t_entry->present) return;
+
+		pdpt_entry_t* pdpt_base =
+			(pdpt_entry_t*)get_vaddr_from_frame (pml4t_entry->pdpt_base_address);
+		pdpt_entry_t* pdpt_entry = &pdpt_base[current.pdpt_index];
+
+		if (!pdpt_entry->present) return;
+
+		pd_entry_t* pd_base = (pd_entry_t*)get_vaddr_from_frame (pdpt_entry->pd_base_address);
+		pd_entry_t* pd_entry = &pd_base[current.pd_index];
+
+		if (!pd_entry->present) return;
+
+		pt_entry_t* pt_base = (pt_entry_t*)get_vaddr_from_frame (pd_entry->pt_base_address);
+		pt_entry_t* pt_entry = &pt_base[current.pt_index];
+
+		if (!pt_entry->present) return;
+
+		pt_entry->rw = M_PG_IS_WRITE (flags) ? 1 : 0;
+		pt_entry->nex = M_PG_IS_EXEC (flags) ? 0 : 1;
+		pt_entry->us = is_vaddr_t_user (&current);
 
 		if (!is_vaddr_t_lt (&current, &last)) break;
 
@@ -81,10 +130,11 @@ void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr) 
  * @param count number of consecutive pages to allocate
  * @return base virtual address of allocated pages
  */
-void* alloc_vpages (size_t req_count, bool user) {
+void* alloc_vpages (size_t req_count, uint16_t flags) {
 	// all memory allocations are currently under 2 pml4 entries. this is 512 gb of memory for
 	// kernel and user each, which should be plenty for literally any use case of COS.
-	pml4t_entry_t* pml4t_entry = &pml4_base_ptr[user ? USER_PML4_IDX : KRNL_PML4_IDX];
+	pml4t_entry_t* pml4t_entry =
+		&pml4_base_ptr[M_PG_IS_USER (flags) ? USER_PML4_IDX : KRNL_PML4_IDX];
 	if (!pml4t_entry->present) return nullptr;
 
 	size_t	 count_so_far = 0;
@@ -150,14 +200,15 @@ void* alloc_vpages (size_t req_count, bool user) {
 		paddr_t base_physical = alloc_ppages (req_count);
 		if (base_physical == nullptr) return nullptr; // no more physical memory
 
-		vaddr_t first_vaddr = {user ? USER_PML4_IDX : KRNL_PML4_IDX, (start_page_idx >> 18) & 0x1FF,
-							   (start_page_idx >> 9) & 0x1FF, start_page_idx & 0x1FF, 0};
-		vaddr_t last_vaddr = {user ? USER_PML4_IDX : KRNL_PML4_IDX,
+		vaddr_t first_vaddr = {M_PG_IS_USER (flags) ? USER_PML4_IDX : KRNL_PML4_IDX,
+							   (start_page_idx >> 18) & 0x1FF, (start_page_idx >> 9) & 0x1FF,
+							   start_page_idx & 0x1FF, 0};
+		vaddr_t last_vaddr = {M_PG_IS_USER (flags) ? USER_PML4_IDX : KRNL_PML4_IDX,
 							  ((start_page_idx + req_count - 1) >> 18) & 0x1FF,
 							  ((start_page_idx + req_count - 1) >> 9) & 0x1FF,
 							  (start_page_idx + req_count - 1) & 0x1FF, 0};
 
-		alloc_all_vpages_in_range (first_vaddr, last_vaddr, base_physical);
+		alloc_all_vpages_in_range (first_vaddr, last_vaddr, base_physical, flags);
 		return vaddr_t_to_ptr (&first_vaddr);
 	}
 
@@ -168,7 +219,7 @@ void* alloc_vpages (size_t req_count, bool user) {
  * Allocate one virtual page
  * @return base virtual address of allocated page
  */
-void* alloc_vpage (bool user) { return alloc_vpages (1, user); }
+void* alloc_vpage (uint16_t flags) { return alloc_vpages (1, flags); }
 
 /*!
  * Check if page structure is empty
@@ -297,7 +348,7 @@ void free_vpages (void* ptr, size_t count) {
  */
 void free_vpage (void* ptr) { free_vpages (ptr, 1); }
 
-void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, bool write) {
+void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, uint16_t flags) {
 	if (num_pages == 0) return;
 	pml4t_entry_t* original_ptr = pml4_base_ptr;
 	pml4_base_ptr = (pml4t_entry_t*)(cr3 + get_hhdm_offset ());
@@ -305,9 +356,7 @@ void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, bool write) 
 
 	paddr_t physmem = alloc_ppages (num_pages);
 	alloc_all_vpages_in_range (get_vaddr_t_from_ptr ((void*)start),
-							   get_vaddr_t_from_ptr ((void*)last_page_base), physmem);
-
-	(void)write; // TODO: set rw flag
+							   get_vaddr_t_from_ptr ((void*)last_page_base), physmem, flags);
 
 	pml4_base_ptr = original_ptr;
 	write_cr3 (read_cr3 ());
@@ -321,6 +370,19 @@ void dealloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages) {
 
 	free_all_vpages_in_range (get_vaddr_t_from_ptr ((void*)start),
 							  get_vaddr_t_from_ptr ((void*)last_page_base));
+	pml4_base_ptr = original_ptr;
+	write_cr3 (read_cr3 ());
+}
+
+void reflag_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, uint16_t flags) {
+	if (num_pages == 0) return;
+	pml4t_entry_t* original_ptr = pml4_base_ptr;
+	pml4_base_ptr = (pml4t_entry_t*)(cr3 + get_hhdm_offset ());
+	uintptr_t last_page_base = ALIGN_PAGE_DOWN (start + (num_pages * PAGE_SIZE) - 1);
+
+	reflag_all_vpages_in_range (get_vaddr_t_from_ptr ((void*)start),
+								get_vaddr_t_from_ptr ((void*)last_page_base), flags);
+
 	pml4_base_ptr = original_ptr;
 	write_cr3 (read_cr3 ());
 }

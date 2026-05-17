@@ -32,7 +32,7 @@ void* init_rsdp (uintptr_t rsdp_base_ptr, uint64_t hhdm_offset) {
 		vaddr_t rsdp_vaddr_end = get_vaddr_t_from_ptr (
 			(void*)ALIGN_PAGE_DOWN (rsdp_base_ptr + hhdm_offset + sizeof (XSDP_t)));
 
-		alloc_all_vpages_in_range (rsdp_vaddr_start, rsdp_vaddr_end, rsdp_base_frame);
+		alloc_all_vpages_in_range (rsdp_vaddr_start, rsdp_vaddr_end, rsdp_base_frame, M_PG_READ);
 		rsdp_base_ptr += hhdm_offset;
 	}
 

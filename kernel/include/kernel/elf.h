@@ -6,6 +6,10 @@
 
 #define PT_LOAD 0x00000001
 
+#define PF_X 0x1
+#define PF_W 0x2
+#define PF_R 0x4
+
 typedef struct __attribute__ ((packed)) {
 	char	 elf_magic[4];
 	char	 elf_class[1];

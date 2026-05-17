@@ -1,5 +1,6 @@
 #include <kclib/stdio.h>
 #include <kclib/string.h>
+#include <kernel/error.h>
 #include <kernel/idt.h>
 #include <kernel/limine.h>
 #include <kernel/memmgt.h>
@@ -45,7 +46,13 @@ static void page_fault_handler (registers_t* registers) {
 					cr2);
 	log_registers_to_serial (registers);
 
-	send_signal (get_current_process (), SIGSEGV);
+	int error = send_signal (get_current_process (), SIGSEGV);
+	if (error == -ESRCH) {
+		kserial_printf ("No active process, halting instead.\n");
+		for (;;)
+			;
+	}
+
 	deliver_pending_signals (registers);
 }
 
@@ -61,7 +68,7 @@ static uint64_t sys_brk (uint64_t addr, uint64_t arg2, uint64_t arg3) {
 
 	if (new_pcount > old_pcount)
 		alloc_by_cr3 (current->p_cr3, current->p_heap_base + PAGE_SIZE * old_pcount,
-					  new_pcount - old_pcount, true);
+					  new_pcount - old_pcount, M_PG_READ | M_PG_WRITE | M_PG_USER);
 
 	if (new_pcount < old_pcount)
 		dealloc_by_cr3 (current->p_cr3, current->p_heap_base + PAGE_SIZE * new_pcount,
