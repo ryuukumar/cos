@@ -18,8 +18,7 @@ int do_stat (const char* restrict path, stat* restrict buf) {
 	return node->i_iops->stat (node, buf);
 }
 
-uint64_t sys_stat (uint64_t path, uint64_t buf, uint64_t arg3) {
-	(void)arg3;
+uint64_t sys_stat (uint64_t path, uint64_t buf) {
 	const char* path_us = kstrdup ((const char*)path);
 	int			error = do_stat (path_us, (stat*)buf);
 	kfree ((void*)path_us);

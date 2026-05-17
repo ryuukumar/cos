@@ -35,7 +35,4 @@ int do_getcwd (char* buf, size_t size) {
 	return do_getcwd_recurse (buf, size, current->p_wd, current->p_root);
 }
 
-uint64_t sys_getcwd (uint64_t buf, uint64_t size, uint64_t arg3) {
-	(void)arg3;
-	return do_getcwd ((char*)buf, size);
-}
+uint64_t sys_getcwd (uint64_t buf, uint64_t size) { return do_getcwd ((char*)buf, size); }

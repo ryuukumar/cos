@@ -42,7 +42,7 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 		(int64_t)sys_read ((uint64_t)fd, (uint64_t)&elf_header, (uint64_t)sizeof (elf64_header_t));
 
 	if (bytes_read != sizeof (elf64_header_t) || !verify_elf_loadable (&elf_header)) {
-		sys_close ((uint64_t)fd, 0, 0);
+		sys_close ((uint64_t)fd);
 		return -ENOEXEC;
 	}
 
@@ -98,7 +98,7 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 	target_process->p_heap_sz = 0;
 
 	kfree (program_headers);
-	sys_close ((uint64_t)fd, 0, 0);
+	sys_close ((uint64_t)fd);
 
 	*entry_point_r = elf_header.elf_entry;
 	return 0;

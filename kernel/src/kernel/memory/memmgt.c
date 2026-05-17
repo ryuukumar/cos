@@ -56,9 +56,7 @@ static void page_fault_handler (registers_t* registers) {
 	deliver_pending_signals (registers);
 }
 
-static uint64_t sys_brk (uint64_t addr, uint64_t arg2, uint64_t arg3) {
-	(void)arg2, (void)arg3;
-
+static uint64_t sys_brk (uint64_t addr) {
 	process* current = get_current_process ();
 	if (!current) return 0;
 	if (addr < current->p_heap_base) return current->p_heap_base + current->p_heap_sz;
@@ -112,7 +110,7 @@ void init_memmgt (uint64_t p_hhdm_offset, struct limine_memmap_response* memmap_
 
 	init_vmm (pml4_base_ptr);
 
-	register_syscall (SYSCALL_SYS_BRK, sys_brk);
+	register_syscall (SYSCALL_SYS_BRK, SYS1 (sys_brk));
 }
 
 /*!
