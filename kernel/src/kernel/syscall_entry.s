@@ -15,7 +15,7 @@ syscall_entry:
     pushq %rcx
 
     pushq $0
-    pushq $0x80
+    pushq $0x8000  /* set arbitrary interrupt number so we can differentiate */
 
     pushq %r15
     pushq %r14
