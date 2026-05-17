@@ -80,7 +80,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	init_acpi (rsdp);
 
 	for (int i = 0; i < 3; i++) // open stdin, stdout and stderr
-		do_syscall (SYSCALL_SYS_OPEN, (uint64_t)"/dev/tty1", 0, 0);
+		do_syscall (SYSCALL_SYS_OPEN, (uint64_t)"/dev/tty1", 0, 0, 0, 0, 0);
 
 	print_info ();
 
@@ -88,7 +88,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 
 	kprintf ("Launching /bin/hello...\n");
 
-	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0);
+	uint64_t fork_result = do_syscall (SYSCALL_SYS_FORK, 0, 0, 0, 0, 0, 0);
 
 	if (fork_result == 0) {
 		kserial_printf ("Spawned child, attempting to start elf file.\n");
@@ -98,7 +98,7 @@ __attribute__ ((noreturn)) void _start_stage2 (void) {
 	}
 
 	for (;;)
-		do_syscall (SYSCALL_SCHED_YIELD, 0, 0, 0);
+		do_syscall (SYSCALL_SCHED_YIELD, 0, 0, 0, 0, 0, 0);
 }
 
 static void get_limine_requests (void) {

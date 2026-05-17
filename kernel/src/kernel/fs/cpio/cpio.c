@@ -139,15 +139,15 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 			*last_slash = '/';
 		}
 
-		int64_t fd =
-			(int64_t)do_syscall (SYSCALL_SYS_OPEN, (uint64_t)filename, O_CREAT | O_WRONLY, 0);
+		int64_t fd = (int64_t)do_syscall (SYSCALL_SYS_OPEN, (uint64_t)filename, O_CREAT | O_WRONLY,
+										  0, 0, 0, 0);
 		if (fd >= 0) {
 			void* data = (void*)(header + 1);
 			data += namesize;
 			if ((uint64_t)data % 4) data += 4 - ((uint64_t)data % 4);
 
-			do_syscall (SYSCALL_SYS_WRITE, fd, (uint64_t)data, filesize);
-			do_syscall (SYSCALL_SYS_CLOSE, fd, 0, 0);
+			do_syscall (SYSCALL_SYS_WRITE, fd, (uint64_t)data, filesize, 0, 0, 0);
+			do_syscall (SYSCALL_SYS_CLOSE, fd, 0, 0, 0, 0, 0);
 		} else {
 			kprintf ("[CPIO] Could not write file %s : %lld\n", filename, fd);
 			goto cleanup;

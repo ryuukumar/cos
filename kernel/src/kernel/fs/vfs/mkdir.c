@@ -49,9 +49,8 @@ int do_mkdir (char* dirname, inode** result, inode* parent) {
  * @param mode (unused) mode for the new directory
  * @return 0 if successful, error otherwise
  */
-uint64_t sys_mkdir (uint64_t path, uint64_t mode, uint64_t arg3) {
+uint64_t sys_mkdir (uint64_t path, uint64_t mode) {
 	(void)mode; // TODO: consider mode when opening dirs
-	(void)arg3;
 
 	process* current = get_current_process ();
 	if (!current) return -EINVAL;

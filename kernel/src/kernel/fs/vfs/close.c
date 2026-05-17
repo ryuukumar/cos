@@ -24,9 +24,7 @@ int do_close (struct file* fd) {
  * @param fd file descriptor
  * @return 0 if successful, else error
  */
-uint64_t sys_close (uint64_t fd, uint64_t arg2, uint64_t arg3) {
-	(void)arg2, (void)arg3; // unused args
-
+uint64_t sys_close (uint64_t fd) {
 	process* current = get_current_process ();
 	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVAL;
 

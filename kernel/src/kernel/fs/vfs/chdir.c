@@ -15,7 +15,4 @@ int do_chdir (const char* path) {
 	return 0;
 }
 
-uint64_t sys_chdir (uint64_t path, uint64_t arg2, uint64_t arg3) {
-	(void)arg2, (void)arg3;
-	return (uint64_t)do_chdir ((const char*)path);
-}
+uint64_t sys_chdir (uint64_t path) { return (uint64_t)do_chdir ((const char*)path); }

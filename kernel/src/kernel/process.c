@@ -1,6 +1,7 @@
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/gdt.h>
+#include <kernel/hw/cpu_local.h>
 #include <kernel/memmgt.h>
 #include <kernel/process.h>
 #include <kernel/stack.h>
@@ -76,6 +77,7 @@ void schedule (registers_t* registers) {
 	current_process = upcoming_process;
 	current_process->p_state = TASK_RUNNING;
 	tss_set_stack (current_process->p_kstack);
+	cpu_local.kernel_rsp = current_process->p_kstack;
 
 	// context switching between the same process is buggy because of compiler evaluation gimmicks.
 	// the simplest solution is to just avoid it entirely
@@ -353,14 +355,12 @@ static uint64_t sys_waitpid (uint64_t pid, uint64_t estatus, uint64_t options) {
 	return do_waitpid (pid, (exit_status*)estatus, options);
 }
 
-static uint64_t sys_fork (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
-	(void)arg1, (void)arg2, (void)arg3; // fork does not use any args
+static uint64_t sys_fork () {
 	process* child = nullptr;
 	return process_fork (get_current_process (), &child);
 }
 
-static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
-	(void)arg2, (void)arg3;
+static uint64_t sys_exit (uint64_t status) {
 	process* current = get_current_process ();
 	current->p_state = TASK_DEAD;
 	current->p_exitstatus.info = status;
@@ -369,7 +369,7 @@ static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
 	if (current->p_parent) send_signal (current->p_parent, SIGCHLD);
 
 	for (int i = 0; i < MAX_FDS; i++)
-		if (current->p_fds[i]) sys_close (i, 0, 0);
+		if (current->p_fds[i]) sys_close (i);
 
 	process* blocked_process = nullptr;
 	do {
@@ -387,19 +387,14 @@ static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
 	return 0;
 }
 
-static uint64_t sys_getpid (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
-	(void)arg1, (void)arg2, (void)arg3;
+static uint64_t sys_getpid () {
 	process* current = get_current_process ();
 	return current ? current->p_id : 0ull;
 }
 
-static uint64_t sys_sched_yield (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
-	(void)arg1, (void)arg2, (void)arg3;
-	return do_sched_yield ();
-}
+static uint64_t sys_sched_yield () { return do_sched_yield (); }
 
-static uint64_t sys_kill (uint64_t pid, uint64_t signum, uint64_t unused) {
-	(void)unused;
+static uint64_t sys_kill (uint64_t pid, uint64_t signum) {
 	process* target = (process*)hashmap_get (pid_map, pid);
 	if (!target) return (uint64_t)-ESRCH;
 	return (uint64_t)send_signal (target, (int)signum);
@@ -422,9 +417,7 @@ static uint64_t sys_rt_sigaction (uint64_t signum, uint64_t new_action_ptr,
 	return 0;
 }
 
-static uint64_t sys_rt_sigreturn (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
-	(void)arg1, (void)arg2, (void)arg3;
-
+static uint64_t sys_rt_sigreturn () {
 	registers_t*	registers = get_latest_r_frame ();
 	uintptr_t		frame_addr = registers->rsp;
 	signal_frame_t* frame = (signal_frame_t*)frame_addr;
@@ -462,12 +455,12 @@ void init_process (void) {
 	pid_map = hashmap_create (16);
 	if (!pid_map) return;
 
-	register_syscall (SYSCALL_SYS_EXIT, sys_exit);
-	register_syscall (SYSCALL_SYS_FORK, sys_fork);
-	register_syscall (SYSCALL_SYS_GETPID, sys_getpid);
-	register_syscall (SYSCALL_SCHED_YIELD, sys_sched_yield);
-	register_syscall (SYSCALL_SYS_WAITPID, sys_waitpid);
-	register_syscall (SYSCALL_SYS_KILL, sys_kill);
-	register_syscall (SYSCALL_SYS_RT_SIGACTION, sys_rt_sigaction);
-	register_syscall (SYSCALL_SYS_RT_SIGRETURN, sys_rt_sigreturn);
+	register_syscall (SYSCALL_SYS_EXIT, SYS1 (sys_exit));
+	register_syscall (SYSCALL_SYS_FORK, SYS0 (sys_fork));
+	register_syscall (SYSCALL_SYS_GETPID, SYS0 (sys_getpid));
+	register_syscall (SYSCALL_SCHED_YIELD, SYS0 (sys_sched_yield));
+	register_syscall (SYSCALL_SYS_WAITPID, SYS3 (sys_waitpid));
+	register_syscall (SYSCALL_SYS_KILL, SYS2 (sys_kill));
+	register_syscall (SYSCALL_SYS_RT_SIGACTION, SYS3 (sys_rt_sigaction));
+	register_syscall (SYSCALL_SYS_RT_SIGRETURN, SYS0 (sys_rt_sigreturn));
 }
