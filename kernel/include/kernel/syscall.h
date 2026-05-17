@@ -1,6 +1,7 @@
 #pragma once
 
 #include <kernel/idt.h>
+#include <stddef.h>
 
 #define SYSCALL_COUNT 83
 
@@ -45,11 +46,39 @@
 #define SYSCALL_SYS_GETTIMEOFDAY 81
 #define SYSCALL_SYS_GETENTROPY	 82
 
-typedef uint64_t (*syscall_handler_t) (uint64_t, uint64_t, uint64_t);
+#define SYS0(fn) ((syscall_reg_t){.handler.sys0 = fn, .args = 0})
+#define SYS1(fn) ((syscall_reg_t){.handler.sys1 = fn, .args = 1})
+#define SYS2(fn) ((syscall_reg_t){.handler.sys2 = fn, .args = 2})
+#define SYS3(fn) ((syscall_reg_t){.handler.sys3 = fn, .args = 3})
+#define SYS4(fn) ((syscall_reg_t){.handler.sys4 = fn, .args = 4})
+#define SYS5(fn) ((syscall_reg_t){.handler.sys5 = fn, .args = 5})
+#define SYS6(fn) ((syscall_reg_t){.handler.sys6 = fn, .args = 6})
+
+typedef uint64_t (*syscall0_handler_t) ();
+typedef uint64_t (*syscall1_handler_t) (uint64_t);
+typedef uint64_t (*syscall2_handler_t) (uint64_t, uint64_t);
+typedef uint64_t (*syscall3_handler_t) (uint64_t, uint64_t, uint64_t);
+typedef uint64_t (*syscall4_handler_t) (uint64_t, uint64_t, uint64_t, uint64_t);
+typedef uint64_t (*syscall5_handler_t) (uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+typedef uint64_t (*syscall6_handler_t) (uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+
+typedef struct {
+	union {
+		syscall0_handler_t sys0;
+		syscall1_handler_t sys1;
+		syscall2_handler_t sys2;
+		syscall3_handler_t sys3;
+		syscall4_handler_t sys4;
+		syscall5_handler_t sys5;
+		syscall6_handler_t sys6;
+	} handler;
+	size_t args;
+} syscall_reg_t;
 
 void syscall_handler (registers_t* registers);
 void init_syscalls (void);
 
-void		 register_syscall (int vector, syscall_handler_t handler);
-uint64_t	 do_syscall (uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3);
+void	 register_syscall (int vector, syscall_reg_t handler);
+uint64_t do_syscall (uint64_t syscall, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4,
+					 uint64_t arg5, uint64_t arg6);
 registers_t* get_latest_r_frame (void);
