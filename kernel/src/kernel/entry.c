@@ -158,7 +158,7 @@ void _start (void) {
 	stage2_proc->p_state = TASK_READY;
 	stage2_proc->p_wd = stage2_proc->p_root = get_absolute_root ();
 
-	void* kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, false);
+	void* kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, M_PG_READ | M_PG_WRITE);
 	stage2_proc->p_kstack = (uintptr_t)kstack + STACK_SIZE;
 
 	registers_t* regs = (registers_t*)(stage2_proc->p_kstack - sizeof (registers_t));

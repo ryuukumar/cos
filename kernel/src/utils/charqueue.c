@@ -1,5 +1,6 @@
 #include <kclib/string.h>
 #include <kernel/error.h>
+#include <kernel/memmgt.h>
 #include <liballoc/liballoc.h>
 #include <utils/charqueue.h>
 #include <utils/spinlock.h>
@@ -39,7 +40,7 @@ charqueue* create_charqueue (void) {
 int push_charqueue (charqueue* queue, unsigned char insert) {
 	charqueue_page_t* new_page = nullptr;
 	if (queue->tail.current_page == nullptr || queue->tail.offset > max_offset) {
-		new_page = alloc_vpage (false);
+		new_page = alloc_vpage (M_PG_READ | M_PG_WRITE);
 		if (new_page == nullptr) return -ENOMEM;
 		new_page->next = nullptr;
 	}
@@ -48,7 +49,7 @@ int push_charqueue (charqueue* queue, unsigned char insert) {
 	if (queue->tail.current_page == nullptr || queue->tail.offset > max_offset) {
 		if (new_page == nullptr) {
 			// TODO: this should be replaced with a quicker allocation function when available
-			new_page = alloc_vpage (false);
+			new_page = alloc_vpage (M_PG_READ | M_PG_WRITE);
 			if (new_page == nullptr) {
 				spinlock_release (&queue->lock, flags);
 				return -ENOMEM;

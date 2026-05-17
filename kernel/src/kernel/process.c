@@ -146,7 +146,7 @@ int process_fork (process* source_process, process** dest_ptr) {
 
 	kmemcpy ((void*)new_process, (void*)source_process, sizeof (process));
 
-	void* new_kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, false);
+	void* new_kstack = alloc_vpages (STACK_SIZE / PAGE_SIZE, M_PG_READ | M_PG_WRITE);
 	if (!new_kstack) return -ENOMEM;
 
 	new_process->p_kstack = (uintptr_t)new_kstack + STACK_SIZE;

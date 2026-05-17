@@ -74,7 +74,8 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 		size_t	  num_pages = (end - start) / PAGE_SIZE;
 		bool	  is_writable = (ph->p_flags & 2) != 0;
 
-		alloc_by_cr3 (target_process->p_cr3, (uintptr_t)start, num_pages, is_writable);
+		alloc_by_cr3 (target_process->p_cr3, (uintptr_t)start, num_pages,
+					  M_PG_READ | M_PG_WRITE | M_PG_USER);
 
 		err = sys_seek ((uint64_t)fd, ph->p_offset, SEEK_SET);
 		if (err < 0) return err;
@@ -86,6 +87,9 @@ int load_elf (const char* filepath, process* target_process, uintptr_t* entry_po
 
 		if (ph->p_memsz > ph->p_filesz)
 			kmemset_explicit ((void*)(ph->p_vaddr + ph->p_filesz), 0, ph->p_memsz - ph->p_filesz);
+
+		reflag_by_cr3 (target_process->p_cr3, (uintptr_t)start, num_pages,
+					   M_PG_READ | (is_writable ? M_PG_WRITE : 0) | M_PG_EXEC | M_PG_USER);
 	}
 
 	init_break = ((init_break + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));

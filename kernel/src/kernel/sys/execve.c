@@ -51,7 +51,7 @@ static int do_execve (const char* path, char* const argv[], char* const envp[]) 
 	uintptr_t user_stack_base = (uintptr_t)vaddr_t_to_ptr (&us_base_vaddr);
 	size_t	  stack_pages = 4;
 	alloc_by_cr3 (get_current_process ()->p_cr3, user_stack_base - (stack_pages * PAGE_SIZE),
-				  stack_pages, true);
+				  stack_pages, M_PG_READ | M_PG_WRITE | M_PG_USER);
 
 	while (argv_cp && argv_cp[argc])
 		argc++;
