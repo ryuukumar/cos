@@ -61,18 +61,19 @@ typedef uint64_t (*syscall3_handler_t) (uint64_t, uint64_t, uint64_t);
 typedef uint64_t (*syscall4_handler_t) (uint64_t, uint64_t, uint64_t, uint64_t);
 typedef uint64_t (*syscall5_handler_t) (uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
 typedef uint64_t (*syscall6_handler_t) (uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t);
+typedef union {
+	syscall0_handler_t sys0;
+	syscall1_handler_t sys1;
+	syscall2_handler_t sys2;
+	syscall3_handler_t sys3;
+	syscall4_handler_t sys4;
+	syscall5_handler_t sys5;
+	syscall6_handler_t sys6;
+} syscall_handler_t;
 
 typedef struct {
-	union {
-		syscall0_handler_t sys0;
-		syscall1_handler_t sys1;
-		syscall2_handler_t sys2;
-		syscall3_handler_t sys3;
-		syscall4_handler_t sys4;
-		syscall5_handler_t sys5;
-		syscall6_handler_t sys6;
-	} handler;
-	size_t args;
+	syscall_handler_t handler;
+	size_t			  args;
 } syscall_reg_t;
 
 void syscall_handler (registers_t* registers);

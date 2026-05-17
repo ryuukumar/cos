@@ -17,32 +17,31 @@ void syscall_handler (registers_t* registers) {
 	if (current) current->p_registers_ptr = registers;
 
 	if (syscall_handlers[vector].handler.sys0) {
+		syscall_handler_t* uhandler = &syscall_handlers[vector].handler;
 		switch (syscall_handlers[vector].args) {
 		case 0:
-			registers->rax = syscall_handlers[vector].handler.sys0 ();
+			registers->rax = uhandler->sys0 ();
 			break;
 		case 1:
-			registers->rax = syscall_handlers[vector].handler.sys1 (registers->rdi);
+			registers->rax = uhandler->sys1 (registers->rdi);
 			break;
 		case 2:
-			registers->rax = syscall_handlers[vector].handler.sys2 (registers->rdi, registers->rsi);
+			registers->rax = uhandler->sys2 (registers->rdi, registers->rsi);
 			break;
 		case 3:
-			registers->rax = syscall_handlers[vector].handler.sys3 (registers->rdi, registers->rsi,
-																	registers->rdx);
+			registers->rax = uhandler->sys3 (registers->rdi, registers->rsi, registers->rdx);
 			break;
 		case 4:
-			registers->rax = syscall_handlers[vector].handler.sys4 (registers->rdi, registers->rsi,
-																	registers->rdx, registers->r10);
+			registers->rax =
+				uhandler->sys4 (registers->rdi, registers->rsi, registers->rdx, registers->r10);
 			break;
 		case 5:
-			registers->rax = syscall_handlers[vector].handler.sys5 (
-				registers->rdi, registers->rsi, registers->rdx, registers->r10, registers->r8);
+			registers->rax = uhandler->sys5 (registers->rdi, registers->rsi, registers->rdx,
+											 registers->r10, registers->r8);
 			break;
 		case 6:
-			registers->rax = syscall_handlers[vector].handler.sys6 (registers->rdi, registers->rsi,
-																	registers->rdx, registers->r10,
-																	registers->r8, registers->r9);
+			registers->rax = uhandler->sys6 (registers->rdi, registers->rsi, registers->rdx,
+											 registers->r10, registers->r8, registers->r9);
 			break;
 		}
 	} else {
