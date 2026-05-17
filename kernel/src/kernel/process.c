@@ -66,12 +66,12 @@ void schedule (registers_t* registers) {
 		enqueue_process (get_ready_queue (), current_process);
 	}
 
-	int errno = dequeue_process (get_ready_queue (), &upcoming_process);
-
-	if (upcoming_process == nullptr)
-		for (;;)
-			;
-	if (errno != 0) return;
+	do {
+		dequeue_process (get_ready_queue (), &upcoming_process);
+		if (upcoming_process == nullptr)
+			for (;;)
+				;
+	} while (upcoming_process->p_state == TASK_DEAD || upcoming_process->p_state == TASK_STOPPED);
 
 	current_process = upcoming_process;
 	current_process->p_state = TASK_RUNNING;
@@ -229,6 +229,11 @@ int process_fork (process* source_process, process** dest_ptr) {
 	new_process->p_waiting = kmalloc (sizeof (process_queue));
 	kmemset (new_process->p_waiting, 0, sizeof (process_queue));
 
+	new_process->p_sigmask = source_process->p_sigmask;
+	kmemcpy (new_process->p_sigactions, source_process->p_sigactions,
+			 sizeof (source_process->p_sigactions));
+	new_process->p_pending = 0;
+
 	errno = enqueue_process (get_ready_queue (), new_process);
 	if (errno != 0) {
 		free_vpages (new_kstack, STACK_SIZE / PAGE_SIZE);
@@ -243,11 +248,35 @@ int process_fork (process* source_process, process** dest_ptr) {
 
 void process_block (process_queue* wait_queue) {
 	current_process->p_state = TASK_BLOCKED;
+	current_process->p_waiting_on_queue = wait_queue;
 	enqueue_process (wait_queue, current_process);
 	do_sched_yield ();
+	current_process->p_waiting_on_queue = nullptr;
 }
 
 void process_unblock (process* p) {
+	p->p_state = TASK_READY;
+	p->p_waiting_on_queue = nullptr;
+	enqueue_process (&ready_queue, p);
+}
+
+void process_signal_wakeup (process* p) {
+	if (p->p_waiting_on_queue) {
+		process_queue* q = p->p_waiting_on_queue;
+		if (q->head == p) {
+			q->head = p->next;
+			if (q->tail == p) q->tail = nullptr;
+		} else {
+			process* cur = q->head;
+			while (cur && cur->next != p)
+				cur = cur->next;
+			if (cur) {
+				cur->next = p->next;
+				if (q->tail == p) q->tail = cur;
+			}
+		}
+		p->p_waiting_on_queue = nullptr;
+	}
 	p->p_state = TASK_READY;
 	enqueue_process (&ready_queue, p);
 }
@@ -305,6 +334,9 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 
 		do {
 			process_block (waitproc->p_waiting);
+			current = get_current_process ();
+			if (waitproc->p_state == TASK_DEAD) break;
+			if (current->p_pending & ~current->p_sigmask) return -EINTR;
 		} while (waitproc->p_state != TASK_DEAD);
 
 	pid0_exit:
@@ -333,6 +365,8 @@ static uint64_t sys_exit (uint64_t status, uint64_t arg2, uint64_t arg3) {
 	current->p_state = TASK_DEAD;
 	current->p_exitstatus.info = status;
 	current->p_exitstatus.reason = 0;
+
+	if (current->p_parent) send_signal (current->p_parent, SIGCHLD);
 
 	for (int i = 0; i < MAX_FDS; i++)
 		if (current->p_fds[i]) sys_close (i, 0, 0);
@@ -364,6 +398,64 @@ static uint64_t sys_sched_yield (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
 	return do_sched_yield ();
 }
 
+static uint64_t sys_kill (uint64_t pid, uint64_t signum, uint64_t unused) {
+	(void)unused;
+	process* target = (process*)hashmap_get (pid_map, pid);
+	if (!target) return (uint64_t)-ESRCH;
+	return (uint64_t)send_signal (target, (int)signum);
+}
+
+static uint64_t sys_rt_sigaction (uint64_t signum, uint64_t new_action_ptr,
+								  uint64_t old_action_ptr) {
+	if (signum < 1 || signum >= NSIG) return (uint64_t)-EINVAL;
+	if (signum == SIGKILL || signum == SIGSTOP) return (uint64_t)-EINVAL;
+
+	process* p = get_current_process ();
+	if (!p) return (uint64_t)-ESRCH;
+
+	if (old_action_ptr)
+		kmemcpy ((void*)old_action_ptr, &p->p_sigactions[signum], sizeof (sigaction));
+
+	if (new_action_ptr)
+		kmemcpy (&p->p_sigactions[signum], (void*)new_action_ptr, sizeof (sigaction));
+
+	return 0;
+}
+
+static uint64_t sys_rt_sigreturn (uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+	(void)arg1, (void)arg2, (void)arg3;
+
+	registers_t*	registers = get_latest_r_frame ();
+	uintptr_t		frame_addr = registers->rsp;
+	signal_frame_t* frame = (signal_frame_t*)frame_addr;
+
+	process* p = get_current_process ();
+	p->p_sigmask = frame->saved_sigmask;
+
+	registers->rax = frame->rax;
+	registers->rbx = frame->rbx;
+	registers->rcx = frame->rcx;
+	registers->rdx = frame->rdx;
+	registers->rbp = frame->rbp;
+	registers->rsi = frame->rsi;
+	registers->rdi = frame->rdi;
+	registers->r8 = frame->r8;
+	registers->r9 = frame->r9;
+	registers->r10 = frame->r10;
+	registers->r11 = frame->r11;
+	registers->r12 = frame->r12;
+	registers->r13 = frame->r13;
+	registers->r14 = frame->r14;
+	registers->r15 = frame->r15;
+	registers->rip = frame->rip;
+	registers->rflags = frame->rflags;
+	registers->rsp = frame->rsp;
+	registers->cs = frame->cs;
+	registers->ss = frame->ss;
+
+	return registers->rax;
+}
+
 void init_process (void) {
 	ready_queue.head = ready_queue.tail = nullptr;
 	next_free_pid = 2ll;
@@ -375,4 +467,7 @@ void init_process (void) {
 	register_syscall (SYSCALL_SYS_GETPID, sys_getpid);
 	register_syscall (SYSCALL_SCHED_YIELD, sys_sched_yield);
 	register_syscall (SYSCALL_SYS_WAITPID, sys_waitpid);
+	register_syscall (SYSCALL_SYS_KILL, sys_kill);
+	register_syscall (SYSCALL_SYS_RT_SIGACTION, sys_rt_sigaction);
+	register_syscall (SYSCALL_SYS_RT_SIGRETURN, sys_rt_sigreturn);
 }

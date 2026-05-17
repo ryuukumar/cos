@@ -19,6 +19,8 @@
 
 // The following will have numbers changed
 
+#define SYSCALL_SYS_RT_SIGACTION 239
+#define SYSCALL_SYS_RT_SIGRETURN 240
 #define SYSCALL_SYS_IOCTL		 241
 #define SYSCALL_SYS_GETCWD		 242
 #define SYSCALL_SYS_CHDIR		 243

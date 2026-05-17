@@ -2,6 +2,7 @@
 
 #include <kernel/fs/vfs.h>
 #include <kernel/idt.h>
+#include <kernel/signal.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <utils/hashmap32.h>
@@ -13,7 +14,7 @@
 typedef struct process		 process;
 typedef struct process_queue process_queue;
 
-typedef enum { TASK_RUNNING, TASK_READY, TASK_BLOCKED, TASK_DEAD } task_state_t;
+typedef enum { TASK_RUNNING, TASK_READY, TASK_BLOCKED, TASK_STOPPED, TASK_DEAD } task_state_t;
 
 typedef union {
 	int32_t raw;
@@ -43,6 +44,10 @@ struct process {
 	process*	   p_parent;
 	exit_status	   p_exitstatus;
 	int64_t		   p_waitforchild;
+	process_queue* p_waiting_on_queue;
+	uint64_t	   p_pending;
+	uint64_t	   p_sigmask;
+	sigaction	   p_sigactions[NSIG];
 };
 
 struct process_queue {
@@ -59,6 +64,10 @@ int enqueue_process (process_queue* queue, process* new_process);
 
 void process_block (process_queue* wait_queue);
 void process_unblock (process* p);
+void process_signal_wakeup (process* p);
+
+int	 send_signal (process* target, int signum);
+void deliver_pending_signals (registers_t* registers);
 
 void schedule (registers_t* registers);
 

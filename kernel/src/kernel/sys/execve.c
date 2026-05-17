@@ -42,6 +42,11 @@ static int do_execve (const char* path, char* const argv[], char* const envp[]) 
 	err = load_elf (path_cp, get_current_process (), &entry_point);
 	if (err != 0) goto cleanup_envc_argc_path;
 
+	process* p = get_current_process ();
+	for (int i = 1; i < NSIG; i++)
+		if (p->p_sigactions[i].sa_handler != SIG_IGN) p->p_sigactions[i].sa_handler = SIG_DFL;
+	p->p_pending = 0;
+
 	vaddr_t	  us_base_vaddr = {254, 255, 0, 0, 0};
 	uintptr_t user_stack_base = (uintptr_t)vaddr_t_to_ptr (&us_base_vaddr);
 	size_t	  stack_pages = 4;

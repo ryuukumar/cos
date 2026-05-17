@@ -3,10 +3,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#ifndef WCOREDUMP
+#define WCOREDUMP(s) ((s) & 0x80)
+#endif
+
 extern char** environ;
+
+static void print_signal_status (int status) {
+	if (!WIFSIGNALED (status)) return;
+	fprintf (stderr, "%s%s\n", strsignal (WTERMSIG (status)),
+			 WCOREDUMP (status) ? " (core dumped)" : "");
+}
+
+static int exit_status_from_wait (int status) {
+	if (WIFSIGNALED (status)) return 128 + WTERMSIG (status);
+	return WEXITSTATUS (status);
+}
 
 static int exec_and_wait (const char* path, char** argv) {
 	pid_t pid = fork ();
@@ -20,7 +36,8 @@ static int exec_and_wait (const char* path, char** argv) {
 	}
 	int status = 0;
 	waitpid (pid, &status, 0);
-	return WEXITSTATUS (status);
+	print_signal_status (status);
+	return exit_status_from_wait (status);
 }
 
 static int try_exec_in_path (char** argv) {
@@ -43,9 +60,10 @@ static int try_exec_in_path (char** argv) {
 		waitpid (pid, &status, 0);
 		free (buf);
 
-		if (WEXITSTATUS (status) != 127) {
+		if (exit_status_from_wait (status) != 127) {
 			free (path_copy);
-			return WEXITSTATUS (status);
+			print_signal_status (status);
+			return exit_status_from_wait (status);
 		}
 		entry = strtok (NULL, ":");
 	}
