@@ -3,6 +3,12 @@
 #include <kernel/con/con.h>
 #include <kernel/serial.h>
 #include <liballoc/liballoc.h>
+#include <utils/spinlock.h>
+
+#define FMT_BUF_SIZE 256
+
+static char fmt_buffer[FMT_BUF_SIZE];
+static bool fmt_lock = false;
 
 static uint64_t uint_str_to_num (const char* str, size_t len) {
 	uint64_t res = 0;
@@ -16,7 +22,10 @@ static uint64_t uint_str_to_num (const char* str, size_t len) {
 /*!
  * Handle the next % case in printf. Currently handles: d,i -> signed int, u -> unsigned int, x,X ->
  * unsigned hexadecimal (case not considered), l,ll prefix -> 64-bit, h prefix -> 16-bit, hh prefix
- * -> 8-bit, s -> string, % -> actual % sign, c -> character (signed), p -> 64-bit pointer
+ * -> 8-bit, s -> string, % -> actual % sign, c -> character (signed), p -> 64-bit pointer.
+ *
+ * All cases except %s are guaranteed to not use dynamic memory allocation
+ *
  * @param input full input fmt string
  * @param idx pointer to index at which % was encountered
  * @param list argument list
@@ -29,6 +38,8 @@ static size_t format_handler (const char* input, size_t idx, va_list* list, char
 		return 0;
 	}
 
+	uint64_t irq_flags = spinlock_acquire (&fmt_lock);
+
 	size_t consumed = 1; /* '%' */
 	size_t input_bytes = 32;
 	size_t pad_width = 0;
@@ -40,12 +51,10 @@ static size_t format_handler (const char* input, size_t idx, va_list* list, char
 			idx++, consumed++;
 			pad_char = '0';
 		}
-
 		size_t num_len = idx;
 		while ('0' <= input[idx] && input[idx] <= '9')
 			idx++, consumed++;
 		num_len = idx - num_len;
-
 		pad_width = uint_str_to_num ((const char*)&input[idx - num_len], num_len);
 	}
 
@@ -61,80 +70,99 @@ static size_t format_handler (const char* input, size_t idx, va_list* list, char
 	char spec = input[idx++];
 	consumed++;
 
-	char* buf = NULL;
+	char* buf = nullptr;
+	bool  buf_is_allocated = false;
+
 	switch (spec) {
-	case 's':
+	case 's': {
 		char* str = kstrdup (va_arg (*list, const char*));
-		if (str) buf = str;
+		if (str) {
+			buf = str;
+			buf_is_allocated = true;
+		}
 		break;
+	}
 	case 'c':
-		buf = kmalloc (2);
-		buf[0] = (char)va_arg (*list, int);
-		buf[1] = '\0';
+		fmt_buffer[0] = (char)va_arg (*list, int);
+		fmt_buffer[1] = '\0';
+		buf = fmt_buffer;
 		break;
 	case '%':
-		buf = kmalloc (2);
-		buf[0] = '%';
-		buf[1] = '\0';
+		fmt_buffer[0] = '%';
+		fmt_buffer[1] = '\0';
+		buf = fmt_buffer;
 		break;
 	case 'p':
-		buf = kmalloc (19);
-		buf[0] = '0';
-		buf[1] = 'x';
-		kulitos ((uint64_t)va_arg (*list, void*), buf + 2, 16);
+		fmt_buffer[0] = '0';
+		fmt_buffer[1] = 'x';
+		kulitos ((uint64_t)va_arg (*list, void*), fmt_buffer + 2, 16);
+		buf = fmt_buffer;
 		break;
 	case 'd':
 	case 'i':
-		if (input_bytes == 64) {
-			buf = kmalloc (65);
-			kulitos (va_arg (*list, uint64_t), buf, 10);
-		} else {
-			buf = kmalloc (33);
-			kitos (va_arg (*list, int32_t), buf, 10);
-		}
+		if (input_bytes == 64)
+			kulitos (va_arg (*list, uint64_t), fmt_buffer, 10);
+		else
+			kitos (va_arg (*list, int32_t), fmt_buffer, 10);
+		buf = fmt_buffer;
 		break;
 	case 'u':
-		if (input_bytes == 64) {
-			buf = kmalloc (65);
-			kulitos (va_arg (*list, uint64_t), buf, 10);
-		} else {
-			buf = kmalloc (33);
-			kulitos (va_arg (*list, uint32_t), buf, 10);
-		}
+		if (input_bytes == 64)
+			kulitos (va_arg (*list, uint64_t), fmt_buffer, 10);
+		else
+			kulitos (va_arg (*list, uint32_t), fmt_buffer, 10);
+		buf = fmt_buffer;
 		break;
 	case 'x':
 	case 'X':
-		if (input_bytes == 64) {
-			buf = kmalloc (17);
-			kulitos (va_arg (*list, uint64_t), buf, 16);
-		} else {
-			buf = kmalloc (9);
-			kulitos (va_arg (*list, uint32_t), buf, 16);
-		}
+		if (input_bytes == 64)
+			kulitos (va_arg (*list, uint64_t), fmt_buffer, 16);
+		else
+			kulitos (va_arg (*list, uint32_t), fmt_buffer, 16);
+		buf = fmt_buffer;
 		break;
 	default:
+		spinlock_release (&fmt_lock, irq_flags);
 		*r_output = nullptr;
 		return consumed;
 	}
 
 	if (pad_width > 0 && buf) {
 		size_t len = kstrlen (buf);
-
 		if (pad_width > len) {
-			size_t newlen = pad_width;
-			char*  pbuf = kmalloc (newlen + 1);
-			size_t pad = pad_width - len;
+			if (pad_width < FMT_BUF_SIZE) {
+				size_t pad = pad_width - len;
+				for (size_t i = len + 1; i > 0; i--)
+					fmt_buffer[pad + i - 1] = buf[i - 1];
+				for (size_t i = 0; i < pad; i++)
+					fmt_buffer[i] = pad_char;
 
-			for (size_t i = 0; i < pad; i++)
-				pbuf[i] = pad_char;
-
-			kmemcpy (pbuf + pad, buf, len + 1);
-			kfree (buf);
-			buf = pbuf;
+				if (buf_is_allocated) kfree (buf);
+				buf = fmt_buffer;
+				buf_is_allocated = false;
+			} else {
+				size_t newlen = pad_width;
+				char*  pbuf = kmalloc (newlen + 1);
+				if (pbuf) {
+					size_t pad = pad_width - len;
+					for (size_t i = 0; i < pad; i++)
+						pbuf[i] = pad_char;
+					kmemcpy (pbuf + pad, buf, len + 1);
+					if (buf_is_allocated) kfree (buf);
+					buf = pbuf;
+					buf_is_allocated = true;
+				}
+			}
 		}
 	}
 
 	*r_output = buf;
+
+	if (buf != fmt_buffer)
+		spinlock_release (&fmt_lock, irq_flags);
+	else
+		spinlock_release (&fmt_lock, irq_flags);
+
 	return consumed;
 }
 
