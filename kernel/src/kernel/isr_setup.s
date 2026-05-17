@@ -22,6 +22,11 @@ isr\num:
 .extern kernel_dispatch_interrupt
 
 isr_common_stub:
+    testb $3, 24(%rsp)
+    jz    .Lno_swapgs_entry
+    swapgs
+.Lno_swapgs_entry:
+
     pushq %r15
     pushq %r14
     pushq %r13
@@ -60,7 +65,13 @@ restore_registers_and_iret:
     popq %r15
 
     addq $16, %rsp
+    
+    testb $3, 8(%rsp)
+    jz    .Lno_swapgs_exit
+    swapgs
+.Lno_swapgs_exit:
     iretq
+
 
 .global switch_to
 switch_to:

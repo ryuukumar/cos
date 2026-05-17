@@ -1,6 +1,7 @@
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/gdt.h>
+#include <kernel/hw/cpu_local.h>
 #include <kernel/memmgt.h>
 #include <kernel/process.h>
 #include <kernel/stack.h>
@@ -76,6 +77,7 @@ void schedule (registers_t* registers) {
 	current_process = upcoming_process;
 	current_process->p_state = TASK_RUNNING;
 	tss_set_stack (current_process->p_kstack);
+	cpu_local.kernel_rsp = current_process->p_kstack;
 
 	// context switching between the same process is buggy because of compiler evaluation gimmicks.
 	// the simplest solution is to just avoid it entirely

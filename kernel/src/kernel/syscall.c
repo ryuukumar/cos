@@ -2,8 +2,12 @@
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/exec.h>
+#include <kernel/hw/cpu_local.h>
+#include <kernel/io.h>
 #include <kernel/process.h>
 #include <kernel/syscall.h>
+
+extern void syscall_entry (void);
 
 syscall_reg_t syscall_handlers[SYSCALL_COUNT];
 registers_t*  latest_frame;
@@ -77,6 +81,14 @@ inline registers_t* get_latest_r_frame (void) { return latest_frame; }
 
 void init_syscalls (void) {
 	latest_frame = nullptr;
+
+	wrmsr (IA32_EFER, rdmsr (IA32_EFER) | 1);
+	wrmsr (IA32_STAR, ((uint64_t)0x0030 << 48) | ((uint64_t)0x0028 << 32));
+	wrmsr (IA32_LSTAR, (uint64_t)syscall_entry);
+	wrmsr (IA32_FMASK, (1 << 9) | (1 << 10));
+
+	init_cpu_local ();
+
 	idt_register_handler (0x80, syscall_handler);
 	idt_set_flags (0x80, 0x0E, 3, 0);
 	kmemset (syscall_handlers, 0, SYSCALL_COUNT * sizeof (syscall_reg_t));
