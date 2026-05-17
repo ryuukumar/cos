@@ -11,6 +11,16 @@
 #define PAGE_SIZE		   4096ull
 #define ALIGN_PAGE_DOWN(x) ((x) & ~(PAGE_SIZE - 1))
 
+#define M_PG_READ  0x0001
+#define M_PG_WRITE 0x0002
+#define M_PG_EXEC  0x0004
+#define M_PG_USER  0x0008
+
+#define M_PG_IS_READ(x)	 ((x) & M_PG_READ)
+#define M_PG_IS_WRITE(x) ((x) & M_PG_WRITE)
+#define M_PG_IS_EXEC(x)	 ((x) & M_PG_EXEC)
+#define M_PG_IS_USER(x)	 ((x) & M_PG_USER)
+
 typedef struct {
 	uint64_t present : 1;			 // Page present in memory
 	uint64_t read_write : 1;		 // Read-write flag
@@ -101,16 +111,18 @@ bool	is_vaddr_t_user (vaddr_t* addr);
 bool	is_vaddr_t_lt (vaddr_t* a, vaddr_t* b);
 bool	is_vaddr_t_eq (vaddr_t a, vaddr_t b);
 
-void* alloc_vpages (size_t req_count, bool user);
-void* alloc_vpage (bool user);
+void* alloc_vpages (size_t req_count, uint16_t flags);
+void* alloc_vpage (uint16_t flags);
 void  free_vpages (void* ptr, size_t count);
 void  free_vpage (void* ptr);
 void  init_vmm (pml4t_entry_t* kernel_pml4);
 
-void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr);
+void alloc_all_vpages_in_range (vaddr_t first, vaddr_t last, paddr_t base_addr, uint16_t flags);
 void free_all_vpages_in_range (vaddr_t first, vaddr_t last);
-void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, bool write);
+void reflag_all_vpages_in_range (vaddr_t first, vaddr_t last, uint16_t flags);
+void alloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, uint16_t flags);
 void dealloc_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages);
+void reflag_by_cr3 (uint64_t cr3, uintptr_t start, size_t num_pages, uint16_t flags);
 
 void  init_memmgt (uint64_t, struct limine_memmap_response*);
 void  walk_pagetable (void);
