@@ -38,3 +38,6 @@ chmod +x build.sh
 This will generate a file `image.iso` inside your working directory. Use VMWare or your favourite VM emulator (or put it on a liveCD if you're brave enough) to run and test it out. Or run `qemu.sh` to run it on QEMU.
 
 ![An image of COS saying 'Hello, world!'](images/hello%20world.png)
+
+## License
+This project is licensed under the GNU General Public License v2.0 - see the [LICENSE](LICENSE) file for details.
