@@ -307,7 +307,7 @@ parent_unlinked:
 
 int close (inode* node, file* f) {
 	(void)f;
-	if (node->i_cnt == 0) delete_node (node);
+	if (node->i_cnt == 0 && node->i_type != DIRECTORY) delete_node (node);
 	return 0;
 }
 
@@ -326,6 +326,7 @@ inode* init_ramfs_root (void) {
 	root_inode->i_fops = &f_ops;
 	root_inode->i_no = next_inode++;
 	root_inode->i_parent = root_inode;
+	root_inode->i_cnt = 1; // the single reference is us, COS
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)root_inode->i_pvt)->d_count = 2;
