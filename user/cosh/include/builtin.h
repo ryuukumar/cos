@@ -33,3 +33,4 @@ int builtin_source (int argc, char** argv);
 int builtin_stat (int argc, char** argv);
 int builtin_test (int argc, char** argv);
 int builtin_touch (int argc, char** argv);
+int builtin_unlink (int argc, char** argv);
