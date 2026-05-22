@@ -287,14 +287,12 @@ static void delete_node (inode* node) {
 		if (d_child->c_inode == node) {
 			kfree (d_child->c_name);
 			dir_content->d_children[i] = dir_content->d_children[--dir_content->d_count];
-			void* tmp = kmalloc ((dir_content->d_count) * sizeof (child_t));
-			if (tmp) {
-				kmemcpy (tmp, dir_content->d_children, dir_content->d_count * sizeof (child_t));
-				kfree (dir_content->d_children);
+			void* tmp =
+				krealloc (dir_content->d_children, (dir_content->d_count) * sizeof (child_t));
+			if (tmp)
 				dir_content->d_children = tmp;
-			} else {
+			else
 				kmemset (&dir_content->d_children[dir_content->d_count], 0, sizeof (child_t));
-			}
 			break;
 		}
 	}
