@@ -286,8 +286,8 @@ static void delete_node (inode* node) {
 
 		if (d_child->c_inode == node) {
 			kfree (d_child->c_name);
-			dir_content->d_children[i] = dir_content->d_children[dir_content->d_count--];
-			void* tmp = kmalloc ((dir_content->d_count - 1) * sizeof (child_t));
+			dir_content->d_children[i] = dir_content->d_children[--dir_content->d_count];
+			void* tmp = kmalloc ((dir_content->d_count) * sizeof (child_t));
 			if (tmp) {
 				kmemcpy (tmp, dir_content->d_children, dir_content->d_count * sizeof (child_t));
 				kfree (dir_content->d_children);
