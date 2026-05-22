@@ -1,5 +1,5 @@
 /*
- * close.c
+ * unlink.c
  * Copyright (C) 2026  Aditya Kumar
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
@@ -14,38 +14,30 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
+#include <stddef.h>
 
-/*!
- * Execute the close routine and free the file structure if applicable.
- * @param fd pointer to the file structure to close
- * @return 0 if successful, error (<0) otherwise
- */
-int do_close (struct file* fd) {
-	if (!fd) return -EINVAL;
-	if (--fd->f_cnt == 0) {
-		fd->f_inode->i_cnt--;
-		if (fd->f_fops && fd->f_fops->close) fd->f_fops->close (fd->f_inode, fd);
-		kfree (fd);
-	}
-	return 0;
+int do_unlink (const char* path) {
+	if (!path) return -EINVAL;
+
+	process* current = get_current_process ();
+	inode*	 node = nullptr;
+
+	int error = do_lookup ((char*)path, &node, current->p_root, current->p_wd);
+	if (error != 0) return error;
+
+	if (node->i_type == DIRECTORY) return -EISDIR;
+	if (!node->i_iops || !node->i_iops->unlink) return -ENOSYS;
+	return node->i_iops->unlink (node);
 }
 
-/*!
- * Close a file descriptor associated to an fd. If this was the last reference to the file
- * descriptor, frees the file descriptor.
- * @param fd file descriptor
- * @return 0 if successful, else error
- */
-uint64_t sys_close (uint64_t fd) {
-	process* current = get_current_process ();
-	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVAL;
-
-	struct file* f = current->p_fds[fd];
-	current->p_fds[fd] = nullptr;
-
-	return (uint64_t)do_close (f);
+uint64_t sys_unlink (uint64_t path) {
+	const char* path_us = kstrdup ((const char*)path);
+	int			error = do_unlink (path_us);
+	kfree ((void*)path_us);
+	return error;
 }

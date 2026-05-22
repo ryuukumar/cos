@@ -51,6 +51,7 @@ typedef struct {
 	int (*create) (char*, inode**, inode*);
 	int (*mkdir) (char*, inode**, inode*);
 	int (*stat) (inode*, stat*);
+	int (*unlink) (inode*);
 } inode_operations;
 
 typedef struct {
@@ -93,6 +94,7 @@ int do_chdir (const char* path);
 int do_getcwd (char* buf, size_t size);
 int do_create (char* filename, inode** result, inode* parent);
 int do_lookup (char* filename, inode** result, inode* root, inode* cwd);
+int do_unlink (const char* path);
 
 int do_read (struct file* f, void* buf, size_t size);
 int do_seek (struct file* f, size_t offset, int whence);
@@ -116,6 +118,7 @@ uint64_t sys_getcwd (uint64_t buf, uint64_t size);
 uint64_t sys_fstat (uint64_t fd, uint64_t buf);
 uint64_t sys_stat (uint64_t path, uint64_t buf);
 uint64_t sys_ioctl (uint64_t fd, uint64_t req, uint64_t arg);
+uint64_t sys_unlink (uint64_t path);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);
