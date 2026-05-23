@@ -51,6 +51,8 @@ int dispatch_builtin (size_t argc, char** argv) {
 		return builtin_test (argc, argv);
 	else if (strcmp (argv[0], "clear") == 0)
 		return builtin_clear (argc, argv);
+	else if (strcmp (argv[0], "unlink") == 0)
+		return builtin_unlink (argc, argv);
 
 	return -1;
 }

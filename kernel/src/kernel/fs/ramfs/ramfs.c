@@ -28,12 +28,13 @@ static inode_operations i_ops = {.lookup = lookup,
 								 .lookup_by_ino = lookup_by_ino,
 								 .mkdir = mkdir,
 								 .create = create,
-								 .stat = istat};
+								 .stat = istat,
+								 .unlink = unlink};
 static file_operations	f_ops = {.read = read,
 								 .write = write,
 								 .seek = seek,
 								 .open = nullptr,
-								 .close = nullptr,
+								 .close = close,
 								 .getdents = getdents,
 								 .fstat = fstat};
 
@@ -48,6 +49,7 @@ int mkdir (char* dirname, inode** result, inode* root) {
 	new_dir->i_fops = &f_ops;
 	new_dir->i_no = next_inode++;
 	new_dir->i_parent = root;
+	new_dir->i_cnt = 1;
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)new_dir->i_pvt)->d_count = 2;
@@ -85,6 +87,7 @@ int create (char* filename, inode** result, inode* root) {
 	new_file->i_fops = &f_ops;
 	new_file->i_no = next_inode++;
 	new_file->i_parent = root;
+	new_file->i_cnt = 1;
 
 	// construct parent replacement structures
 	dir_content_t* parent_pvt = (dir_content_t*)root->i_pvt;
@@ -272,6 +275,48 @@ int fstat (inode* node, file* f, stat* buf) {
 	return istat (node, buf);
 }
 
+static void delete_node (inode* node) {
+	inode* parent_node = node->i_parent;
+	if (parent_node == node || !parent_node) goto parent_unlinked;
+
+	dir_content_t* dir_content = (dir_content_t*)parent_node->i_pvt;
+	for (uint64_t i = 0; i < dir_content->d_count; i++) {
+		child_t* d_child = &dir_content->d_children[i];
+		if (!d_child->c_inode || !d_child->c_name) continue;
+
+		if (d_child->c_inode == node) {
+			kfree (d_child->c_name);
+			dir_content->d_children[i] = dir_content->d_children[--dir_content->d_count];
+			void* tmp =
+				krealloc (dir_content->d_children, (dir_content->d_count) * sizeof (child_t));
+			if (tmp)
+				dir_content->d_children = tmp;
+			else
+				kmemset (&dir_content->d_children[dir_content->d_count], 0, sizeof (child_t));
+			break;
+		}
+	}
+
+parent_unlinked:
+	if (node->i_pvt) kfree (node->i_pvt);
+	if (node->i_fsinfo) kfree (node->i_fsinfo);
+	if (node->i_info.ramfs_info) kfree (node->i_info.ramfs_info);
+
+	kfree (node);
+}
+
+int close (inode* node, file* f) {
+	(void)f;
+	if (node->i_cnt == 0 && node->i_type != DIRECTORY) delete_node (node);
+	return 0;
+}
+
+int unlink (inode* node) {
+	node->i_cnt--;
+	if (node->i_cnt == 0) delete_node (node);
+	return 0;
+}
+
 inode* init_ramfs_root (void) {
 	root_inode = kmalloc (sizeof (inode));
 	kmemset ((void*)root_inode, 0, sizeof (inode));
@@ -281,6 +326,7 @@ inode* init_ramfs_root (void) {
 	root_inode->i_fops = &f_ops;
 	root_inode->i_no = next_inode++;
 	root_inode->i_parent = root_inode;
+	root_inode->i_cnt = 1; // the single reference is us, COS
 
 	// manually add the '.' and '..' entries
 	((dir_content_t*)root_inode->i_pvt)->d_count = 2;

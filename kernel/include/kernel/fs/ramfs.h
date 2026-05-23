@@ -30,6 +30,8 @@ int seek (inode* node, file* f, size_t offset, int whence);
 int getdents (inode* node, file* f, void* buf, size_t count);
 int istat (inode* node, stat* buf);
 int fstat (inode* node, file* f, stat* buf);
+int close (inode* node, file* f);
+int unlink (inode* node);
 
 typedef struct {
 	char*  c_name;

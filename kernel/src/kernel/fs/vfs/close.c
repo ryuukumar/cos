@@ -27,8 +27,8 @@
 int do_close (struct file* fd) {
 	if (!fd) return -EINVAL;
 	if (--fd->f_cnt == 0) {
-		if (fd->f_fops && fd->f_fops->close) fd->f_fops->close (fd->f_inode, fd);
 		fd->f_inode->i_cnt--;
+		if (fd->f_fops && fd->f_fops->close) fd->f_fops->close (fd->f_inode, fd);
 		kfree (fd);
 	}
 	return 0;

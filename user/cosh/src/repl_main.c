@@ -145,7 +145,7 @@ int repl_loop (void) {
 	cmdbuf[strcspn (cmdbuf, "\n")] = '\0';
 	if (cmdbuf[0] == '\0') return 0;
 	last_exit = run_line (cmdbuf);
-	if (last_exit != 0) printf ("\033[31mexited with non-zero status: %i\n", last_exit);
+	if (last_exit != 0) printf ("\033[31m[%i] ", last_exit);
 
 	return 0;
 }

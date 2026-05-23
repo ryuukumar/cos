@@ -1,5 +1,5 @@
 /*
- * builtin.h
+ * unlink.c
  * Copyright (C) 2026  Aditya Kumar
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
@@ -14,23 +14,30 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
+#include <kclib/string.h>
+#include <kernel/error.h>
+#include <kernel/fs/vfs.h>
+#include <kernel/process.h>
+#include <liballoc/liballoc.h>
 #include <stddef.h>
 
-int dispatch_builtin (size_t argc, char** argv);
+int do_unlink (const char* path) {
+	if (!path) return -EINVAL;
 
-int builtin_chdir (int argc, char** argv);
-int builtin_clear (int argc, char** argv);
-int builtin_echo (int argc, char** argv);
-int builtin_eval (int argc, char** argv);
-int builtin_exit (int argc, char** argv);
-int builtin_getpid (int argc, char** argv);
-int builtin_ls (int argc, char** argv);
-int builtin_mkdir (int argc, char** argv);
-int builtin_pwd (int argc, char** argv);
-int builtin_source (int argc, char** argv);
-int builtin_stat (int argc, char** argv);
-int builtin_test (int argc, char** argv);
-int builtin_touch (int argc, char** argv);
-int builtin_unlink (int argc, char** argv);
+	process* current = get_current_process ();
+	inode*	 node = nullptr;
+
+	int error = do_lookup ((char*)path, &node, current->p_root, current->p_wd);
+	if (error != 0) return error;
+
+	if (node->i_type == DIRECTORY) return -EISDIR;
+	if (!node->i_iops || !node->i_iops->unlink) return -ENOSYS;
+	return node->i_iops->unlink (node);
+}
+
+uint64_t sys_unlink (uint64_t path) {
+	const char* path_us = kstrdup ((const char*)path);
+	int			error = do_unlink (path_us);
+	kfree ((void*)path_us);
+	return error;
+}
