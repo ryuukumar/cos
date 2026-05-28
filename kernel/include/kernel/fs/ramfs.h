@@ -32,6 +32,7 @@ int istat (inode* node, stat* buf);
 int fstat (inode* node, file* f, stat* buf);
 int close (inode* node, file* f);
 int unlink (inode* node);
+int rename (inode* node, const char* new);
 
 typedef struct {
 	char*  c_name;

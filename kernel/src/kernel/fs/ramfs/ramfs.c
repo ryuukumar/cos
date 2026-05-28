@@ -29,7 +29,8 @@ static inode_operations i_ops = {.lookup = lookup,
 								 .mkdir = mkdir,
 								 .create = create,
 								 .stat = istat,
-								 .unlink = unlink};
+								 .unlink = unlink,
+								.rename = rename};
 static file_operations	f_ops = {.read = read,
 								 .write = write,
 								 .seek = seek,
@@ -315,6 +316,11 @@ int unlink (inode* node) {
 	node->i_cnt--;
 	if (node->i_cnt == 0) delete_node (node);
 	return 0;
+}
+
+int rename (inode* node, const char* new) {
+	inode* parent_node = node->i_parent;
+	if (parent_node == node || !parent_node) return 0;
 }
 
 inode* init_ramfs_root (void) {
