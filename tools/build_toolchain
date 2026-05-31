@@ -126,3 +126,15 @@ mkdir "$BUILD_DIR/libcos-rcos"
 cd "$BUILD_DIR/libcos-rcos"
 
 $MAKE -C "$PROJ_DIR/lib/cos" CC=x86_64-rcos-gcc AR=x86_64-rcos-ar
+
+# build gcc stage 2
+
+[ -d "$BUILD_DIR/build-gcc-s2" ] && rm -rf "$BUILD_DIR/build-gcc-s2"
+
+mkdir "$BUILD_DIR/build-gcc-s2"
+
+cd "$BUILD_DIR/build-gcc-s2"
+../gcc/gcc-$GCC_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --enable-languages=c,c++ --with-sysroot="$SYSROOT_DIR" --with-newlib --without-headers --disable-hosted-libstdcxx
+
+$MAKE all-gcc all-target-libgcc -j$NPROC > "$BUILD_DIR/gcc.log" 2>&1
+$MAKE install-gcc install-target-libgcc > "$BUILD_DIR/gcc-install.log" 2>&1
