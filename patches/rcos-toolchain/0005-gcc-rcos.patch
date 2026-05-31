@@ -1,0 +1,95 @@
+diff -ur gcc og/gcc-15.2.0/config.sub gcc/gcc-15.2.0/config.sub
+--- gcc og/gcc-15.2.0/config.sub	2026-05-31 14:53:56
++++ gcc/gcc-15.2.0/config.sub	2026-05-31 14:52:01
+@@ -499,6 +499,10 @@
+ 				basic_machine=i586-unknown
+ 				basic_os=pw32
+ 				;;
++			rcos)
++				basic_machine=x86_64-pc
++				basic_os=rcos
++				;;
+ 			rdos | rdos64)
+ 				basic_machine=x86_64-pc
+ 				basic_os=rdos
+@@ -1745,7 +1749,7 @@
+ 	     | os2* | vos* | palmos* | uclinux* | nucleus* | morphos* \
+ 	     | scout* | superux* | sysv* | rtmk* | tpf* | windiss* \
+ 	     | powermax* | dnix* | nx6 | nx7 | sei* | dragonfly* \
+-	     | skyos* | haiku* | rdos* | toppers* | drops* | es* \
++	     | skyos* | haiku* | rcos* | rdos* | toppers* | drops* | es* \
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+ 	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
+diff -ur gcc og/gcc-15.2.0/fixincludes/mkfixinc.sh gcc/gcc-15.2.0/fixincludes/mkfixinc.sh
+--- gcc og/gcc-15.2.0/fixincludes/mkfixinc.sh	2025-08-08 12:21:39
++++ gcc/gcc-15.2.0/fixincludes/mkfixinc.sh	2026-05-31 15:08:46
+@@ -13,6 +13,7 @@
+ case $machine in
+     i?86-*-cygwin* | \
+     *-mingw32* | \
++    *-rcos* | *-*-rcos* | \
+     powerpc-*-eabisim* | \
+     powerpc-*-eabi*    | \
+     powerpc-*-rtems*   | \
+Only in gcc/gcc-15.2.0/gcc/config: rcos.h
+diff -ur gcc og/gcc-15.2.0/gcc/config.gcc gcc/gcc-15.2.0/gcc/config.gcc
+--- gcc og/gcc-15.2.0/gcc/config.gcc	2025-08-08 12:21:40
++++ gcc/gcc-15.2.0/gcc/config.gcc	2026-05-31 14:57:03
+@@ -1038,6 +1038,13 @@
+   esac
+   tm_defines="$tm_defines DEFAULT_LIBC=LIBC_UCLIBC SINGLE_LIBC"
+   ;;
++*-*-rcos*)
++  extra_options="$extra_options gnu-user.opt"
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  use_gcc_stdint=provide
++  ;;
+ *-*-rdos*)
+   use_gcc_stdint=wrap
+   ;;
+@@ -1965,6 +1972,12 @@
+ x86_64-*-rtems*)
+ 	tm_file="${tm_file} i386/unix.h i386/att.h elfos.h newlib-stdint.h i386/i386elf.h i386/x86-64.h i386/rtemself.h rtems.h"
+ 	;;
++i[34567]86-*-rcos*)
++    tm_file="${tm_file} i386/unix.h i386/att.h elfos.h glibc-stdint.h i386/i386elf.h rcos.h gnu-user.h"
++    ;;
++x86_64-*-rcos*)
++    tm_file="${tm_file} i386/unix.h i386/att.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h rcos.h gnu-user.h"
++    ;;
+ i[34567]86-*-rdos*)
+     tm_file="${tm_file} i386/unix.h i386/att.h elfos.h newlib-stdint.h i386/i386elf.h i386/rdos.h"
+     ;;
+diff -ur gcc og/gcc-15.2.0/libgcc/config.host gcc/gcc-15.2.0/libgcc/config.host
+--- gcc og/gcc-15.2.0/libgcc/config.host	2025-08-08 12:21:44
++++ gcc/gcc-15.2.0/libgcc/config.host	2026-05-31 15:10:21
+@@ -1349,6 +1349,10 @@
+ 	tmake_file="${tmake_file} t-softfp-sfdf t-softfp-excl t-softfp t-gnu-prefix pru/t-pru"
+ 	tm_file="$tm_file pru/pru-abi.h"
+ 	;;
++x86_64-*-rcos*)
++	extra_parts="$extra_parts crti.o crtbegin.o crtend.o crtn.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic"
++	;;
+ riscv*-*-linux*)
+ 	tmake_file="${tmake_file} riscv/t-crtstuff riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address} t-slibgcc-libgcc"
+ 	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o crtendS.o crtbeginT.o"
+diff -ur gcc og/gcc-15.2.0/libstdc++-v3/crossconfig.m4 gcc/gcc-15.2.0/libstdc++-v3/crossconfig.m4
+--- gcc og/gcc-15.2.0/libstdc++-v3/crossconfig.m4	2025-08-08 12:21:45
++++ gcc/gcc-15.2.0/libstdc++-v3/crossconfig.m4	2026-05-31 15:02:41
+@@ -236,6 +236,12 @@
+     AC_DEFINE(HAVE_SINHF)
+     AC_DEFINE(HAVE_SINHL)
+     ;;
++  *-rcos*)
++    GLIBCXX_CHECK_COMPILER_FEATURES
++    GLIBCXX_CHECK_LINKER_FEATURES
++    GLIBCXX_CHECK_MATH_SUPPORT
++    GLIBCXX_CHECK_STDLIB_SUPPORT
++    ;;
+   *-tpf)
+     SECTION_FLAGS='-ffunction-sections -fdata-sections'
+     SECTION_LDFLAGS='-Wl,--gc-sections $SECTION_LDFLAGS'

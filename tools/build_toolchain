@@ -69,6 +69,9 @@ patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER" < "$PATCH_DIR/0001-binutils-rco
 patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER/bfd" < "$PATCH_DIR/0002-binutils-bfd-rcos.patch"
 patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER/gas" < "$PATCH_DIR/0003-binutils-gas-rcos.patch"
 patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER/ld" < "$PATCH_DIR/0004-binutils-ld-rcos.patch"
+patch -N -p1 -d "$GCC_EXT_DIR" < "$PATCH_DIR/0005-gcc-rcos.patch"
+
+cp "$PATCH_DIR/rcos.h" "$GCC_EXT_DIR/gcc-$GCC_VER/gcc/config/rcos.h"
 
 # build binutils
 [ -d "$BUILD_DIR/build-binutils" ] && rm -rf "$BUILD_DIR/build-binutils"
@@ -85,3 +88,18 @@ cd "$BUILD_DIR/build-binutils"
 
 $MAKE -j$NPROC > "$BUILD_DIR/binutils.log" 2>&1
 $MAKE install
+
+# download gcc dependencies
+cd "$GCC_EXT_DIR/gcc-$GCC_VER"
+./contrib/download_prerequisites
+
+# build gcc stage 1
+[ -d "$BUILD_DIR/build-gcc-s1" ] && rm -rf "$BUILD_DIR/build-gcc-s1"
+
+mkdir "$BUILD_DIR/build-gcc-s1"
+
+cd "$BUILD_DIR/build-gcc-s1"
+../gcc/gcc-$GCC_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --enable-languages=c --without-headers --disable-hosted-libstdcxx
+
+$MAKE all-gcc -j$NPROC > "$BUILD_DIR/gcc.log" 2>&1
+$MAKE install-gcc > "$BUILD_DIR/gcc-install.log" 2>&1
