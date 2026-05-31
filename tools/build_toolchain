@@ -71,6 +71,8 @@ patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER/gas" < "$PATCH_DIR/0003-binutils
 patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER/ld" < "$PATCH_DIR/0004-binutils-ld-rcos.patch"
 patch -N -p1 -d "$GCC_EXT_DIR" < "$PATCH_DIR/0005-gcc-rcos.patch"
 
+git -C "$PROJ_DIR/lib/newlib-cygwin" apply "$PATCH_DIR/../newlib/0001-cos-syscall-stubs.patch"
+
 cp "$PATCH_DIR/rcos.h" "$GCC_EXT_DIR/gcc-$GCC_VER/gcc/config/rcos.h"
 
 # build binutils
@@ -103,3 +105,24 @@ cd "$BUILD_DIR/build-gcc-s1"
 
 $MAKE all-gcc -j$NPROC > "$BUILD_DIR/gcc.log" 2>&1
 $MAKE install-gcc > "$BUILD_DIR/gcc-install.log" 2>&1
+
+export PATH="$INSTALL_DIR/bin:$PATH"
+
+# build newlib
+[ -d "$BUILD_DIR/newlib-rcos" ] && rm -rf "$BUILD_DIR/newlib-rcos"
+mkdir "$BUILD_DIR/newlib-rcos"
+
+cd "$BUILD_DIR/newlib-rcos"
+
+"$PROJ_DIR/lib/newlib-cygwin/configure" --target=x86_64-rcos --prefix=/usr --disable-multilib
+
+$MAKE all -j$NPROC
+$MAKE DESTDIR="$SYSROOT_DIR" tooldir=/usr install
+
+# build libcos
+[ -d "$BUILD_DIR/libcos-rcos" ] && rm -rf "$BUILD_DIR/libcos-rcos"
+mkdir "$BUILD_DIR/libcos-rcos"
+
+cd "$BUILD_DIR/libcos-rcos"
+
+$MAKE -C "$PROJ_DIR/lib/cos" CC=x86_64-rcos-gcc AR=x86_64-rcos-ar
