@@ -92,6 +92,17 @@ for cmd in $commands; do
 	fi
 done
 
+commands="x86_64-rcos-gcc x86_64-rcos-g++ x86_64-rcos-ld x86_64-rcos-as"
+for cmd in $commands; do
+	if ! command -v "$cmd" &> /dev/null; then
+		heading "ERROR: $cmd not found." "1;31"
+		printf "Please ensure your x86_64-rcos toolchain exists and is in PATH. You can use tools/build_toolchain to build the toolchain.\n"
+		exit
+	else
+		printf "$cmd found\n"
+	fi
+done
+
 if [ "$BUILD_DOCS" = true ]; then
 	heading "Building documentation" "1;33"
 	doxygen Doxyfile
@@ -110,7 +121,7 @@ heading "Configuring libc" "1;33"
 
 mkdir -p build/lib/newlib
 cd build/lib/newlib
-[ -f Makefile ] || ../../../lib/newlib-cygwin/configure --target=x86_64-elf --prefix=/usr --disable-multilib
+[ -f Makefile ] || ../../../lib/newlib-cygwin/configure --target=x86_64-rcos --prefix=/usr --disable-multilib
 
 heading "Building libc" "1;33"
 
@@ -119,15 +130,15 @@ $MAKE DESTDIR=$(pwd)/../../../initramfs tooldir=/usr install
 
 cd "$ROOTDIR"
 
+$MAKE -j$NPROC lib CC=x86_64-rcos-gcc AR=x86_64-rcos-ar
+
+heading "Building OS binaries" "1;33"
+
 export CC=x86_64-elf-gcc
 export CXX=x86_64-elf-g++
 export LD=x86_64-elf-ld
 export AS=x86_64-elf-as
 export AR=x86_64-elf-ar
-
-$MAKE -j$NPROC lib
-
-heading "Building OS binaries" "1;33"
 
 $MAKE -j$NPROC kernel
 
@@ -139,6 +150,12 @@ fi
 printf "\nentry.elf generated with size $(wc -c <"build/kernel/entry.elf") bytes\n"
 
 heading "Building userspace" "1;33"
+
+export CC=x86_64-rcos-gcc
+export CXX=x86_64-rcos-g++
+export LD=x86_64-rcos-ld
+export AS=x86_64-rcos-as
+export AR=x86_64-rcos-ar
 
 $MAKE -j$NPROC initramfs
 

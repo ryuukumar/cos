@@ -13,10 +13,10 @@ define DEFAULT_VAR =
 	endif
 endef
 
-override DEFAULT_CC := x86_64-elf-gcc
+override DEFAULT_CC := x86_64-rcos-gcc
 $(eval $(call DEFAULT_VAR,CC,$(DEFAULT_CC)))
 
-override DEFAULT_LD := x86_64-elf-ld
+override DEFAULT_LD := x86_64-rcos-ld
 $(eval $(call DEFAULT_VAR,LD,$(DEFAULT_LD)))
 
 override DEFAULT_CFLAGS := -g -O2 -pipe
@@ -40,7 +40,6 @@ override CFLAGS += \
 	-Wmissing-prototypes \
 	-Wmissing-declarations \
 	-std=gnu23 \
-	-ffreestanding \
 	-fno-stack-protector \
 	-fno-stack-check \
 	-fno-lto \
@@ -52,7 +51,6 @@ override CFLAGS += \
  
 # Internal C preprocessor flags that should not be changed by the user.
 override CPPFLAGS := \
-	-I $(SYSROOT)/usr/include \
 	-I include \
 	-I. \
 	$(CPPFLAGS) \
@@ -61,10 +59,7 @@ override CPPFLAGS := \
  
 # Internal linker flags that should not be changed by the user.
 override LDFLAGS += \
-	-L$(SYSROOT)/usr/lib \
-	-nostdlib \
-	-static \
-	-m elf_x86_64 \
+	-lcos -static \
 	-z max-page-size=0x1000
 
 ifeq ($(shell $(LD) --help 2>&1 | grep 'no-pie' >/dev/null 2>&1; echo $$?),0)
@@ -84,8 +79,8 @@ override HEADER_DEPS := $(patsubst %.c,$(BUILD_DIR)/%.c.d,$(CFILES)) $(patsubst 
 all: $(BUILD_DIR)/$(TARGET)
 
 $(BUILD_DIR)/$(TARGET): $(OBJ)
-	@printf "LD\t%s\n" $@
-	@$(LD) $(SYSROOT)/usr/lib/crt0.o $(OBJ) $(LDFLAGS) -lc -lcos -o $@
+	@printf "CCLD\t%s\n" $@
+	@$(CC) $(OBJ) $(LDFLAGS) -o $@
 	@mkdir -p $(INITRAMFS_DIR)
 	@cp $(BUILD_DIR)/$(TARGET) $(INITRAMFS_DIR)
 
