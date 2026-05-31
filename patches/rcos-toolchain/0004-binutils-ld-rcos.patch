@@ -1,0 +1,11 @@
+--- configure copy.tgt	2026-05-31 14:33:51
++++ configure.tgt	2026-05-31 14:37:43
+@@ -997,6 +997,8 @@
+ vax-*-linux-*)		targ_emul=elf32vax
+ 			;;
+ visium-*-elf)		targ_emul=elf32visium
++			;;
++x86_64-*-rcos*)		targ_emul=elf_x86_64
+ 			;;
+ x86_64-*-rdos*)		targ_emul=elf64rdos
+ 			;;

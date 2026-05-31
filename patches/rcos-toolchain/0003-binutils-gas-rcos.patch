@@ -1,0 +1,10 @@
+--- configure.tgt.og	2026-05-31 14:22:07
++++ configure.tgt	2026-05-31 14:22:18
+@@ -265,6 +265,7 @@
+     esac ;;
+   i386-*-nto-qnx*)			fmt=elf ;;
+   i386-*-*nt*)				fmt=coff em=pe ;;
++  i386-*-rcos*)				fmt=elf ;;
+   i386-*-rdos*)				fmt=elf ;;
+   i386-*-darwin*)			fmt=macho ;;
+ 
