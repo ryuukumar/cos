@@ -5,10 +5,10 @@
 NPROC=$(getconf _NPROCESSORS_ONLN)
 
 export MAKE=make
-export CC=gcc-15
-export AR=gcc-ar-15
-export NM=gcc-nm-15
 if [ "$(uname)" = "Darwin" ]; then
+    export CC=gcc-15
+    export AR=gcc-ar-15
+    export NM=gcc-nm-15
     if command -v gmake >/dev/null 2>&1; then
         export MAKE=gmake # build could fail if using BSD make. use gmake if possible
     else
@@ -97,7 +97,7 @@ cd "$GCC_EXT_DIR/gcc-$GCC_VER"
 mkdir "$BUILD_DIR/build-gcc-s1"
 
 cd "$BUILD_DIR/build-gcc-s1"
-../gcc/gcc-$GCC_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --enable-languages=c --without-headers --disable-hosted-libstdcxx
+../gcc/gcc-$GCC_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --enable-languages=c --without-headers --disable-hosted-libstdcxx --disable-fixincludes
 
 $MAKE all-gcc
 $MAKE install-gcc
@@ -130,7 +130,7 @@ $MAKE -C "$PROJ_DIR/lib/cos" CC=x86_64-rcos-gcc AR=x86_64-rcos-ar
 mkdir "$BUILD_DIR/build-gcc-s2"
 
 cd "$BUILD_DIR/build-gcc-s2"
-../gcc/gcc-$GCC_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --enable-languages=c,c++ --with-sysroot="$SYSROOT_DIR" --with-newlib --without-headers --disable-hosted-libstdcxx
+../gcc/gcc-$GCC_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --enable-languages=c,c++ --with-sysroot="$SYSROOT_DIR" --with-newlib --without-headers --disable-hosted-libstdcxx --disable-fixincludes
 
 $MAKE all-gcc all-target-libgcc -j$NPROC
 $MAKE install-gcc install-target-libgcc
