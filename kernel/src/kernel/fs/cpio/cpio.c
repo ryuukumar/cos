@@ -169,6 +169,25 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 			goto cleanup;
 		}
 	}
+	if (filetype == C_ISLNK && filesize > 0) {
+		void* data = (void*)(header + 1);
+		data += namesize;
+		if ((uint64_t)data % 4) data += 4 - ((uint64_t)data % 4);
+
+		char* target = kmalloc (filesize + 1);
+		kmemcpy (target, data, filesize);
+		target[filesize] = '\0';
+
+		inode* parent = nullptr;
+		char*  name = nullptr;
+		error = vfs_resolve_parent (filename, root_dir, root_dir, &parent, &name);
+		if (error == 0 && parent->i_iops->symlink) {
+			inode* link_result = nullptr;
+			parent->i_iops->symlink (target, name, &link_result, parent);
+		}
+		kfree (target);
+		kfree (name);
+	}
 
 	error = 0;
 

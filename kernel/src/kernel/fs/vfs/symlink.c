@@ -1,5 +1,5 @@
 /*
- * unlink.c
+ * symlink.c
  * Copyright (C) 2026  Aditya Kumar
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
@@ -19,42 +19,41 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
-#include <stddef.h>
 
-int do_unlink (const char* path) {
-	if (!path) return -EINVAL;
+int do_symlink (const char* target, const char* linkpath) {
+	if (!target || !linkpath) return -EINVAL;
 
 	process* current = get_current_process ();
 	inode*	 parent = nullptr;
 	char*	 name = nullptr;
 
-	int error = vfs_resolve_parent (path, current->p_root, current->p_wd, &parent, &name);
+	int error = vfs_resolve_parent (linkpath, current->p_root, current->p_wd, &parent, &name);
 	if (error) return error;
 
-	inode* node = nullptr;
-	error = parent->i_iops->lookup (name, &node, parent);
-	if (error) {
-		kfree (name);
-		return error;
+	inode* existing = nullptr;
+	if (parent->i_iops->lookup (name, &existing, parent) == 0) {
+		error = -EEXIST;
+		goto cleanup;
 	}
 
-	if (node->i_type == DIRECTORY) {
-		kfree (name);
-		return -EISDIR;
-	}
-	if (!node->i_iops || !node->i_iops->unlink) {
-		kfree (name);
-		return -ENOSYS;
+	if (!parent->i_iops->symlink) {
+		error = -ENOSYS;
+		goto cleanup;
 	}
 
-	error = node->i_iops->unlink (parent, name, node);
+	inode* result = nullptr;
+	error = parent->i_iops->symlink ((char*)target, name, &result, parent);
+
+cleanup:
 	kfree (name);
 	return error;
 }
 
-uint64_t sys_unlink (uint64_t path) {
-	const char* path_us = kstrdup ((const char*)path);
-	int			error = do_unlink (path_us);
-	kfree ((void*)path_us);
+uint64_t sys_symlink (uint64_t target, uint64_t linkpath) {
+	const char* target_us = kstrdup ((const char*)target);
+	const char* linkpt_us = kstrdup ((const char*)linkpath);
+	if (!target_us || !linkpt_us) return -ENOMEM;
+	int error = do_symlink (target_us, linkpt_us);
+	kfree ((void*)target_us), kfree ((void*)linkpt_us);
 	return error;
 }
