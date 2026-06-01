@@ -38,7 +38,7 @@
 #define SYSCALL_SYS_UNLINK	 15
 #define SYSCALL_SYS_GETDENTS 16
 #define SYSCALL_SYS_SYMLINK	 17
-#define SYSCALL_SYS_READLINK 17
+#define SYSCALL_SYS_READLINK 18
 
 /* Memory syscalls */
 

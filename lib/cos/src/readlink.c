@@ -15,9 +15,10 @@
  */
 
 #include <arch/x86_64-cos/syscalls.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 ssize_t readlink (const char* __restrict __path, char* __restrict __buf, size_t __buflen) {
-	return (int)syscall_ret ((long)syscall3 (SYSCALL_SYS_READLINK, (uint64_t)__path,
-											 (uint64_t)__buf, (uint64_t)__buflen));
+	return (ssize_t)syscall_ret ((long)syscall3 (SYSCALL_SYS_READLINK, (uint64_t)__path,
+												 (uint64_t)__buf, (uint64_t)__buflen));
 }
