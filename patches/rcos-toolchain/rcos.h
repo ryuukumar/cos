@@ -2,7 +2,7 @@
 #define TARGET_RCOS 1
 
 #undef LIB_SPEC
-#define LIB_SPEC "-lc -lcos"
+#define LIB_SPEC "--start-group -lc -lcos --end-group"
 
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC "crt0.o%s crti.o%s crtbegin.o%s"
