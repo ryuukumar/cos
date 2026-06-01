@@ -4,10 +4,7 @@
 
 .extern main
 .extern exit
-.extern __preinit_array_start
-.extern __preinit_array_end
-.extern __init_array_start
-.extern __init_array_end
+.extern __libc_init_array
 .extern environ
 
 _start:
