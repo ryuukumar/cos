@@ -46,4 +46,6 @@ void init_vfs (inode* absolute_root) {
 	register_syscall (SYSCALL_SYS_UNLINK, SYS1 (sys_unlink));
 	register_syscall (SYSCALL_SYS_SYMLINK, SYS2 (sys_symlink));
 	register_syscall (SYSCALL_SYS_READLINK, SYS3 (sys_readlink));
+	register_syscall (SYSCALL_SYS_DUP, SYS1 (sys_dup));
+	register_syscall (SYSCALL_SYS_DUP2, SYS2 (sys_dup2));
 }

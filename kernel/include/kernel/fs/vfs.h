@@ -130,6 +130,8 @@ uint64_t sys_link (uint64_t oldpath, uint64_t newpath);
 uint64_t sys_unlink (uint64_t path);
 uint64_t sys_symlink (uint64_t target, uint64_t linkpath);
 uint64_t sys_readlink (uint64_t path, uint64_t buf, uint64_t bufsz);
+uint64_t sys_dup (uint64_t fd);
+uint64_t sys_dup2 (uint64_t oldfd, uint64_t newfd);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);
