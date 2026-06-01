@@ -42,4 +42,6 @@ void init_vfs (inode* absolute_root) {
 	register_syscall (SYSCALL_SYS_GETCWD, SYS2 (sys_getcwd));
 	register_syscall (SYSCALL_SYS_IOCTL, SYS3 (sys_ioctl));
 	register_syscall (SYSCALL_SYS_UNLINK, SYS1 (sys_unlink));
+	register_syscall (SYSCALL_SYS_SYMLINK, SYS2 (sys_symlink));
+	register_syscall (SYSCALL_SYS_READLINK, SYS3 (sys_readlink));
 }
