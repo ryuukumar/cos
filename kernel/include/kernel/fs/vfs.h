@@ -51,7 +51,7 @@ typedef struct {
 	int (*create) (char*, inode**, inode*);
 	int (*mkdir) (char*, inode**, inode*);
 	int (*stat) (inode*, stat*);
-	int (*unlink) (inode*);
+	int (*unlink) (inode*, char*, inode*);
 	int (*symlink) (char*, char*, inode**, inode*);
 	int (*readlink) (inode*, char*, size_t);
 	int (*link) (inode*, char*, inode*);
@@ -109,6 +109,7 @@ int do_fstat (struct file* fd, stat* buf);
 int do_lstat (const char* restrict path, stat* restrict buf);
 int do_stat (const char* restrict path, stat* restrict buf);
 int do_ioctl (struct file* fd, uint64_t req, uint64_t arg);
+int do_link (const char* oldpath, const char* newpath);
 int do_symlink (const char* target, const char* linkpath);
 int do_readlink (const char* path, char* buf, size_t bufsz);
 
@@ -125,6 +126,7 @@ uint64_t sys_fstat (uint64_t fd, uint64_t buf);
 uint64_t sys_lstat (uint64_t path, uint64_t buf);
 uint64_t sys_stat (uint64_t path, uint64_t buf);
 uint64_t sys_ioctl (uint64_t fd, uint64_t req, uint64_t arg);
+uint64_t sys_link (uint64_t oldpath, uint64_t newpath);
 uint64_t sys_unlink (uint64_t path);
 uint64_t sys_symlink (uint64_t target, uint64_t linkpath);
 uint64_t sys_readlink (uint64_t path, uint64_t buf, uint64_t bufsz);

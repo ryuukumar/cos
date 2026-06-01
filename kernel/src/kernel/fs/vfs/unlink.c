@@ -25,14 +25,31 @@ int do_unlink (const char* path) {
 	if (!path) return -EINVAL;
 
 	process* current = get_current_process ();
-	inode*	 node = nullptr;
+	inode*	 parent = nullptr;
+	char*	 name = nullptr;
 
-	int error = do_lookup ((char*)path, &node, current->p_root, current->p_wd);
-	if (error != 0) return error;
+	int error = vfs_resolve_parent (path, current->p_root, current->p_wd, &parent, &name);
+	if (error) return error;
 
-	if (node->i_type == DIRECTORY) return -EISDIR;
-	if (!node->i_iops || !node->i_iops->unlink) return -ENOSYS;
-	return node->i_iops->unlink (node);
+	inode* node = nullptr;
+	error = parent->i_iops->lookup (name, &node, parent);
+	if (error) {
+		kfree (name);
+		return error;
+	}
+
+	if (node->i_type == DIRECTORY) {
+		kfree (name);
+		return -EISDIR;
+	}
+	if (!node->i_iops || !node->i_iops->unlink) {
+		kfree (name);
+		return -ENOSYS;
+	}
+
+	error = node->i_iops->unlink (parent, name, node);
+	kfree (name);
+	return error;
 }
 
 uint64_t sys_unlink (uint64_t path) {

@@ -14,27 +14,11 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <builtin.h>
-#include <stdio.h>
-#include <string.h>
+#include <arch/x86_64-cos/syscalls.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-int builtin_ln (int argc, char** argv) {
-	int symbolic = 0;
-	int argi = 1;
-
-	if (argc > 1 && strcmp (argv[1], "-s") == 0) {
-		symbolic = 1;
-		argi = 2;
-	}
-
-	if (argc - argi != 2) {
-		printf ("usage: ln [-s] target linkname\n");
-		return 64;
-	}
-
-	if (symbolic)
-		return symlink (argv[argi], argv[argi + 1]);
-	else
-		return link (argv[argi], argv[argi + 1]);
+int link (const char* __path1, const char* __path2) {
+	return (int)syscall_ret (
+		(long)syscall2 (SYSCALL_SYS_LINK, (uint64_t)__path1, (uint64_t)__path2));
 }

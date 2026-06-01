@@ -31,7 +31,8 @@ int getdents (inode* node, file* f, void* buf, size_t count);
 int istat (inode* node, stat* buf);
 int fstat (inode* node, file* f, stat* buf);
 int close (inode* node, file* f);
-int unlink (inode* node);
+int unlink (inode* parent, char* name, inode* node);
+int link (inode* existing, char* linkname, inode* parent);
 int symlink (char* target, char* linkname, inode** result, inode* parent);
 int readlink (inode* node, char* buf, size_t bufsz);
 

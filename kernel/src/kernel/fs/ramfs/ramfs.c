@@ -29,6 +29,7 @@ static inode_operations i_ops = {.lookup = lookup,
 								 .mkdir = mkdir,
 								 .create = create,
 								 .stat = istat,
+								 .link = link,
 								 .unlink = unlink,
 								 .symlink = symlink,
 								 .readlink = readlink};
@@ -277,45 +278,54 @@ int fstat (inode* node, file* f, stat* buf) {
 	return istat (node, buf);
 }
 
-static void delete_node (inode* node) {
-	inode* parent_node = node->i_parent;
-	if (parent_node == node || !parent_node) goto parent_unlinked;
-
-	dir_content_t* dir_content = (dir_content_t*)parent_node->i_pvt;
-	for (uint64_t i = 0; i < dir_content->d_count; i++) {
-		child_t* d_child = &dir_content->d_children[i];
-		if (!d_child->c_inode || !d_child->c_name) continue;
-
-		if (d_child->c_inode == node) {
-			kfree (d_child->c_name);
-			dir_content->d_children[i] = dir_content->d_children[--dir_content->d_count];
-			void* tmp =
-				krealloc (dir_content->d_children, (dir_content->d_count) * sizeof (child_t));
+static void remove_dirent (inode* parent, char* name) {
+	dir_content_t* dir = (dir_content_t*)parent->i_pvt;
+	for (uint64_t i = 0; i < dir->d_count; i++) {
+		if (kstrcmp (dir->d_children[i].c_name, name) == 0) {
+			kfree (dir->d_children[i].c_name);
+			dir->d_children[i] = dir->d_children[--dir->d_count];
+			void* tmp = krealloc (dir->d_children, dir->d_count * sizeof (child_t));
 			if (tmp)
-				dir_content->d_children = tmp;
+				dir->d_children = tmp;
 			else
-				kmemset (&dir_content->d_children[dir_content->d_count], 0, sizeof (child_t));
-			break;
+				kmemset (&dir->d_children[dir->d_count], 0, sizeof (child_t));
+			return;
 		}
 	}
+}
 
-parent_unlinked:
+static void free_inode (inode* node) {
 	if (node->i_pvt) kfree (node->i_pvt);
 	if (node->i_fsinfo) kfree (node->i_fsinfo);
 	if (node->i_info.ramfs_info) kfree (node->i_info.ramfs_info);
-
 	kfree (node);
 }
 
 int close (inode* node, file* f) {
 	(void)f;
-	if (node->i_cnt == 0 && node->i_type != DIRECTORY) delete_node (node);
+	if (node->i_cnt == 0 && node->i_type != DIRECTORY) free_inode (node);
 	return 0;
 }
 
-int unlink (inode* node) {
-	node->i_cnt--;
-	if (node->i_cnt == 0) delete_node (node);
+int unlink (inode* parent, char* name, inode* node) {
+	remove_dirent (parent, name);
+	if (--node->i_cnt == 0) free_inode (node);
+	return 0;
+}
+
+int link (inode* existing, char* linkname, inode* parent) {
+	if (existing->i_type == DIRECTORY) return -EPERM;
+
+	dir_content_t* parent_pvt = (dir_content_t*)parent->i_pvt;
+	child_t*	   new_children = kmalloc ((parent_pvt->d_count + 1) * sizeof (child_t));
+	kmemcpy (new_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
+	new_children[parent_pvt->d_count].c_inode = existing;
+	new_children[parent_pvt->d_count].c_name = kstrdup (linkname);
+	kfree (parent_pvt->d_children);
+	parent_pvt->d_children = new_children;
+	parent_pvt->d_count++;
+
+	existing->i_cnt++;
 	return 0;
 }
 
