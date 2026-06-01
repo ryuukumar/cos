@@ -1,5 +1,5 @@
 /*
- * chdir.c
+ * link.c
  * Copyright (C) 2026  Aditya Kumar
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
@@ -14,26 +14,27 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <kernel/error.h>
-#include <kernel/fs/vfs.h>
-#include <kernel/process.h>
+#include <builtin.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
-int do_chdir (const char* path) {
-	if (!path) return -EINVAL;
-	inode*	 new_dir = nullptr;
-	process* current = get_current_process ();
+int builtin_ln (int argc, char** argv) {
+	int symbolic = 0;
+	int argi = 1;
 
-	int error = do_lookup ((char*)path, &new_dir, current->p_root, current->p_wd);
-	if (error != 0) return error;
-
-	if (new_dir->i_type == LINK) {
-		error = do_lookup ((char*)new_dir->i_pvt, &new_dir, current->p_root, current->p_wd);
-		if (error) return error;
+	if (argc > 1 && strcmp (argv[1], "-s") == 0) {
+		symbolic = 1;
+		argi = 2;
 	}
 
-	if (new_dir->i_type != DIRECTORY) return -ENOTDIR;
-	current->p_wd = new_dir;
-	return 0;
-}
+	if (argc - argi != 2) {
+		printf ("usage: ln [-s] target linkname\n");
+		return 64;
+	}
 
-uint64_t sys_chdir (uint64_t path) { return (uint64_t)do_chdir ((const char*)path); }
+	if (symbolic)
+		return symlink (argv[argi], argv[argi + 1]);
+	else
+		return link (argv[argi], argv[argi + 1]);
+}

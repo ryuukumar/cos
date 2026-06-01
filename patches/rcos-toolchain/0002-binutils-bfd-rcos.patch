@@ -1,0 +1,14 @@
+--- config.bfd.og	2026-05-31 14:00:00
++++ config.bfd	2026-05-31 13:59:50
+@@ -721,6 +721,11 @@
+     want64=true
+     targ_underscore=no
+     ;;
++  x86_64-*-rcos*)
++    targ_defvec=x86_64_elf64_vec
++    targ_selvecs=i386_elf32_vec
++    want64=true
++    ;;
+   x86_64-*-rdos*)
+     targ_defvec=x86_64_elf64_vec
+     want64=true

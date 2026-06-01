@@ -1,5 +1,5 @@
 /*
- * chdir.c
+ * lstat.c
  * Copyright (C) 2026  Aditya Kumar
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
@@ -14,26 +14,29 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
+#include <liballoc/liballoc.h>
+#include <stddef.h>
 
-int do_chdir (const char* path) {
-	if (!path) return -EINVAL;
-	inode*	 new_dir = nullptr;
+int do_lstat (const char* restrict path, stat* restrict buf) {
+	if (!path || !buf) return -EINVAL;
+
 	process* current = get_current_process ();
+	inode*	 node = nullptr;
 
-	int error = do_lookup ((char*)path, &new_dir, current->p_root, current->p_wd);
+	int error = do_lookup ((char*)path, &node, current->p_root, current->p_wd);
 	if (error != 0) return error;
 
-	if (new_dir->i_type == LINK) {
-		error = do_lookup ((char*)new_dir->i_pvt, &new_dir, current->p_root, current->p_wd);
-		if (error) return error;
-	}
-
-	if (new_dir->i_type != DIRECTORY) return -ENOTDIR;
-	current->p_wd = new_dir;
-	return 0;
+	if (!node->i_iops || !node->i_iops->stat) return -ENOSYS;
+	return node->i_iops->stat (node, buf);
 }
 
-uint64_t sys_chdir (uint64_t path) { return (uint64_t)do_chdir ((const char*)path); }
+uint64_t sys_lstat (uint64_t path, uint64_t buf) {
+	const char* path_us = kstrdup ((const char*)path);
+	int			error = do_stat (path_us, (stat*)buf);
+	kfree ((void*)path_us);
+	return error;
+}

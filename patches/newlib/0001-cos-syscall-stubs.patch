@@ -1,17 +1,37 @@
+diff --git a/config.sub b/config.sub
+index 38f3d037a..c65bcca53 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1749,7 +1749,7 @@ case $os in
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+ 	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
+-	     | fiwix* )
++	     | fiwix* | rcos* )
+ 		;;
+ 	# This one is extra strict with allowed versions
+ 	sco3.2v2 | sco3.2v[4-9]* | sco5v6*)
 diff --git a/newlib/configure.host b/newlib/configure.host
-index 960cca215..8a1828463 100644
+index 960cca215..4c2b58d9c 100644
 --- a/newlib/configure.host
 +++ b/newlib/configure.host
-@@ -592,6 +592,15 @@ case "${host}" in
+@@ -592,6 +592,22 @@ case "${host}" in
    z8k-*-coff)
  	sys_dir=z8ksim
  	;;
++  x86_64-rcos* | x86_64-*-rcos*)
++    sys_dir=cos
++    posix_dir=posix
++    newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
++    newlib_cflags="${newlib_cflags} -D_NO_GLOB"
++    newlib_cflags="${newlib_cflags} -D_NO_POSIX_SPAWN"
++    have_crt0="no"
++    ;;
 +  x86_64-*-elf*)
 +    sys_dir=cos
 +    posix_dir=posix
 +    newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
 +    newlib_cflags="${newlib_cflags} -D_NO_GLOB"
-+    newlib_cflags="${newlib_cflags} -Dlstat=stat"
 +    newlib_cflags="${newlib_cflags} -D_NO_POSIX_SPAWN"
 +    have_crt0="no"
 +    ;;
@@ -30,6 +50,20 @@ index a1040386b..7098f2def 100644
    d10v
    epiphany
    h8300hms h8500hms
+diff --git a/newlib/libc/include/sys/stat.h b/newlib/libc/include/sys/stat.h
+index 740997965..143b883d4 100644
+--- a/newlib/libc/include/sys/stat.h
++++ b/newlib/libc/include/sys/stat.h
+@@ -157,8 +157,8 @@ int	mkfifo (const char *__path, mode_t __mode );
+ int	stat (const char *__restrict __path, struct stat *__restrict __sbuf );
+ mode_t	umask (mode_t __mask );
+ 
+-#if defined (__SPU__) || defined(__rtems__) || defined(__CYGWIN__)
+ int	lstat (const char *__restrict __path, struct stat *__restrict __buf );
++#if defined (__SPU__) || defined(__rtems__) || defined(__CYGWIN__)
+ int	mknod (const char *__path, mode_t __mode, dev_t __dev );
+ #endif
+ 
 diff --git a/newlib/libc/sys/Makefile.inc b/newlib/libc/sys/Makefile.inc
 index 9f8758934..2e0d30bf2 100644
 --- a/newlib/libc/sys/Makefile.inc

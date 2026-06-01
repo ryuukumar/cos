@@ -68,6 +68,12 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
 
 	inode* target_inode = nullptr;
 	int	   error = do_lookup (filename, &target_inode, current->p_root, current->p_wd);
+	if (error == 0 && target_inode->i_type == LINK) {
+		error =
+			do_lookup ((char*)target_inode->i_pvt, &target_inode, current->p_root, current->p_wd);
+		if (error != 0) goto cleanup;
+	}
+
 	if (error == -ENOENT && (flags & O_CREAT)) {
 		inode* parent;
 		char*  name;

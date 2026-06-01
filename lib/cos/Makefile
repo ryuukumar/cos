@@ -13,10 +13,10 @@ define DEFAULT_VAR =
 	endif
 endef
 
-override DEFAULT_CC := x86_64-elf-gcc
+override DEFAULT_CC := x86_64-rcos-gcc
 $(eval $(call DEFAULT_VAR,CC,$(DEFAULT_CC)))
 
-override DEFAULT_AR := x86_64-elf-ar
+override DEFAULT_AR := x86_64-rcos-ar
 $(eval $(call DEFAULT_VAR,AR,$(DEFAULT_AR)))
 
 override DEFAULT_CFLAGS := -g -O2 -pipe

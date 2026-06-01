@@ -53,6 +53,8 @@ int dispatch_builtin (size_t argc, char** argv) {
 		return builtin_clear (argc, argv);
 	else if (strcmp (argv[0], "unlink") == 0)
 		return builtin_unlink (argc, argv);
+	else if (strcmp (argv[0], "link") == 0 || strcmp (argv[0], "ln") == 0)
+		return builtin_ln (argc, argv);
 
 	return -1;
 }
