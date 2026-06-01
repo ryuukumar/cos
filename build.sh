@@ -81,11 +81,11 @@ fi
 
 printf "\e[1;33m\n$(heading "Checking for compilers")\n\e[0m\n"
 
-commands="x86_64-elf-gcc x86_64-elf-g++ x86_64-elf-ld x86_64-elf-as"
+commands="x86_64-rcos-gcc x86_64-rcos-g++ x86_64-rcos-ld x86_64-rcos-as"
 for cmd in $commands; do
 	if ! command -v "$cmd" &> /dev/null; then
 		heading "ERROR: $cmd not found." "1;31"
-		printf "You probably don't have a cross-compiler installed, or it is in the wrong path. Please refer online on how you can build and install one.\n"
+		printf "Please ensure your x86_64-rcos toolchain exists and is in PATH. You can use tools/build_toolchain to build the toolchain.\n"
 		exit
 	else
 		printf "$cmd found\n"
@@ -110,7 +110,7 @@ heading "Configuring libc" "1;33"
 
 mkdir -p build/lib/newlib
 cd build/lib/newlib
-[ -f Makefile ] || ../../../lib/newlib-cygwin/configure --target=x86_64-elf --prefix=/usr --disable-multilib
+[ -f Makefile ] || ../../../lib/newlib-cygwin/configure --target=x86_64-rcos --prefix=/usr --disable-multilib
 
 heading "Building libc" "1;33"
 
@@ -119,15 +119,15 @@ $MAKE DESTDIR=$(pwd)/../../../initramfs tooldir=/usr install
 
 cd "$ROOTDIR"
 
-export CC=x86_64-elf-gcc
-export CXX=x86_64-elf-g++
-export LD=x86_64-elf-ld
-export AS=x86_64-elf-as
-export AR=x86_64-elf-ar
-
-$MAKE -j$NPROC lib
+$MAKE -j$NPROC lib CC=x86_64-rcos-gcc AR=x86_64-rcos-ar
 
 heading "Building OS binaries" "1;33"
+
+export CC=x86_64-rcos-gcc
+export CXX=x86_64-rcos-g++
+export LD=x86_64-rcos-ld
+export AS=x86_64-rcos-as
+export AR=x86_64-rcos-ar
 
 $MAKE -j$NPROC kernel
 

@@ -15,14 +15,12 @@ define DEFAULT_VAR =
 	endif
 endef
  
-# It is highly recommended to use a custom built cross toolchain to build a kernel.
-# We are only using "cc" as a placeholder here. It may work by using
-# the host system's toolchain, but this is not guaranteed.
-override DEFAULT_CC := x86_64-elf-gcc
+# By default, use an rcos-targeting GCC
+override DEFAULT_CC := x86_64-rcos-gcc
 $(eval $(call DEFAULT_VAR,CC,$(DEFAULT_CC)))
  
 # Same thing for "ld" (the linker).
-override DEFAULT_LD := x86_64-elf-ld
+override DEFAULT_LD := x86_64-rcos-ld
 $(eval $(call DEFAULT_VAR,LD,$(DEFAULT_LD)))
  
 # User controllable C flags.

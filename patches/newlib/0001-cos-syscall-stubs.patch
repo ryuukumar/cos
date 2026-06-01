@@ -1,11 +1,33 @@
+diff --git a/config.sub b/config.sub
+index 38f3d037a..c65bcca53 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1749,7 +1749,7 @@ case $os in
+ 	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
+ 	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
+ 	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
+-	     | fiwix* )
++	     | fiwix* | rcos* )
+ 		;;
+ 	# This one is extra strict with allowed versions
+ 	sco3.2v2 | sco3.2v[4-9]* | sco5v6*)
 diff --git a/newlib/configure.host b/newlib/configure.host
-index 960cca215..8a1828463 100644
+index 960cca215..b18a601d0 100644
 --- a/newlib/configure.host
 +++ b/newlib/configure.host
-@@ -592,6 +592,15 @@ case "${host}" in
+@@ -592,6 +592,24 @@ case "${host}" in
    z8k-*-coff)
  	sys_dir=z8ksim
  	;;
++  x86_64-rcos* | x86_64-*-rcos*)
++    sys_dir=cos
++    posix_dir=posix
++    newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
++    newlib_cflags="${newlib_cflags} -D_NO_GLOB"
++    newlib_cflags="${newlib_cflags} -Dlstat=stat"
++    newlib_cflags="${newlib_cflags} -D_NO_POSIX_SPAWN"
++    have_crt0="no"
++    ;;
 +  x86_64-*-elf*)
 +    sys_dir=cos
 +    posix_dir=posix

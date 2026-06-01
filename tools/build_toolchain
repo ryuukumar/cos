@@ -1,0 +1,140 @@
+#!/bin/sh
+
+# Basic script for building a simple x86_64-cos-* toolchain
+
+NPROC=$(getconf _NPROCESSORS_ONLN)
+
+export MAKE=make
+if [ "$(uname)" = "Darwin" ]; then
+    if command -v gmake >/dev/null 2>&1; then
+        export MAKE=gmake # build could fail if using BSD make. use gmake if possible
+    else
+        printf "You are on macOS but gmake was not found. I will use make but build could fail.\nRetry with GNU make (e.g. brew install make) if build fails.\n" >&2
+    fi
+fi
+
+GCC_VER="16.1.0"
+BUL_VER="2.46.0"
+
+GCC_URL="https://ftp.gnu.org/gnu/gcc/gcc-$GCC_VER/gcc-$GCC_VER.tar.xz"
+BUL_URL="https://ftp.gnu.org/gnu/binutils/binutils-$BUL_VER.tar.xz"
+
+PROJ_DIR=$(realpath "$(pwd)/..")
+BUILD_DIR="$PROJ_DIR/build/toolchain"
+SYSROOT_DIR="$PROJ_DIR/initramfs"
+PATCH_DIR="$PROJ_DIR/patches/rcos-toolchain"
+INSTALL_DIR="$PROJ_DIR/toolchain"
+
+GCC_EXT_DIR="$BUILD_DIR/gcc"
+GCC_BLD_DIR="$BUILD_DIR/gcc-build"
+BUL_EXT_DIR="$BUILD_DIR/binutils"
+BUL_BLD_DIR="$BUILD_DIR/binutils-build"
+
+mkdir -p $BUILD_DIR
+[ ! -d $SYSROOT_DIR ] && mkdir -p $SYSROOT_DIR
+
+# downloads, wget preferred
+if command -v wget >/dev/null 2>&1; then
+    wget -c -O "$BUILD_DIR/gcc.tar.xz" $GCC_URL 
+    wget -c -O "$BUILD_DIR/binutils.tar.xz" $BUL_URL
+else
+    curl -o "$BUILD_DIR/gcc.tar.xz" -C - $GCC_URL
+    curl -o "$BUILD_DIR/binutils.tar.xz" -C - $BUL_URL
+fi
+
+# extract these
+[ ! -d $GCC_EXT_DIR ] && mkdir $GCC_EXT_DIR
+[ ! -d $BUL_EXT_DIR ] && mkdir $BUL_EXT_DIR
+
+if command -v pv >/dev/null 2>&1; then
+    pv "$BUILD_DIR/gcc.tar.xz" | tar -xJk -C "$GCC_EXT_DIR"
+    pv "$BUILD_DIR/binutils.tar.xz" | tar -xJk -C "$BUL_EXT_DIR"
+else
+    tar -xkf "$BUILD_DIR/gcc.tar.xz" -C "$GCC_EXT_DIR"
+    printf "Extracted gcc.tar.xz\n"
+
+    tar -xkf "$BUILD_DIR/binutils.tar.xz" -C "$BUL_EXT_DIR"
+    printf "Extracted binutils.tar.xz\n"
+fi
+
+# add rcos case in configs
+patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER" < "$PATCH_DIR/0001-binutils-rcos.patch"
+patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER/bfd" < "$PATCH_DIR/0002-binutils-bfd-rcos.patch"
+patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER/gas" < "$PATCH_DIR/0003-binutils-gas-rcos.patch"
+patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER/ld" < "$PATCH_DIR/0004-binutils-ld-rcos.patch"
+patch -N -p1 -d "$GCC_EXT_DIR" < "$PATCH_DIR/0005-gcc-rcos.patch"
+
+if git -C "$PROJ_DIR/lib/newlib-cygwin" apply --check --reverse "$PATCH_DIR/../newlib/0001-cos-syscall-stubs.patch" 2>/dev/null; then
+	printf "Already applied: $PATCH_DIR/../newlib/0001-cos-syscall-stubs.patch\n"
+else
+	git -C "$PROJ_DIR/lib/newlib-cygwin" apply "$PATCH_DIR/../newlib/0001-cos-syscall-stubs.patch"
+	printf "Applied: $PATCH_DIR/../newlib/0001-cos-syscall-stubs.patch\n"
+fi
+
+cp "$PATCH_DIR/rcos.h" "$GCC_EXT_DIR/gcc-$GCC_VER/gcc/config/rcos.h"
+
+# build binutils
+[ -d "$BUILD_DIR/build-binutils" ] && rm -rf "$BUILD_DIR/build-binutils"
+
+mkdir "$BUILD_DIR/build-binutils"
+mkdir -p "$INSTALL_DIR"
+if [ ! -d "$BUILD_DIR/build-binutils" ]; then
+    printf "Could not create $BUILD_DIR/build-binutils. Quitting.\n"
+    exit
+fi
+
+cd "$BUILD_DIR/build-binutils"
+../binutils/binutils-$BUL_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --disable-werror --with-sysroot="$SYSROOT_DIR"
+
+$MAKE -j$NPROC
+$MAKE install
+
+# download gcc dependencies if we are on macOS
+if [ "$(uname)" = "Darwin" ]; then
+    cd "$GCC_EXT_DIR/gcc-$GCC_VER"
+    ./contrib/download_prerequisites
+fi
+
+# build gcc stage 1
+[ -d "$BUILD_DIR/build-gcc-s1" ] && rm -rf "$BUILD_DIR/build-gcc-s1"
+
+mkdir "$BUILD_DIR/build-gcc-s1"
+
+cd "$BUILD_DIR/build-gcc-s1"
+../gcc/gcc-$GCC_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --enable-languages=c --without-headers --disable-hosted-libstdcxx --disable-fixincludes
+
+$MAKE all-gcc
+$MAKE install-gcc
+
+export PATH="$INSTALL_DIR/bin:$PATH"
+
+# build newlib
+[ -d "$BUILD_DIR/newlib-rcos" ] && rm -rf "$BUILD_DIR/newlib-rcos"
+mkdir "$BUILD_DIR/newlib-rcos"
+
+cd "$BUILD_DIR/newlib-rcos"
+
+"$PROJ_DIR/lib/newlib-cygwin/configure" --target=x86_64-rcos --prefix=/usr --disable-multilib
+
+$MAKE all -j$NPROC
+$MAKE DESTDIR="$SYSROOT_DIR" tooldir=/usr install
+
+# build libcos
+[ -d "$BUILD_DIR/libcos-rcos" ] && rm -rf "$BUILD_DIR/libcos-rcos"
+mkdir "$BUILD_DIR/libcos-rcos"
+
+cd "$BUILD_DIR/libcos-rcos"
+
+$MAKE -C "$PROJ_DIR/lib/cos" CC=x86_64-rcos-gcc AR=x86_64-rcos-ar
+
+# build gcc stage 2
+
+[ -d "$BUILD_DIR/build-gcc-s2" ] && rm -rf "$BUILD_DIR/build-gcc-s2"
+
+mkdir "$BUILD_DIR/build-gcc-s2"
+
+cd "$BUILD_DIR/build-gcc-s2"
+../gcc/gcc-$GCC_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --enable-languages=c,c++ --with-sysroot="$SYSROOT_DIR" --with-newlib --disable-fixincludes --enable-threads=single
+
+$MAKE all -j$NPROC
+$MAKE install

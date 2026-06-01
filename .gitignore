@@ -5,6 +5,7 @@ initramfs
 *.o
 .vscode
 docs
+toolchain
 **/compile_commands.json
 
 ## Ignore Visual Studio temporary files, build results, and
