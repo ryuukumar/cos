@@ -41,6 +41,7 @@
 #define SYSCALL_SYS_GETDENTS 16
 #define SYSCALL_SYS_SYMLINK	 17
 #define SYSCALL_SYS_READLINK 18
+#define SYSCALL_SYS_LSTAT	 19
 
 /* Memory syscalls */
 
