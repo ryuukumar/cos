@@ -59,7 +59,7 @@ override CPPFLAGS := \
  
 # Internal linker flags that should not be changed by the user.
 override LDFLAGS += \
-	-lcos -static \
+	-static \
 	-z max-page-size=0x1000
 
 ifeq ($(shell $(LD) --help 2>&1 | grep 'no-pie' >/dev/null 2>&1; echo $$?),0)
