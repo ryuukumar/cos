@@ -20,16 +20,10 @@
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
 
-/*!
- * Check if filepath supplied in filename exists.
- * If it does, set *result to the pointer to the inode.
- * @param filename absolute path to lookup
- * @param result pointer to the inode* where the matching inode may be placed
- * @param root root of the filesystem as considered by the process
- * @param cwd current working directory of the process
- * @return 0 if found, else an error code from error.h
- */
-int do_lookup (char* filename, inode** result, inode* root, inode* cwd) {
+#define SYMLINK_LIMIT 40
+
+static int do_lookup_limit (char* filename, inode** result, inode* root, inode* cwd, size_t limit) {
+	if (limit > SYMLINK_LIMIT) return -ELOOP;
 	if (!root || !cwd || !filename || filename[0] == 0) return -EINVAL;
 	if (cwd->i_type != DIRECTORY) return -ENOTDIR;
 
@@ -59,11 +53,38 @@ int do_lookup (char* filename, inode** result, inode* root, inode* cwd) {
 	}
 
 	kfree (target_fname);
-	while (next_slash && *next_slash == '/')
-		next_slash++;
-	if (!next_slash || kstrlen (next_slash) == 0) {
+	bool is_final = (!next_slash || kstrlen (next_slash) == 0);
+
+	if (dirsrch_res->i_type == LINK && !is_final) {
+		char*  target = (char*)dirsrch_res->i_pvt;
+		inode* link_dest = nullptr;
+		inode* link_start = (target[0] == '/') ? root : cwd;
+		int	   err = do_lookup_limit (target, &link_dest, root, link_start, limit + 1);
+		if (err) return err;
+
+		while (next_slash && *next_slash == '/')
+			next_slash++;
+		return do_lookup_limit (next_slash, result, root, link_dest, limit);
+	}
+
+	if (is_final) {
 		*result = dirsrch_res;
 		return 0;
 	}
-	return do_lookup (next_slash, result, root, dirsrch_res);
+	while (next_slash && *next_slash == '/')
+		next_slash++;
+	return do_lookup_limit (next_slash, result, root, dirsrch_res, limit);
+}
+
+/*!
+ * Check if filepath supplied in filename exists.
+ * If it does, set *result to the pointer to the inode.
+ * @param filename absolute path to lookup
+ * @param result pointer to the inode* where the matching inode may be placed
+ * @param root root of the filesystem as considered by the process
+ * @param cwd current working directory of the process
+ * @return 0 if found, else an error code from error.h
+ */
+int do_lookup (char* filename, inode** result, inode* root, inode* cwd) {
+	return do_lookup_limit (filename, result, root, cwd, 0);
 }

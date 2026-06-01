@@ -29,7 +29,9 @@ static inode_operations i_ops = {.lookup = lookup,
 								 .mkdir = mkdir,
 								 .create = create,
 								 .stat = istat,
-								 .unlink = unlink};
+								 .unlink = unlink,
+								 .symlink = symlink,
+								 .readlink = readlink};
 static file_operations	f_ops = {.read = read,
 								 .write = write,
 								 .seek = seek,
