@@ -52,6 +52,9 @@ typedef struct {
 	int (*mkdir) (char*, inode**, inode*);
 	int (*stat) (inode*, stat*);
 	int (*unlink) (inode*);
+	int (*symlink) (char*, char*, inode**, inode*);
+	int (*readlink) (inode*, char*, size_t);
+	int (*link) (inode*, char*, inode*);
 } inode_operations;
 
 typedef struct {

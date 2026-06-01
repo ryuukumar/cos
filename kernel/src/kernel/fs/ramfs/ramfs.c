@@ -317,6 +317,27 @@ int unlink (inode* node) {
 	return 0;
 }
 
+int symlink (char* target, char* linkname, inode** result, inode* parent) {
+	int error = create (linkname, result, parent);
+	if (error) return error;
+
+	(*result)->i_type = LINK;
+	(*result)->i_pvt = kstrdup (target);
+	(*result)->i_sz = kstrlen (target);
+
+	return error;
+}
+
+int readlink (inode* node, char* buf, size_t bufsz) {
+	if (node->i_type != LINK) return -EINVAL;
+	if (!node->i_pvt) return -EIO;
+
+	size_t len = node->i_sz;
+	if (len > bufsz) len = bufsz;
+	kmemcpy (buf, node->i_pvt, len);
+	return (int)len;
+}
+
 inode* init_ramfs_root (void) {
 	root_inode = kmalloc (sizeof (inode));
 	kmemset ((void*)root_inode, 0, sizeof (inode));

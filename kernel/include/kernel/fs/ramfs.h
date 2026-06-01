@@ -32,6 +32,8 @@ int istat (inode* node, stat* buf);
 int fstat (inode* node, file* f, stat* buf);
 int close (inode* node, file* f);
 int unlink (inode* node);
+int symlink (char* target, char* linkname, inode** result, inode* parent);
+int readlink (inode* node, char* buf, size_t bufsz);
 
 typedef struct {
 	char*  c_name;
