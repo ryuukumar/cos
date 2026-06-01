@@ -16,8 +16,8 @@ if [ "$(uname)" = "Darwin" ]; then
     fi
 fi
 
-GCC_VER="15.2.0"
-BUL_VER="2.45"
+GCC_VER="16.1.0"
+BUL_VER="2.46.0"
 
 GCC_URL="https://ftp.gnu.org/gnu/gcc/gcc-$GCC_VER/gcc-$GCC_VER.tar.xz"
 BUL_URL="https://ftp.gnu.org/gnu/binutils/binutils-$BUL_VER.tar.xz"
@@ -50,8 +50,8 @@ fi
 [ ! -d $BUL_EXT_DIR ] && mkdir $BUL_EXT_DIR
 
 if command -v pv >/dev/null 2>&1; then
-    pv "$BUILD_DIR/gcc.tar.xz" | tar -xk -C "$GCC_EXT_DIR"
-    pv "$BUILD_DIR/binutils.tar.xz" | tar -xk -C "$BUL_EXT_DIR"
+    pv "$BUILD_DIR/gcc.tar.xz" | tar -xJk -C "$GCC_EXT_DIR"
+    pv "$BUILD_DIR/binutils.tar.xz" | tar -xJk -C "$BUL_EXT_DIR"
 else
     tar -xkf "$BUILD_DIR/gcc.tar.xz" -C "$GCC_EXT_DIR"
     printf "Extracted gcc.tar.xz\n"
@@ -67,7 +67,12 @@ patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER/gas" < "$PATCH_DIR/0003-binutils
 patch -N -p0 -d "$BUL_EXT_DIR/binutils-$BUL_VER/ld" < "$PATCH_DIR/0004-binutils-ld-rcos.patch"
 patch -N -p1 -d "$GCC_EXT_DIR" < "$PATCH_DIR/0005-gcc-rcos.patch"
 
-git -C "$PROJ_DIR/lib/newlib-cygwin" apply "$PATCH_DIR/../newlib/0001-cos-syscall-stubs.patch"
+if git -C "$PROJ_DIR/lib/newlib-cygwin" apply --check --reverse "$PATCH_DIR/../newlib/0001-cos-syscall-stubs.patch" 2>/dev/null; then
+	printf "Already applied: $PATCH_DIR/../newlib/0001-cos-syscall-stubs.patch\n"
+else
+	git -C "$PROJ_DIR/lib/newlib-cygwin" apply "$PATCH_DIR/../newlib/0001-cos-syscall-stubs.patch"
+	printf "Applied: $PATCH_DIR/../newlib/0001-cos-syscall-stubs.patch\n"
+fi
 
 cp "$PATCH_DIR/rcos.h" "$GCC_EXT_DIR/gcc-$GCC_VER/gcc/config/rcos.h"
 
@@ -87,9 +92,11 @@ cd "$BUILD_DIR/build-binutils"
 $MAKE -j$NPROC
 $MAKE install
 
-# download gcc dependencies
-cd "$GCC_EXT_DIR/gcc-$GCC_VER"
-./contrib/download_prerequisites
+# download gcc dependencies if we are on macOS
+if [ "$(uname)" = "Darwin" ]; then
+    cd "$GCC_EXT_DIR/gcc-$GCC_VER"
+    ./contrib/download_prerequisites
+fi
 
 # build gcc stage 1
 [ -d "$BUILD_DIR/build-gcc-s1" ] && rm -rf "$BUILD_DIR/build-gcc-s1"
@@ -132,5 +139,7 @@ mkdir "$BUILD_DIR/build-gcc-s2"
 cd "$BUILD_DIR/build-gcc-s2"
 ../gcc/gcc-$GCC_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --enable-languages=c,c++ --with-sysroot="$SYSROOT_DIR" --with-newlib --without-headers --disable-hosted-libstdcxx --disable-fixincludes
 
-$MAKE all-gcc all-target-libgcc -j$NPROC
-$MAKE install-gcc install-target-libgcc
+$MAKE all-gcc all-libiberty -j$NPROC
+$MAKE install-gcc
+$MAKE all-target-libgcc -j$NPROC
+$MAKE install-target-libgcc

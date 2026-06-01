@@ -1,6 +1,6 @@
-diff -ur gcc og/gcc-15.2.0/config.sub gcc/gcc-15.2.0/config.sub
---- gcc og/gcc-15.2.0/config.sub	2026-05-31 14:53:56
-+++ gcc/gcc-15.2.0/config.sub	2026-05-31 14:52:01
+diff -ur gcc og/gcc-16.1.0/config.sub gcc/gcc-16.1.0/config.sub
+--- gcc og/gcc-16.1.0/config.sub	2026-05-31 14:53:56
++++ gcc/gcc-16.1.0/config.sub	2026-05-31 14:52:01
 @@ -499,6 +499,10 @@
  				basic_machine=i586-unknown
  				basic_os=pw32
@@ -21,9 +21,9 @@ diff -ur gcc og/gcc-15.2.0/config.sub gcc/gcc-15.2.0/config.sub
  	     | onefs* | tirtos* | phoenix* | fuchsia* | redox* | bme* \
  	     | midnightbsd* | amdhsa* | unleashed* | emscripten* | wasi* \
  	     | nsk* | powerunix* | genode* | zvmoe* | qnx* | emx* | zephyr* \
-diff -ur gcc og/gcc-15.2.0/fixincludes/mkfixinc.sh gcc/gcc-15.2.0/fixincludes/mkfixinc.sh
---- gcc og/gcc-15.2.0/fixincludes/mkfixinc.sh	2025-08-08 12:21:39
-+++ gcc/gcc-15.2.0/fixincludes/mkfixinc.sh	2026-05-31 15:08:46
+diff -ur gcc og/gcc-16.1.0/fixincludes/mkfixinc.sh gcc/gcc-16.1.0/fixincludes/mkfixinc.sh
+--- gcc og/gcc-16.1.0/fixincludes/mkfixinc.sh	2025-08-08 12:21:39
++++ gcc/gcc-16.1.0/fixincludes/mkfixinc.sh	2026-05-31 15:08:46
 @@ -13,6 +13,7 @@
  case $machine in
      i?86-*-cygwin* | \
@@ -32,10 +32,10 @@ diff -ur gcc og/gcc-15.2.0/fixincludes/mkfixinc.sh gcc/gcc-15.2.0/fixincludes/mk
      powerpc-*-eabisim* | \
      powerpc-*-eabi*    | \
      powerpc-*-rtems*   | \
-Only in gcc/gcc-15.2.0/gcc/config: rcos.h
-diff -ur gcc og/gcc-15.2.0/gcc/config.gcc gcc/gcc-15.2.0/gcc/config.gcc
---- gcc og/gcc-15.2.0/gcc/config.gcc	2025-08-08 12:21:40
-+++ gcc/gcc-15.2.0/gcc/config.gcc	2026-05-31 14:57:03
+Only in gcc/gcc-16.1.0/gcc/config: rcos.h
+diff -ur gcc og/gcc-16.1.0/gcc/config.gcc gcc/gcc-16.1.0/gcc/config.gcc
+--- gcc og/gcc-16.1.0/gcc/config.gcc	2025-08-08 12:21:40
++++ gcc/gcc-16.1.0/gcc/config.gcc	2026-05-31 14:57:03
 @@ -1038,6 +1038,13 @@
    esac
    tm_defines="$tm_defines DEFAULT_LIBC=LIBC_UCLIBC SINGLE_LIBC"
@@ -63,9 +63,9 @@ diff -ur gcc og/gcc-15.2.0/gcc/config.gcc gcc/gcc-15.2.0/gcc/config.gcc
  i[34567]86-*-rdos*)
      tm_file="${tm_file} i386/unix.h i386/att.h elfos.h newlib-stdint.h i386/i386elf.h i386/rdos.h"
      ;;
-diff -ur gcc og/gcc-15.2.0/libgcc/config.host gcc/gcc-15.2.0/libgcc/config.host
---- gcc og/gcc-15.2.0/libgcc/config.host	2025-08-08 12:21:44
-+++ gcc/gcc-15.2.0/libgcc/config.host	2026-05-31 15:10:21
+diff -ur gcc og/gcc-16.1.0/libgcc/config.host gcc/gcc-16.1.0/libgcc/config.host
+--- gcc og/gcc-16.1.0/libgcc/config.host	2025-08-08 12:21:44
++++ gcc/gcc-16.1.0/libgcc/config.host	2026-05-31 15:10:21
 @@ -1349,6 +1349,10 @@
  	tmake_file="${tmake_file} t-softfp-sfdf t-softfp-excl t-softfp t-gnu-prefix pru/t-pru"
  	tm_file="$tm_file pru/pru-abi.h"
@@ -77,9 +77,9 @@ diff -ur gcc og/gcc-15.2.0/libgcc/config.host gcc/gcc-15.2.0/libgcc/config.host
  riscv*-*-linux*)
  	tmake_file="${tmake_file} riscv/t-crtstuff riscv/t-softfp${host_address} t-softfp riscv/t-elf riscv/t-elf${host_address} t-slibgcc-libgcc"
  	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o crtendS.o crtbeginT.o"
-diff -ur gcc og/gcc-15.2.0/libstdc++-v3/crossconfig.m4 gcc/gcc-15.2.0/libstdc++-v3/crossconfig.m4
---- gcc og/gcc-15.2.0/libstdc++-v3/crossconfig.m4	2025-08-08 12:21:45
-+++ gcc/gcc-15.2.0/libstdc++-v3/crossconfig.m4	2026-05-31 15:02:41
+diff -ur gcc og/gcc-16.1.0/libstdc++-v3/crossconfig.m4 gcc/gcc-16.1.0/libstdc++-v3/crossconfig.m4
+--- gcc og/gcc-16.1.0/libstdc++-v3/crossconfig.m4	2025-08-08 12:21:45
++++ gcc/gcc-16.1.0/libstdc++-v3/crossconfig.m4	2026-05-31 15:02:41
 @@ -236,6 +236,12 @@
      AC_DEFINE(HAVE_SINHF)
      AC_DEFINE(HAVE_SINHL)

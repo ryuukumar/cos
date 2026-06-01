@@ -35,7 +35,7 @@ cd tools && ./build_toolchain
 
 **Note that building a GCC toolchain can take upwards of an hour on some systems.** Please set aside some time for this task.
 
-By default this sets up GCC 15.2.0 and Binutils 2.45 in `cos/toolchain`. You can add this location to your path, or move the built toolchain to a more convenient location. You can also modify INSTALL_DIR in the build script to your liking.
+By default this sets up GCC 16.1.0 and Binutils 2.46.0 in `cos/toolchain`. You can add this location to your path, or move the built toolchain to a more convenient location. You can also modify INSTALL_DIR in the build script to your liking.
 
 It is strongly recommended not to change the versions of GCC and Binutils to be built, as there are no guarantees that any two pairs of versions will result in working software; additionally, the patch files will likely not work on any other version, and will require changes on your part.
 
