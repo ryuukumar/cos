@@ -26,6 +26,7 @@ int builtin_echo (int argc, char** argv);
 int builtin_eval (int argc, char** argv);
 int builtin_exit (int argc, char** argv);
 int builtin_getpid (int argc, char** argv);
+int builtin_ln (int argc, char** argv);
 int builtin_ls (int argc, char** argv);
 int builtin_mkdir (int argc, char** argv);
 int builtin_pwd (int argc, char** argv);

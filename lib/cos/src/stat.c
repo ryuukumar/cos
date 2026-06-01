@@ -22,6 +22,10 @@ int fstat (int file, struct stat* st) {
 	return (int)syscall_ret ((long)syscall2 (SYSCALL_SYS_FSTAT, (uint64_t)file, (uint64_t)st));
 }
 
+int lstat (const char* __restrict __path, struct stat* __restrict __buf) {
+	return (int)syscall_ret ((long)syscall2 (SYSCALL_SYS_LSTAT, (uint64_t)__path, (uint64_t)__buf));
+}
+
 int stat (const char* restrict path, struct stat* restrict st) {
 	return (int)syscall_ret ((long)syscall2 (SYSCALL_SYS_STAT, (uint64_t)path, (uint64_t)st));
 }

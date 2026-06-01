@@ -1,5 +1,5 @@
 /*
- * stat.c
+ * readlink.c
  * Copyright (C) 2026  Aditya Kumar
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
@@ -16,32 +16,35 @@
 
 #include <kclib/string.h>
 #include <kernel/error.h>
-#include <kernel/fs/vfs.h>
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
-#include <stddef.h>
 
-int do_stat (const char* restrict path, stat* restrict buf) {
+int do_readlink (const char* path, char* buf, size_t bufsz) {
 	if (!path || !buf) return -EINVAL;
 
 	process* current = get_current_process ();
-	inode*	 node = nullptr;
+	inode*	 parent = nullptr;
+	char*	 name = nullptr;
 
-	int error = do_lookup ((char*)path, &node, current->p_root, current->p_wd);
-	if (error != 0) return error;
+	int error = vfs_resolve_parent (path, current->p_root, current->p_wd, &parent, &name);
+	if (error) goto cleanup;
 
-	if (node->i_type == LINK) {
-		error = do_lookup ((char*)node->i_pvt, &node, current->p_root, current->p_wd);
-		if (error) return error;
-	}
+	inode* node = nullptr;
+	error = parent->i_iops->lookup (name, &node, parent);
+	if (error) goto cleanup;
 
-	if (!node->i_iops || !node->i_iops->stat) return -ENOSYS;
-	return node->i_iops->stat (node, buf);
+	if (node->i_type != LINK) return -EINVAL;
+	if (!node->i_iops->readlink) return -ENOSYS;
+	error = node->i_iops->readlink (node, buf, bufsz);
+
+cleanup:
+	kfree (name);
+	return error;
 }
 
-uint64_t sys_stat (uint64_t path, uint64_t buf) {
-	const char* path_us = kstrdup ((const char*)path);
-	int			error = do_stat (path_us, (stat*)buf);
-	kfree ((void*)path_us);
-	return error;
+uint64_t sys_readlink (uint64_t path, uint64_t buf, uint64_t bufsz) {
+	char* p = kstrdup ((char*)path);
+	int	  ret = do_readlink (p, (char*)buf, (size_t)bufsz);
+	kfree (p);
+	return ret;
 }
