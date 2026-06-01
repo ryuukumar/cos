@@ -26,6 +26,11 @@ int do_chdir (const char* path) {
 	int error = do_lookup ((char*)path, &new_dir, current->p_root, current->p_wd);
 	if (error != 0) return error;
 
+	if (new_dir->i_type == LINK) {
+		error = do_lookup ((char*)new_dir->i_pvt, &new_dir, current->p_root, current->p_wd);
+		if (error) return error;
+	}
+
 	if (new_dir->i_type != DIRECTORY) return -ENOTDIR;
 	current->p_wd = new_dir;
 	return 0;
