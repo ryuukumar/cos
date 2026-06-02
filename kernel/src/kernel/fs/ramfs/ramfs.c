@@ -361,12 +361,9 @@ int readlink (inode* node, char* buf, size_t bufsz) {
 
 int rename (inode* old_node, inode* old_parent, const char* old_name, inode* new_parent,
 			const char* new_name) {
-	if (!new_parent->i_iops || !new_parent->i_iops->link || !new_parent->i_iops->unlink)
-		return -ENOSYS;
 	int error = add_dirent (new_parent, (char*)new_name, old_node);
 	if (error) return error;
 
-	old_node->i_cnt--;
 	old_node->i_parent = new_parent;
 	remove_dirent (old_parent, (char*)old_name);
 
