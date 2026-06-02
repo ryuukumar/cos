@@ -27,16 +27,17 @@ int do_rename (const char* old, const char* new) {
 	// TODO: should we follow links anywhere here?
 
 	process* current = get_current_process ();
-	inode*	 old_node = nullptr;
+	inode *	 old_parent = nullptr, *old_node = nullptr, *new_parent = nullptr, *new_node = nullptr;
+	char *	 old_childname = nullptr, *new_childname = nullptr;
 
-	int error = do_lookup ((char*)old, &old_node, current->p_root, current->p_wd);
-	if (error != 0) return error;
+	int error =
+		vfs_resolve_parent (old, current->p_root, current->p_wd, &old_parent, &old_childname);
+	if (error) return error;
+	error = do_lookup ((char*)old, &old_node, current->p_root, current->p_wd);
+	if (error) return error;
 
-	inode* old_parent = old_node->i_parent;
 	if (!old_parent || old_parent == old_node) return -EINVAL;
 
-	inode* new_parent = nullptr;
-	char*  new_childname = nullptr;
 	error = vfs_resolve_parent (new, current->p_root, current->p_wd, &new_parent, &new_childname);
 	if (error != 0) return error;
 
@@ -44,19 +45,21 @@ int do_rename (const char* old, const char* new) {
 		if (n == old_node) return -EINVAL;
 	if (new_parent->i_type != DIRECTORY) return -ENOTDIR;
 
-	inode* new_node = nullptr;
 	error = do_lookup ((char*)new, &new_node, current->p_root, current->p_wd);
 
 	// TODO: check for separate filesystems, return -EXDEV
 
 	if (error == 0 && new_node) {
-		if (!new_parent->i_iops || !new_parent->i_iops->unlink) return -EEXIST;
+		if (new_node->i_type == DIRECTORY && old_node->i_type != DIRECTORY) return -EISDIR;
+		if (new_node->i_type != DIRECTORY && old_node->i_type == DIRECTORY) return -ENOTDIR;
+		if (!new_parent->i_iops || !new_parent->i_iops->unlink) return -ENOSYS;
 		error = new_parent->i_iops->unlink (new_parent, new_childname, new_node);
 		if (error) return error;
 	}
 
 	if (!old_node->i_iops || !old_node->i_iops->rename) return -ENOSYS;
-	return old_node->i_iops->rename (old_node, new_parent, new_childname);
+	return old_node->i_iops->rename (old_node, old_parent, old_childname, new_parent,
+									 new_childname);
 }
 
 uint64_t sys_rename (uint64_t old, uint64_t new) {

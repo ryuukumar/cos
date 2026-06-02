@@ -309,6 +309,7 @@ int close (inode* node, file* f) {
 }
 
 int unlink (inode* parent, char* name, inode* node) {
+	if (node->i_type == DIRECTORY && ((dir_content_t*)node->i_pvt)->d_count > 2) return -ENOTEMPTY;
 	remove_dirent (parent, name);
 	if (--node->i_cnt == 0) free_inode (node);
 	return 0;
@@ -351,15 +352,22 @@ int readlink (inode* node, char* buf, size_t bufsz) {
 	return (int)len;
 }
 
-int rename (inode* old_node, inode* new_parent, const char* new) {
-	inode* parent_node = old_node->i_parent;
-	if (parent_node == old_node || !parent_node) return 0;
-
+int rename (inode* old_node, inode* old_parent, const char* old_name, inode* new_parent,
+			const char* new_name) {
 	if (!new_parent->i_iops || !new_parent->i_iops->link || !new_parent->i_iops->unlink)
 		return -ENOSYS;
-	new_parent->i_iops->link (old_node, (char*)new, new_parent);
-	new_parent->i_iops->unlink (parent_node, (char*)new, old_node);
+	int error = new_parent->i_iops->link (old_node, (char*)new_name, new_parent);
+	if (error) return error;
 
+	old_parent->i_iops->unlink (old_parent, (char*)old_name, old_node);
+	if (old_node->i_parent == old_parent) old_node->i_parent = new_parent;
+
+	if (old_node->i_type == DIRECTORY) {
+		dir_content_t* node_pvt = (dir_content_t*)old_node->i_pvt;
+		for (uint64_t i = 0; i < node_pvt->d_count; i++)
+			if (kstrcmp (node_pvt->d_children[i].c_name, ".."))
+				node_pvt->d_children[i].c_inode = new_parent;
+	}
 	return 0;
 }
 

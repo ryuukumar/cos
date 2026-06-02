@@ -56,7 +56,7 @@ typedef struct {
 	int (*symlink) (char*, char*, inode**, inode*);
 	int (*readlink) (inode*, char*, size_t);
 	int (*link) (inode*, char*, inode*);
-	int (*rename) (inode*, inode*, const char*);
+	int (*rename) (inode*, inode*, const char*, inode*, const char*);
 } inode_operations;
 
 typedef struct {
