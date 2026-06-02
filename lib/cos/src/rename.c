@@ -17,6 +17,7 @@
 #include <arch/x86_64-cos/syscalls.h>
 #include <stdio.h>
 
-int rename (const char* __p1, const char* __p2) {
+int _rename (const char* __p1, const char* __p2);
+int _rename (const char* __p1, const char* __p2) {
 	return (int)syscall_ret ((long)syscall2 (SYSCALL_SYS_RENAME, (uint64_t)__p1, (uint64_t)__p2));
 }
