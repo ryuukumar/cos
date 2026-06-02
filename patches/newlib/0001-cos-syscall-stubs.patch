@@ -12,10 +12,10 @@ index 38f3d037a..c65bcca53 100755
  	# This one is extra strict with allowed versions
  	sco3.2v2 | sco3.2v[4-9]* | sco5v6*)
 diff --git a/newlib/configure.host b/newlib/configure.host
-index 960cca215..4c2b58d9c 100644
+index 960cca215..f2747388f 100644
 --- a/newlib/configure.host
 +++ b/newlib/configure.host
-@@ -592,6 +592,22 @@ case "${host}" in
+@@ -592,6 +592,23 @@ case "${host}" in
    z8k-*-coff)
  	sys_dir=z8ksim
  	;;
@@ -25,6 +25,7 @@ index 960cca215..4c2b58d9c 100644
 +    newlib_cflags="${newlib_cflags} -DMISSING_SYSCALL_NAMES"
 +    newlib_cflags="${newlib_cflags} -D_NO_GLOB"
 +    newlib_cflags="${newlib_cflags} -D_NO_POSIX_SPAWN"
++    newlib_cflags="${newlib_cflags} -DHAVE_RENAME"
 +    have_crt0="no"
 +    ;;
 +  x86_64-*-elf*)
