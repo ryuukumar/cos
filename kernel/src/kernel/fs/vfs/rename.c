@@ -33,7 +33,7 @@ int do_rename (const char* old, const char* new) {
 	int error =
 		vfs_resolve_parent (old, current->p_root, current->p_wd, &old_parent, &old_childname);
 	if (error) return error;
-	error = do_lookup ((char*)old, &old_node, current->p_root, current->p_wd);
+	error = old_parent->i_iops->lookup (old_childname, &old_node, old_parent);
 	if (error) return error;
 
 	if (!old_parent || old_parent == old_node) return -EINVAL;
@@ -47,7 +47,7 @@ int do_rename (const char* old, const char* new) {
 	}
 	if (new_parent->i_type != DIRECTORY) return -ENOTDIR;
 
-	error = do_lookup ((char*)new, &new_node, current->p_root, current->p_wd);
+	error = new_parent->i_iops->lookup (new_childname, &new_node, new_parent);
 
 	if (old_node == new_node) return 0;
 
