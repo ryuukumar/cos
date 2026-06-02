@@ -24,22 +24,46 @@
 int do_rename (const char* old, const char* new) {
 	if (!old || !new) return -EINVAL;
 
-	process* current = get_current_process ();
-	inode*	 node = nullptr;
+	// TODO: should we follow links anywhere here?
 
-	int error = do_lookup ((char*)old, &node, current->p_root, current->p_wd);
+	process* current = get_current_process ();
+	inode*	 old_node = nullptr;
+
+	int error = do_lookup ((char*)old, &old_node, current->p_root, current->p_wd);
 	if (error != 0) return error;
 
-	if (node->i_type == DIRECTORY) return -EISDIR;
-	if (!node->i_iops || !node->i_iops->rename) return -ENOSYS;
-	return node->i_iops->rename (node, new);
+	inode* old_parent = old_node->i_parent;
+	if (!old_parent || old_parent == old_node) return -EINVAL;
+
+	inode* new_parent = nullptr;
+	char*  new_childname = nullptr;
+	error = vfs_resolve_parent (new, current->p_root, current->p_wd, &new_parent, &new_childname);
+	if (error != 0) return error;
+
+	for (inode* n = new_parent; n != current->p_root; n = n->i_parent)
+		if (n == old_node) return -EINVAL;
+	if (new_parent->i_type != DIRECTORY) return -ENOTDIR;
+
+	inode* new_node = nullptr;
+	error = do_lookup ((char*)new, &new_node, current->p_root, current->p_wd);
+
+	// TODO: check for separate filesystems, return -EXDEV
+
+	if (error == 0 && new_node) {
+		if (!new_parent->i_iops || !new_parent->i_iops->unlink) return -EEXIST;
+		error = new_parent->i_iops->unlink (new_parent, new_childname, new_node);
+		if (error) return error;
+	}
+
+	if (!old_node->i_iops || !old_node->i_iops->rename) return -ENOSYS;
+	return old_node->i_iops->rename (old_node, new_parent, new_childname);
 }
 
 uint64_t sys_rename (uint64_t old, uint64_t new) {
 	const char* old_us = kstrdup ((const char*)old);
 	const char* new_us = kstrdup ((const char*)new);
-    
-	int			error = do_rename (old_us, new_us);
+
+	int error = do_rename (old_us, new_us);
 	kfree ((void*)old_us);
 	kfree ((void*)new_us);
 	return error;

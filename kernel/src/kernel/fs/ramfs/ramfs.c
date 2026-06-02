@@ -33,7 +33,7 @@ static inode_operations i_ops = {.lookup = lookup,
 								 .unlink = unlink,
 								 .symlink = symlink,
 								 .readlink = readlink,
-								.rename = rename};
+								 .rename = rename};
 static file_operations	f_ops = {.read = read,
 								 .write = write,
 								 .seek = seek,
@@ -351,9 +351,16 @@ int readlink (inode* node, char* buf, size_t bufsz) {
 	return (int)len;
 }
 
-int rename (inode* node, const char* new) {
-	inode* parent_node = node->i_parent;
-	if (parent_node == node || !parent_node) return 0;
+int rename (inode* old_node, inode* new_parent, const char* new) {
+	inode* parent_node = old_node->i_parent;
+	if (parent_node == old_node || !parent_node) return 0;
+
+	if (!new_parent->i_iops || !new_parent->i_iops->link || !new_parent->i_iops->unlink)
+		return -ENOSYS;
+	new_parent->i_iops->link (old_node, (char*)new, new_parent);
+	new_parent->i_iops->unlink (parent_node, (char*)new, old_node);
+
+	return 0;
 }
 
 inode* init_ramfs_root (void) {

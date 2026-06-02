@@ -35,7 +35,7 @@ int unlink (inode* parent, char* name, inode* node);
 int link (inode* existing, char* linkname, inode* parent);
 int symlink (char* target, char* linkname, inode** result, inode* parent);
 int readlink (inode* node, char* buf, size_t bufsz);
-int rename (inode* node, const char* new);
+int rename (inode* node, inode* new_parent, const char* new_name);
 
 typedef struct {
 	char*  c_name;
