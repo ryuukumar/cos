@@ -339,7 +339,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 	pidn1_exit:
 		process* child = (process*)hashmap_get (pid_map, child_pid);
 		if (child) {
-			*estatus = child->p_exitstatus;
+			if (estatus) *estatus = child->p_exitstatus;
 			reap_process (child_pid);
 		}
 		current->p_waitforchild = 0;
@@ -358,7 +358,7 @@ static int do_waitpid (int64_t pid, exit_status* estatus, uint64_t options) {
 		} while (waitproc->p_state != TASK_DEAD);
 
 	pid0_exit:
-		*estatus = waitproc->p_exitstatus;
+		if (estatus) *estatus = waitproc->p_exitstatus;
 		reap_process (waitproc->p_id);
 		return pid;
 	}
