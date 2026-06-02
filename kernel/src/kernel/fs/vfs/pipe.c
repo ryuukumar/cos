@@ -40,8 +40,7 @@ static int pipe_read (inode* i, file* f, void* buf, size_t cnt) {
 		if (info->write_refs == 0) return 0;
 
 		process_block (&info->read_wait);
-		process* cur = get_current_process ();
-		if (cur->p_pending & ~cur->p_sigmask) return -EINTR;
+		if (has_pending_nonignored_signal (get_current_process ())) return -EINTR;
 	}
 	return (int)got;
 }
@@ -59,7 +58,7 @@ static int pipe_close_reader (inode* i, file* f) {
 
 static int pipe_write (inode* node, file* f, void* buf, size_t size) {
 	(void)f;
-	pipe_info_t* info = (pipe_info_t*)node->i_pvt;
+	pipe_info_t* info = (pipe_info_t*)node->i_info.pipe_info;
 
 	if (info->read_refs == 0) {
 		send_signal (get_current_process (), SIGPIPE);
@@ -81,7 +80,7 @@ static int pipe_write (inode* node, file* f, void* buf, size_t size) {
 
 static int pipe_close_writer (inode* node, file* f) {
 	(void)f;
-	pipe_info_t* info = (pipe_info_t*)node->i_pvt;
+	pipe_info_t* info = (pipe_info_t*)node->i_info.pipe_info;
 	info->write_refs--;
 	if (info->write_refs == 0) {
 		process* waiter = nullptr;
