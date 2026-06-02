@@ -41,11 +41,15 @@ int do_rename (const char* old, const char* new) {
 	error = vfs_resolve_parent (new, current->p_root, current->p_wd, &new_parent, &new_childname);
 	if (error != 0) return error;
 
-	for (inode* n = new_parent; n != current->p_root; n = n->i_parent)
+	for (inode* n = new_parent;; n = n->i_parent) {
 		if (n == old_node) return -EINVAL;
+		if (n == n->i_parent) break;
+	}
 	if (new_parent->i_type != DIRECTORY) return -ENOTDIR;
 
 	error = do_lookup ((char*)new, &new_node, current->p_root, current->p_wd);
+
+	if (old_node == new_node) return 0;
 
 	// TODO: check for separate filesystems, return -EXDEV
 

@@ -360,8 +360,8 @@ int rename (inode* old_node, inode* old_parent, const char* old_name, inode* new
 	if (error) return error;
 
 	old_node->i_cnt--;
+	old_node->i_parent = new_parent;
 	remove_dirent (old_parent, (char*)old_name);
-	if (old_node->i_parent == old_parent) old_node->i_parent = new_parent;
 
 	if (old_node->i_type == DIRECTORY) {
 		dir_content_t* node_pvt = (dir_content_t*)old_node->i_pvt;
