@@ -156,3 +156,28 @@ void deliver_pending_signals (registers_t* registers) {
 	registers->rdi = signum;
 	registers->rsp = user_rsp;
 }
+
+int is_signal_ignored (process* p, int signum) {
+	if (signum < 1 || signum >= NSIG) return 1;
+
+	sigaction* act = &p->p_sigactions[signum];
+
+	if (act->sa_handler == SIG_IGN) return 1;
+
+	if (act->sa_handler == SIG_DFL) {
+		if (signum == SIGCHLD || signum == SIGURG || signum == SIGWINCH) return 1;
+		return 0;
+	}
+
+	return 0;
+}
+
+int has_pending_nonignored_signal (process* p) {
+	uint64_t pending = p->p_pending & ~p->p_sigmask;
+	while (pending) {
+		int sig = __builtin_ctzll (pending);
+		if (!is_signal_ignored (p, sig)) return 1;
+		pending &= pending - 1;
+	}
+	return 0;
+}

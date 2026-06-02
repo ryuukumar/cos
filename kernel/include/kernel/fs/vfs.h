@@ -20,7 +20,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define MAX_FDS 32
+#define MAX_FDS 256
 
 #define O_RDONLY 0x0000
 #define O_WRONLY 0x0001
@@ -37,13 +37,14 @@
 
 #define ALIGN_UP(value, alignment) (((value) + (alignment) - 1) & ~((alignment) - 1))
 
-typedef enum { UNDEF, EFILE, DIRECTORY, LINK, CHAR_DEV } file_type_t;
+typedef enum { UNDEF, EFILE, DIRECTORY, LINK, CHAR_DEV, PIPE } file_type_t;
 
 typedef struct inode inode;
 typedef struct file	 file;
 
 typedef struct chardev_info chardev_info_t;
 typedef struct ramfs_info	ramfs_info_t;
+typedef struct pipe_info	pipe_info_t;
 
 typedef struct {
 	int (*lookup) (char*, inode**, inode*);
@@ -79,6 +80,7 @@ struct inode {
 	union {
 		chardev_info_t* chardev_info;
 		ramfs_info_t*	ramfs_info;
+		pipe_info_t*	pipe_info;
 	} i_info;
 };
 
@@ -130,6 +132,8 @@ uint64_t sys_link (uint64_t oldpath, uint64_t newpath);
 uint64_t sys_unlink (uint64_t path);
 uint64_t sys_symlink (uint64_t target, uint64_t linkpath);
 uint64_t sys_readlink (uint64_t path, uint64_t buf, uint64_t bufsz);
+uint64_t sys_dup (uint64_t fd);
+uint64_t sys_dup2 (uint64_t oldfd, uint64_t newfd);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);
