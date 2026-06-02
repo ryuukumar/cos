@@ -333,7 +333,7 @@ int unlink (inode* parent, char* name, inode* node) {
 
 int link (inode* existing, char* linkname, inode* parent) {
 	if (existing->i_type == DIRECTORY) return -EPERM;
-	add_dirent (existing, linkname, parent);
+	add_dirent (parent, linkname, existing);
 	existing->i_cnt++;
 	return 0;
 }

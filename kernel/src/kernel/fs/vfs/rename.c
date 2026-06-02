@@ -53,6 +53,10 @@ int do_rename (const char* old, const char* new) {
 
 	// TODO: check for separate filesystems, return -EXDEV
 
+	if (kstrcmp (old_childname, ".") == 0 || kstrcmp (old_childname, "..") == 0 ||
+		kstrcmp (new_childname, ".") == 0 || kstrcmp (new_childname, "..") == 0)
+		return -EINVAL;
+
 	if (error == 0 && new_node) {
 		if (new_node->i_type == DIRECTORY && old_node->i_type != DIRECTORY) return -EISDIR;
 		if (new_node->i_type != DIRECTORY && old_node->i_type == DIRECTORY) return -ENOTDIR;
@@ -60,10 +64,6 @@ int do_rename (const char* old, const char* new) {
 		error = new_parent->i_iops->unlink (new_parent, new_childname, new_node);
 		if (error) return error;
 	}
-
-	if (kstrcmp (old_childname, ".") == 0 || kstrcmp (old_childname, "..") == 0 ||
-		kstrcmp (new_childname, ".") == 0 || kstrcmp (new_childname, "..") == 0)
-		return -EINVAL;
 
 	if (!old_node->i_iops || !old_node->i_iops->rename) return -ENOSYS;
 	return old_node->i_iops->rename (old_node, old_parent, old_childname, new_parent,
