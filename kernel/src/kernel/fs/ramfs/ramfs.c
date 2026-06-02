@@ -365,7 +365,7 @@ int rename (inode* old_node, inode* old_parent, const char* old_name, inode* new
 	if (old_node->i_type == DIRECTORY) {
 		dir_content_t* node_pvt = (dir_content_t*)old_node->i_pvt;
 		for (uint64_t i = 0; i < node_pvt->d_count; i++)
-			if (kstrcmp (node_pvt->d_children[i].c_name, ".."))
+			if (kstrcmp (node_pvt->d_children[i].c_name, "..") == 0)
 				node_pvt->d_children[i].c_inode = new_parent;
 	}
 	return 0;
