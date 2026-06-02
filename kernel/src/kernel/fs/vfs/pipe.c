@@ -57,8 +57,48 @@ static int pipe_close_reader (inode* i, file* f) {
 	return 0;
 }
 
+static int pipe_write (inode* node, file* f, void* buf, size_t size) {
+	(void)f;
+	pipe_info_t* info = (pipe_info_t*)node->i_pvt;
+
+	if (info->read_refs == 0) {
+		send_signal (get_current_process (), SIGPIPE);
+		return -EPIPE;
+	}
+
+	char* cbuf = (char*)buf;
+	for (size_t i = 0; i < size; i++)
+		if (push_charqueue (info->buf, (unsigned char)cbuf[i]) != 0)
+			return i > 0 ? (int)i : -ENOMEM;
+
+	process* waiter = nullptr;
+	while (dequeue_process (&info->read_wait, &waiter) == 0 && waiter) {
+		process_unblock (waiter);
+		waiter = nullptr;
+	}
+	return (int)size;
+}
+
+static int pipe_close_writer (inode* node, file* f) {
+	(void)f;
+	pipe_info_t* info = (pipe_info_t*)node->i_pvt;
+	info->write_refs--;
+	if (info->write_refs == 0) {
+		process* waiter = nullptr;
+		while (dequeue_process (&info->read_wait, &waiter) == 0 && waiter) {
+			process_unblock (waiter);
+			waiter = nullptr;
+		}
+	}
+	if (node->i_cnt == 0) {
+		free_charqueue (info->buf);
+		kfree (info), kfree (node);
+	}
+	return 0;
+}
+
 static file_operations reader_operations = {.read = pipe_read, .close = pipe_close_reader};
-static file_operations writer_operations;
+static file_operations writer_operations = {.write = pipe_write, .close = pipe_close_writer};
 
 uint64_t sys_pipe (uint64_t pipefd_ptr) {
 	process* current = get_current_process ();
