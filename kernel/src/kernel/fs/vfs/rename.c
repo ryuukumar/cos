@@ -57,6 +57,10 @@ int do_rename (const char* old, const char* new) {
 		if (error) return error;
 	}
 
+	if (kstrcmp (old_childname, ".") == 0 || kstrcmp (old_childname, "..") == 0 ||
+		kstrcmp (new_childname, ".") == 0 || kstrcmp (new_childname, "..") == 0)
+		return -EINVAL;
+
 	if (!old_node->i_iops || !old_node->i_iops->rename) return -ENOSYS;
 	return old_node->i_iops->rename (old_node, old_parent, old_childname, new_parent,
 									 new_childname);
