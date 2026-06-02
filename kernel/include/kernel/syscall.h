@@ -44,6 +44,7 @@
 #define SYSCALL_SYS_LSTAT	 19
 #define SYSCALL_SYS_DUP		 20
 #define SYSCALL_SYS_DUP2	 21
+#define SYSCALL_SYS_PIPE	 22
 
 /* Memory syscalls */
 

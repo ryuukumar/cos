@@ -17,6 +17,7 @@
 #include <kclib/ctype.h>
 #include <kclib/string.h>
 #include <kernel/error.h>
+#include <kernel/fs/pipe.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
 #include <kernel/syscall.h>
@@ -48,4 +49,5 @@ void init_vfs (inode* absolute_root) {
 	register_syscall (SYSCALL_SYS_READLINK, SYS3 (sys_readlink));
 	register_syscall (SYSCALL_SYS_DUP, SYS1 (sys_dup));
 	register_syscall (SYSCALL_SYS_DUP2, SYS2 (sys_dup2));
+	register_syscall (SYSCALL_SYS_PIPE, SYS1 (sys_pipe));
 }
