@@ -20,7 +20,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define MAX_FDS 32
+#define MAX_FDS 256
 
 #define O_RDONLY 0x0000
 #define O_WRONLY 0x0001
