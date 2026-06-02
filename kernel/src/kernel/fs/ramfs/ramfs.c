@@ -359,7 +359,8 @@ int rename (inode* old_node, inode* old_parent, const char* old_name, inode* new
 	int error = new_parent->i_iops->link (old_node, (char*)new_name, new_parent);
 	if (error) return error;
 
-	old_parent->i_iops->unlink (old_parent, (char*)old_name, old_node);
+	old_node->i_cnt--;
+	remove_dirent (old_parent, (char*)old_name);
 	if (old_node->i_parent == old_parent) old_node->i_parent = new_parent;
 
 	if (old_node->i_type == DIRECTORY) {
