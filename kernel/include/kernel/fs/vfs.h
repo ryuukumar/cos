@@ -37,13 +37,14 @@
 
 #define ALIGN_UP(value, alignment) (((value) + (alignment) - 1) & ~((alignment) - 1))
 
-typedef enum { UNDEF, EFILE, DIRECTORY, LINK, CHAR_DEV } file_type_t;
+typedef enum { UNDEF, EFILE, DIRECTORY, LINK, CHAR_DEV, PIPE } file_type_t;
 
 typedef struct inode inode;
 typedef struct file	 file;
 
 typedef struct chardev_info chardev_info_t;
 typedef struct ramfs_info	ramfs_info_t;
+typedef struct pipe_info	pipe_info_t;
 
 typedef struct {
 	int (*lookup) (char*, inode**, inode*);
@@ -79,6 +80,7 @@ struct inode {
 	union {
 		chardev_info_t* chardev_info;
 		ramfs_info_t*	ramfs_info;
+		pipe_info_t*	pipe_info;
 	} i_info;
 };
 
