@@ -64,18 +64,7 @@ uint64_t sys_pipe (uint64_t pipefd_ptr) {
 	process* current = get_current_process ();
 	int64_t	 writer_fd = -1, reader_fd = -1;
 	int*	 pipefd = (int*)pipefd_ptr;
-
-	for (int64_t i = 0; i < MAX_FDS; i++) {
-		if (!current->p_fds[i]) {
-			if (reader_fd == -1)
-				reader_fd = i;
-			else
-				writer_fd = i;
-		}
-		if (writer_fd != -1) break;
-	}
-
-	if (writer_fd < 0) return -EMFILE;
+	int		 error = -ENOMEM;
 
 	pipe_info_t* info = kmalloc (sizeof (pipe_info_t));
 	if (!info) goto enomem_none;
@@ -104,12 +93,26 @@ uint64_t sys_pipe (uint64_t pipefd_ptr) {
 	reader_file->f_fops = &reader_operations;
 	writer_file->f_fops = &writer_operations;
 
+	for (int64_t i = 0; i < MAX_FDS; i++) {
+		if (!current->p_fds[i]) {
+			if (reader_fd == -1)
+				reader_fd = i;
+			else
+				writer_fd = i;
+		}
+		if (writer_fd != -1) break;
+	}
+
+	if (writer_fd < 0) goto emfile_all;
+
 	current->p_fds[reader_fd] = reader_file;
 	current->p_fds[writer_fd] = writer_file;
 	pipefd[0] = reader_fd;
 	pipefd[1] = writer_fd;
 	return 0;
 
+emfile_all:
+	error = -EMFILE;
 enomem_all:
 	kfree (reader_file);
 enomem_reader:
@@ -119,5 +122,5 @@ enomem_buf:
 enomem_info:
 	kfree (info);
 enomem_none:
-	return -ENOMEM;
+	return error;
 }
