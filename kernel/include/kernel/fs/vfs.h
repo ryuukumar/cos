@@ -20,6 +20,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define MAX_PATHLEN 2048
+#define MAX_PCMPLEN 256
+
 #define MAX_FDS 256
 
 #define O_RDONLY 0x0000
@@ -93,6 +96,7 @@ struct file {
 
 int	 vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** r_parent,
 						 char** r_name);
+int	 path_normalise_from_user (const char* path, char** outpath);
 bool filename_has_invalid_chars (char* filename);
 
 int do_mkdir (char* dirname, inode** result, inode* parent);
