@@ -45,6 +45,7 @@
 #define SYSCALL_SYS_DUP		 20
 #define SYSCALL_SYS_DUP2	 21
 #define SYSCALL_SYS_PIPE	 22
+#define SYSCALL_SYS_RENAME	 23
 
 /* Memory syscalls */
 

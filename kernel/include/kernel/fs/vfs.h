@@ -56,6 +56,7 @@ typedef struct {
 	int (*symlink) (char*, char*, inode**, inode*);
 	int (*readlink) (inode*, char*, size_t);
 	int (*link) (inode*, char*, inode*);
+	int (*rename) (inode*, inode*, const char*, inode*, const char*);
 } inode_operations;
 
 typedef struct {
@@ -100,6 +101,7 @@ int do_getcwd (char* buf, size_t size);
 int do_create (char* filename, inode** result, inode* parent);
 int do_lookup (char* filename, inode** result, inode* root, inode* cwd);
 int do_unlink (const char* path);
+int do_rename (const char* old, const char* new);
 
 int do_read (struct file* f, void* buf, size_t size);
 int do_seek (struct file* f, size_t offset, int whence);
@@ -134,6 +136,7 @@ uint64_t sys_symlink (uint64_t target, uint64_t linkpath);
 uint64_t sys_readlink (uint64_t path, uint64_t buf, uint64_t bufsz);
 uint64_t sys_dup (uint64_t fd);
 uint64_t sys_dup2 (uint64_t oldfd, uint64_t newfd);
+uint64_t sys_rename (uint64_t old, uint64_t new);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);

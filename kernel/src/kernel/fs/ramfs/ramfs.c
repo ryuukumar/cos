@@ -32,7 +32,8 @@ static inode_operations i_ops = {.lookup = lookup,
 								 .link = link,
 								 .unlink = unlink,
 								 .symlink = symlink,
-								 .readlink = readlink};
+								 .readlink = readlink,
+								 .rename = rename};
 static file_operations	f_ops = {.read = read,
 								 .write = write,
 								 .seek = seek,
@@ -278,6 +279,22 @@ int fstat (inode* node, file* f, stat* buf) {
 	return istat (node, buf);
 }
 
+static int add_dirent (inode* parent, char* name, inode* node) {
+	dir_content_t* parent_pvt = (dir_content_t*)parent->i_pvt;
+	size_t		   new_size = (parent_pvt->d_count + 1) * sizeof (child_t);
+
+	child_t* grown = krealloc (parent_pvt->d_children, new_size);
+	if (!grown) return -ENOMEM;
+	parent_pvt->d_children = grown;
+
+	parent_pvt->d_children[parent_pvt->d_count].c_name = kstrdup (name);
+	if (!parent_pvt->d_children[parent_pvt->d_count].c_name) return -ENOMEM;
+	parent_pvt->d_children[parent_pvt->d_count].c_inode = node;
+	parent_pvt->d_count++;
+
+	return 0;
+}
+
 static void remove_dirent (inode* parent, char* name) {
 	dir_content_t* dir = (dir_content_t*)parent->i_pvt;
 	for (uint64_t i = 0; i < dir->d_count; i++) {
@@ -308,6 +325,7 @@ int close (inode* node, file* f) {
 }
 
 int unlink (inode* parent, char* name, inode* node) {
+	if (node->i_type == DIRECTORY && ((dir_content_t*)node->i_pvt)->d_count > 2) return -ENOTEMPTY;
 	remove_dirent (parent, name);
 	if (--node->i_cnt == 0) free_inode (node);
 	return 0;
@@ -315,16 +333,7 @@ int unlink (inode* parent, char* name, inode* node) {
 
 int link (inode* existing, char* linkname, inode* parent) {
 	if (existing->i_type == DIRECTORY) return -EPERM;
-
-	dir_content_t* parent_pvt = (dir_content_t*)parent->i_pvt;
-	child_t*	   new_children = kmalloc ((parent_pvt->d_count + 1) * sizeof (child_t));
-	kmemcpy (new_children, parent_pvt->d_children, parent_pvt->d_count * sizeof (child_t));
-	new_children[parent_pvt->d_count].c_inode = existing;
-	new_children[parent_pvt->d_count].c_name = kstrdup (linkname);
-	kfree (parent_pvt->d_children);
-	parent_pvt->d_children = new_children;
-	parent_pvt->d_count++;
-
+	add_dirent (parent, linkname, existing);
 	existing->i_cnt++;
 	return 0;
 }
@@ -348,6 +357,23 @@ int readlink (inode* node, char* buf, size_t bufsz) {
 	if (len > bufsz) len = bufsz;
 	kmemcpy (buf, node->i_pvt, len);
 	return (int)len;
+}
+
+int rename (inode* old_node, inode* old_parent, const char* old_name, inode* new_parent,
+			const char* new_name) {
+	int error = add_dirent (new_parent, (char*)new_name, old_node);
+	if (error) return error;
+
+	old_node->i_parent = new_parent;
+	remove_dirent (old_parent, (char*)old_name);
+
+	if (old_node->i_type == DIRECTORY) {
+		dir_content_t* node_pvt = (dir_content_t*)old_node->i_pvt;
+		for (uint64_t i = 0; i < node_pvt->d_count; i++)
+			if (kstrcmp (node_pvt->d_children[i].c_name, "..") == 0)
+				node_pvt->d_children[i].c_inode = new_parent;
+	}
+	return 0;
 }
 
 inode* init_ramfs_root (void) {
