@@ -20,8 +20,6 @@
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
 
-#define SYMLINK_LIMIT 40
-
 static int do_lookup_limit (char* filename, inode** result, inode* root, inode* cwd, size_t limit) {
 	if (limit > SYMLINK_LIMIT) return -ELOOP;
 	if (!root || !cwd || !filename || filename[0] == 0) return -EINVAL;

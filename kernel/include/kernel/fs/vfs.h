@@ -20,8 +20,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define MAX_PATHLEN 2048
-#define MAX_PCMPLEN 256
+#define MAX_PATHLEN	  2048
+#define MAX_PCMPLEN	  256
+#define SYMLINK_LIMIT 40
 
 #define MAX_FDS 256
 
@@ -98,6 +99,7 @@ int	 vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** 
 						 char** r_name);
 int	 path_normalise_from_user (const char* path, char** outpath);
 bool filename_has_invalid_chars (char* filename);
+int	 lookup_inode_by_path (const char* path, inode* proc_root, inode* proc_cwd, inode** result);
 
 int do_mkdir (char* dirname, inode** result, inode* parent);
 int do_chdir (const char* path);

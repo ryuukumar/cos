@@ -61,3 +61,141 @@ int path_normalise_from_user (const char* path, char** outpath) {
 
 	return new_path_sz + 1;
 }
+
+static int navigate_single_element (const char* element_start, size_t elem_len, inode* parent,
+									inode** result) {
+	if (elem_len >= MAX_PCMPLEN) return -ENAMETOOLONG;
+	if (!parent) return -ENOENT;
+	if (!result) return -EINVAL;
+	if (parent->i_type != DIRECTORY) return -ENOTDIR;
+	if (elem_len == 0) return -ENOENT;
+
+	int	 error = 0;
+	char comp_name[MAX_PCMPLEN + 1];
+
+	kmemcpy (comp_name, element_start, elem_len);
+	comp_name[elem_len] = 0;
+
+	inode* buffer_node = nullptr;
+
+	if (kstrncmp (comp_name, "..", MAX_PCMPLEN) == 0) {
+		*result = parent->i_parent;
+	} else if (kstrncmp (comp_name, ".", MAX_PCMPLEN) == 0) {
+		*result = parent;
+	} else {
+		if (!parent->i_iops || !parent->i_iops->lookup) return -ENOSYS;
+		error = parent->i_iops->lookup (comp_name, &buffer_node, parent);
+		*result = buffer_node;
+	}
+
+	return error;
+}
+
+static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* proc_cwd,
+								   inode** result, size_t limit) {
+	if (limit >= SYMLINK_LIMIT) return -ELOOP;
+
+	char * path_base = (char*)path, *path_iter = path_base;
+	inode *start_node = proc_cwd, *buffer_node = nullptr;
+	if (path_base[0] == '/') {
+		start_node = proc_root;
+		if (*(++path_base) == '\0') {
+			*result = proc_root;
+			return 0;
+		}
+		path_iter = path_base;
+	}
+
+	size_t path_len = kstrnlen (path_base, MAX_PATHLEN), complen = 0;
+	if (path_len == MAX_PATHLEN) return -ENAMETOOLONG;
+
+	bool trailing_slash = path_base[path_len - 1] == '/';
+	int	 error = 0;
+
+	for (size_t i = 0; i < path_len - (trailing_slash ? 1 : 0); i++) {
+		if (path_base[i] == '/') {
+			complen = &path_base[i] - path_iter;
+			error = navigate_single_element (path_iter, complen, start_node, &buffer_node);
+			if (error) return error;
+
+			while (buffer_node->i_type == LINK) {
+				if (!buffer_node->i_iops->readlink) return -ENOSYS;
+				char* target = kmalloc (MAX_PATHLEN + 1);
+				error = buffer_node->i_iops->readlink (buffer_node, target, MAX_PATHLEN + 1);
+				if (!(error > 0 && error < MAX_PATHLEN + 1)) {
+					kfree (target);
+					if (error == MAX_PATHLEN + 1) return -ENAMETOOLONG;
+					if (error == 0) return -ENOENT;
+					if (error < 0) return error;
+				}
+
+				char* target_norm = nullptr;
+				error = path_normalise_from_user (target, &target_norm);
+				kfree (target);
+				if (error) return error;
+				error = lookup_inode_by_path_r (target_norm, proc_root, start_node, &buffer_node,
+												limit + 1);
+				kfree (target_norm);
+				if (error) return error;
+				if (buffer_node->i_type != DIRECTORY) return -ENOTDIR;
+			}
+
+			start_node = buffer_node;
+			path_iter = &path_base[i + 1];
+		}
+	}
+
+	complen = &path_base[path_len - (trailing_slash ? 1 : 0)] - path_iter;
+	if (complen > 0) {
+		error = navigate_single_element (path_iter, complen, start_node, &buffer_node);
+		if (error) return error;
+		start_node = buffer_node;
+	}
+
+	while (trailing_slash && start_node->i_type == LINK) {
+		if (!start_node->i_iops || !start_node->i_iops->readlink) return -ENOSYS;
+
+		char* target = kmalloc (MAX_PATHLEN + 1);
+		error = start_node->i_iops->readlink (start_node, target, MAX_PATHLEN + 1);
+		if (!(error > 0 && error < MAX_PATHLEN + 1)) {
+			kfree (target);
+			if (error == MAX_PATHLEN + 1) return -ENAMETOOLONG;
+			if (error == 0) return -ENOENT;
+			if (error < 0) return error;
+		}
+
+		target[error] = '\0';
+
+		char* target_norm = nullptr;
+		error = path_normalise_from_user (target, &target_norm);
+		kfree (target);
+		if (error) return error;
+		error = lookup_inode_by_path_r (target_norm, proc_root, start_node->i_parent, &start_node,
+										limit + 1);
+
+		kfree (target_norm);
+		if (error) return error;
+	}
+	if (trailing_slash && start_node->i_type != DIRECTORY) return -ENOTDIR;
+
+	*result = start_node;
+	return 0;
+}
+
+/*!
+ * Resolve a path to an inode. Intermediate symlinks are always followed. Final symlink is only
+ * followed if a trailing '/' is present. Final component is verified to be a directory (after
+ * symlink resolution) if trailing '/' is present.
+ *
+ * @param path Path to resolve
+ * @param proc_root Root of (process') file system
+ * @param proc_cwd Current working directory of (process') file system
+ * @param result Pointer to inode* where result will be stored, if found
+ * @return 0 if path resolved and *result is populated, else -EINVAL, -ENOENT, -ENOTDIR,
+ * -ENAMETOOLONG, -ELOOP or -ENOSYS.
+ */
+int lookup_inode_by_path (const char* path, inode* proc_root, inode* proc_cwd, inode** result) {
+	if (!path || !proc_root || !proc_cwd || !result) return -EINVAL;
+	if (path[0] == '\0') return -ENOENT;
+	return lookup_inode_by_path_r (path, proc_root, proc_cwd, result, 0);
+}
