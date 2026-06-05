@@ -39,6 +39,10 @@
 #define SEEK_CUR 1
 #define SEEK_END 2
 
+#define L_FLNK	 1
+#define L_NLNK	 2
+#define L_DIRCHK 4
+
 #define ALIGN_UP(value, alignment) (((value) + (alignment) - 1) & ~((alignment) - 1))
 
 typedef enum { UNDEF, EFILE, DIRECTORY, LINK, CHAR_DEV, PIPE } file_type_t;
@@ -99,7 +103,8 @@ int	 vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** 
 						 char** r_name);
 int	 path_normalise_from_user (const char* path, char** outpath);
 bool filename_has_invalid_chars (char* filename);
-int	 lookup_inode_by_path (const char* path, inode* proc_root, inode* proc_cwd, inode** result);
+int	 lookup_inode_by_path (const char* path, inode* proc_root, inode* proc_cwd, inode** result,
+						   uint16_t flags);
 int	 resolve_parent_and_childname (char* path, inode* proc_root, inode* proc_cwd,
 								   inode** result_parent, char** result_childname);
 

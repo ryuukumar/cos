@@ -92,7 +92,7 @@ static int navigate_single_element (const char* element_start, size_t elem_len, 
 }
 
 static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* proc_cwd,
-								   inode** result, size_t limit) {
+								   inode** result, size_t limit, uint16_t flags) {
 	if (limit >= SYMLINK_LIMIT) return -ELOOP;
 
 	char * path_base = (char*)path, *path_iter = path_base;
@@ -134,7 +134,7 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
 				kfree (target);
 				if (error) return error;
 				error = lookup_inode_by_path_r (target_norm, proc_root, start_node, &buffer_node,
-												limit + 1);
+												limit + 1, flags);
 				kfree (target_norm);
 				if (error) return error;
 				if (buffer_node->i_type != DIRECTORY) return -ENOTDIR;
@@ -152,7 +152,7 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
 		start_node = buffer_node;
 	}
 
-	while (trailing_slash && start_node->i_type == LINK) {
+	while ((trailing_slash || flags & L_FLNK) && start_node->i_type == LINK && !(flags & L_NLNK)) {
 		if (!start_node->i_iops || !start_node->i_iops->readlink) return -ENOSYS;
 
 		char* target = kmalloc (MAX_PATHLEN + 1);
@@ -171,12 +171,12 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
 		kfree (target);
 		if (error) return error;
 		error = lookup_inode_by_path_r (target_norm, proc_root, start_node->i_parent, &start_node,
-										limit + 1);
+										limit + 1, flags);
 
 		kfree (target_norm);
 		if (error) return error;
 	}
-	if (trailing_slash && start_node->i_type != DIRECTORY) return -ENOTDIR;
+	if ((trailing_slash || flags & L_DIRCHK) && start_node->i_type != DIRECTORY) return -ENOTDIR;
 
 	*result = start_node;
 	return 0;
@@ -190,17 +190,26 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
  * Passing paths that have not been normalised by path_normalise_from_user or alternative produces
  * undefined behaviour.
  *
+ * Flags:
+ * - [L_FLNK] Follow final link, even if trailing '/' is not detected.
+ * - [L_NLNK] Do not follow links, even if trailing '/' is detected (ignores L_FLNK if present).
+ * Does not affect intermediate link following.
+ * - [L_DIRCHK] Verify the resolved element is a directory and return -ENOTDIR otherwise. If
+ * trailing '/' or L_FLNK is passed, this check is run after symlink resolution is complete.
+ *
  * @param path Path to resolve
  * @param proc_root Root of (process') file system
  * @param proc_cwd Current working directory of (process') file system
  * @param result Pointer to inode* where result will be stored, if found
+ * @param flags Flags for execution
  * @return 0 if path resolved and *result is populated, else -EINVAL, -ENOENT, -ENOTDIR,
  * -ENAMETOOLONG, -ELOOP or -ENOSYS.
  */
-int lookup_inode_by_path (const char* path, inode* proc_root, inode* proc_cwd, inode** result) {
+int lookup_inode_by_path (const char* path, inode* proc_root, inode* proc_cwd, inode** result,
+						  uint16_t flags) {
 	if (!path || !proc_root || !proc_cwd || !result) return -EINVAL;
 	if (path[0] == '\0') return -ENOENT;
-	return lookup_inode_by_path_r (path, proc_root, proc_cwd, result, 0);
+	return lookup_inode_by_path_r (path, proc_root, proc_cwd, result, 0, flags);
 }
 
 /*!
@@ -242,7 +251,8 @@ int resolve_parent_and_childname (char* path, inode* proc_root, inode* proc_cwd,
 		size_t parent_len = slash_ptr - path + 1;
 
 		char* parent = kstrndup (path, parent_len);
-		int	  error = lookup_inode_by_path (parent, proc_root, proc_cwd, result_parent);
+		int	  error =
+			lookup_inode_by_path (parent, proc_root, proc_cwd, result_parent, L_FLNK | L_DIRCHK);
 		kfree (parent);
 		if (error) return error;
 
