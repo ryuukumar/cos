@@ -25,14 +25,23 @@ int do_unlink (const char* path) {
 	if (!path) return -EINVAL;
 
 	process* current = get_current_process ();
-	inode*	 parent = nullptr;
+	inode *	 parent = nullptr, *node = nullptr;
 	char*	 name = nullptr;
 
 	int error =
 		resolve_parent_and_childname ((char*)path, current->p_root, current->p_wd, &parent, &name);
-	if (error) return error;
+	int trailing = error == 1;
+	kserial_printf ("Unlink: child name is %s and trailing slash says %i.\n", name, trailing);
+	if (error < 0) return error;
 
-	inode* node = nullptr;
+	if (trailing) {
+		error = lookup_inode_by_path (name, current->p_root, parent, &node, L_FLNK);
+		kfree (name);
+		if (error) return error;
+		if (node->i_type == DIRECTORY) return -EISDIR;
+		return -ENOTDIR;
+	}
+
 	error = parent->i_iops->lookup (name, &node, parent);
 	if (error) {
 		kfree (name);
@@ -43,6 +52,7 @@ int do_unlink (const char* path) {
 		kfree (name);
 		return -EISDIR;
 	}
+
 	if (!node->i_iops || !node->i_iops->unlink) {
 		kfree (name);
 		return -ENOSYS;
