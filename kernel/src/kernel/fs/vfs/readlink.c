@@ -14,9 +14,9 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <kernel/fs/vfs.h>
 #include <kclib/string.h>
 #include <kernel/error.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
 
