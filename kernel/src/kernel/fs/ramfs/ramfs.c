@@ -33,7 +33,8 @@ static inode_operations i_ops = {.lookup = lookup,
 								 .unlink = unlink,
 								 .symlink = symlink,
 								 .readlink = readlink,
-								 .rename = rename};
+								 .rename = rename,
+								 .empty = empty};
 static file_operations	f_ops = {.read = read,
 								 .write = write,
 								 .seek = seek,
@@ -357,6 +358,19 @@ int rename (inode* old_node, inode* old_parent, const char* old_name, inode* new
 				node_pvt->d_children[i].c_inode = new_parent;
 	}
 	return 0;
+}
+
+int empty (inode* node) {
+	if (!node) return -EINVAL;
+
+	if (node->i_type == DIRECTORY) {
+		dir_content_t* node_pvt = (dir_content_t*)node->i_pvt;
+		return node_pvt->d_count <= 2;
+	} else if (node->i_type == EFILE || node->i_type == LINK) {
+		return node->i_sz == 0;
+	}
+
+	return -EINVAL;
 }
 
 inode* init_ramfs_root (void) {
