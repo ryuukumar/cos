@@ -176,7 +176,9 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
 		kfree (target_norm);
 		if (error) return error;
 	}
-	if ((trailing_slash || flags & L_DIRCHK) && start_node->i_type != DIRECTORY) return -ENOTDIR;
+	if ((trailing_slash || flags & L_DCHK) && start_node->i_type != DIRECTORY && !(flags & L_NDCHK))
+		return -ENOTDIR;
+	if (flags & L_NDCHK && start_node->i_type == DIRECTORY) return -EISDIR;
 
 	*result = start_node;
 	return 0;
@@ -194,8 +196,11 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
  * - [L_FLNK] Follow final link, even if trailing '/' is not detected.
  * - [L_NLNK] Do not follow links, even if trailing '/' is detected (ignores L_FLNK if present).
  * Does not affect intermediate link following.
- * - [L_DIRCHK] Verify the resolved element is a directory and return -ENOTDIR otherwise. If
+ * - [L_DCHK] Verify the resolved element is a directory and return -ENOTDIR otherwise. If
  * trailing '/' or L_FLNK is passed, this check is run after symlink resolution is complete.
+ * - [L_NDCHK] Verify the resolved element is a NOT directory and return -EISDIR otherwise. If
+ * trailing '/' or L_FLNK is passed, this check is run after symlink resolution is complete. Ignores
+ * L_DCHK if present.
  *
  * @param path Path to resolve
  * @param proc_root Root of (process') file system
@@ -252,7 +257,7 @@ int resolve_parent_and_childname (char* path, inode* proc_root, inode* proc_cwd,
 
 		char* parent = kstrndup (path, parent_len);
 		int	  error =
-			lookup_inode_by_path (parent, proc_root, proc_cwd, result_parent, L_FLNK | L_DIRCHK);
+			lookup_inode_by_path (parent, proc_root, proc_cwd, result_parent, L_FLNK | L_DCHK);
 		kfree (parent);
 		if (error) return error;
 

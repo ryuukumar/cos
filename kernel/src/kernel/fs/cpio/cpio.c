@@ -123,7 +123,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	int error = path_normalise_from_user (out_path, &normalised_path);
 	if (error < 0) return error;
 	error = lookup_inode_by_path (normalised_path, get_current_process ()->p_root,
-								  get_current_process ()->p_wd, &root_dir, L_FLNK | L_DIRCHK);
+								  get_current_process ()->p_wd, &root_dir, L_FLNK | L_DCHK);
 	if (error || !root_dir) return error;
 
 	uint64_t namesize = hex_to_u64 (header->c_namesize);

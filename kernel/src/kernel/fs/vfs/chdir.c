@@ -28,7 +28,7 @@ int do_chdir (const char* path) {
 	int	  error = path_normalise_from_user (path, &norm_path);
 	if (error < 0) return error;
 	error = lookup_inode_by_path ((char*)norm_path, current->p_root, current->p_wd, &new_dir,
-								  L_FLNK | L_DIRCHK);
+								  L_FLNK | L_DCHK);
 	kfree (norm_path);
 	if (error != 0) return error;
 

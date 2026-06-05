@@ -39,9 +39,10 @@
 #define SEEK_CUR 1
 #define SEEK_END 2
 
-#define L_FLNK	 1
-#define L_NLNK	 2
-#define L_DIRCHK 4
+#define L_FLNK	0x0001
+#define L_NLNK	0x0002
+#define L_DCHK	0x0004
+#define L_NDCHK 0x0008
 
 #define ALIGN_UP(value, alignment) (((value) + (alignment) - 1) & ~((alignment) - 1))
 
