@@ -86,7 +86,7 @@ typedef struct {
 } file_operations;
 
 struct inode {
-	uint64_t		  i_no, i_sz, i_cnt;
+	uint64_t		  i_no, i_sz, i_cnt, i_uid, i_gid;
 	void*			  i_pvt;
 	void*			  i_fsinfo;
 	inode_operations* i_iops;
@@ -138,6 +138,7 @@ int do_link (const char* oldpath, const char* newpath);
 int do_symlink (const char* restrict target, const char* restrict linkpath);
 int do_readlink (const char* path, char* buf, size_t bufsz);
 int do_access (const char* path, uint8_t flags);
+int do_chown (const char* path, uint64_t uid, uint64_t gid);
 
 uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size);
 uint64_t sys_write (uint64_t fd, uint64_t buf, uint64_t size);
@@ -163,6 +164,7 @@ uint64_t sys_dup2 (uint64_t oldfd, uint64_t newfd);
 uint64_t sys_rename (uint64_t old, uint64_t new);
 uint64_t sys_access (uint64_t path, uint64_t mode);
 uint64_t sys_rmdir (uint64_t path);
+uint64_t sys_chown (uint64_t path, uint64_t uid, uint64_t gid);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);
