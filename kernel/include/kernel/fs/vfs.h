@@ -93,6 +93,7 @@ struct inode {
 	file_operations*  i_fops;
 	file_type_t		  i_type;
 	inode*			  i_parent;
+	uint16_t		  i_perms;
 	union {
 		chardev_info_t* chardev_info;
 		ramfs_info_t*	ramfs_info;
@@ -121,6 +122,7 @@ int do_create (char* filename, inode** result, inode* parent);
 int do_unlink (const char* path);
 int do_rename (const char* old, const char* new);
 int do_rmdir (const char* path);
+int do_chmod (const char* path, uint16_t mode);
 
 int do_read (struct file* f, void* buf, size_t size);
 int do_seek (struct file* f, size_t offset, int whence);
@@ -145,6 +147,7 @@ uint64_t sys_close (uint64_t fd);
 uint64_t sys_mkdir (uint64_t path, uint64_t mode);
 uint64_t sys_chdir (uint64_t path);
 uint64_t sys_chroot (uint64_t path);
+uint64_t sys_chmod (uint64_t path, uint64_t mode);
 uint64_t sys_getdents (uint64_t fd, uint64_t buf, uint64_t count);
 uint64_t sys_getcwd (uint64_t buf, uint64_t size);
 uint64_t sys_fstat (uint64_t fd, uint64_t buf);

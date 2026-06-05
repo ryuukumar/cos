@@ -54,4 +54,5 @@ void init_vfs (inode* absolute_root) {
 	register_syscall (SYSCALL_SYS_RENAME, SYS2 (sys_rename));
 	register_syscall (SYSCALL_SYS_ACCESS, SYS2 (sys_access));
 	register_syscall (SYSCALL_SYS_RMDIR, SYS1 (sys_rmdir));
+	register_syscall (SYSCALL_SYS_CHMOD, SYS2 (sys_chmod));
 }
