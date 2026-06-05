@@ -152,7 +152,8 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
 		start_node = buffer_node;
 	}
 
-	while ((trailing_slash || flags & L_FLNK) && start_node->i_type == LINK && !(flags & L_NLNK)) {
+	while (start_node->i_type == LINK &&
+		   (trailing_slash || (flags & L_FLNK && !(flags & L_NLNK)))) {
 		if (!start_node->i_iops || !start_node->i_iops->readlink) return -ENOSYS;
 
 		char* target = kmalloc (MAX_PATHLEN + 1);
@@ -194,7 +195,7 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
  *
  * Flags:
  * - [L_FLNK] Follow final link, even if trailing '/' is not detected.
- * - [L_NLNK] Do not follow links, even if trailing '/' is detected (ignores L_FLNK if present).
+ * - [L_NLNK] Do not follow final link, unless trailing '/' is detected (ignores L_FLNK if present).
  * Does not affect intermediate link following.
  * - [L_DCHK] Verify the resolved element is a directory and return -ENOTDIR otherwise. If
  * trailing '/' or L_FLNK is passed, this check is run after symlink resolution is complete.
