@@ -31,7 +31,6 @@ int do_unlink (const char* path) {
 	int error =
 		resolve_parent_and_childname ((char*)path, current->p_root, current->p_wd, &parent, &name);
 	int trailing = error == 1;
-	kserial_printf ("Unlink: child name is %s and trailing slash says %i.\n", name, trailing);
 	if (error < 0) return error;
 
 	if (trailing) {
