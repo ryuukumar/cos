@@ -24,21 +24,28 @@
 int do_rename (const char* old, const char* new) {
 	if (!old || !new) return -EINVAL;
 
-	// TODO: should we follow links anywhere here?
-
 	process* current = get_current_process ();
 	inode *	 old_parent = nullptr, *old_node = nullptr, *new_parent = nullptr, *new_node = nullptr;
-	char *	 old_childname = nullptr, *new_childname = nullptr;
+	char *	 old_childname = nullptr, *new_childname = nullptr, *old_norm = nullptr,
+		 *new_norm = nullptr;
 
-	int error =
-		vfs_resolve_parent (old, current->p_root, current->p_wd, &old_parent, &old_childname);
+	int error = path_normalise_from_user (old, &old_norm);
+	if (error < 0) return error;
+
+	error = resolve_parent_and_childname (old_norm, current->p_root, current->p_wd, &old_parent,
+										  &old_childname);
+	kfree (old_norm);
 	if (error) return error;
 	error = old_parent->i_iops->lookup (old_childname, &old_node, old_parent);
 	if (error) return error;
 
 	if (!old_parent || old_parent == old_node) return -EINVAL;
 
-	error = vfs_resolve_parent (new, current->p_root, current->p_wd, &new_parent, &new_childname);
+	error = path_normalise_from_user (new, &new_norm);
+	if (error < 0) return error;
+	error = resolve_parent_and_childname (new_norm, current->p_root, current->p_wd, &new_parent,
+										  &new_childname);
+	kfree (new_norm);
 	if (error != 0) return error;
 
 	for (inode* n = new_parent;; n = n->i_parent) {
