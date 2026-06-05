@@ -193,8 +193,7 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
 		kfree (target_norm);
 		if (error) return error;
 	}
-	if ((trailing_slash || flags & L_DCHK) && start_node->i_type != DIRECTORY && !(flags & L_NDCHK))
-		return -ENOTDIR;
+	if (start_node->i_type != DIRECTORY && (trailing_slash || flags & L_DCHK)) return -ENOTDIR;
 	if (flags & L_NDCHK && start_node->i_type == DIRECTORY) return -EISDIR;
 
 	*result = start_node;
@@ -217,7 +216,7 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
  * trailing '/' or L_FLNK is passed, this check is run after symlink resolution is complete.
  * - [L_NDCHK] Verify the resolved element is a NOT directory and return -EISDIR otherwise. If
  * trailing '/' or L_FLNK is passed, this check is run after symlink resolution is complete. Ignores
- * L_DCHK if present.
+ * L_DCHK if present, however directory check enforced by trailing '/' is not skipped.
  *
  * @param path Path to resolve
  * @param proc_root Root of (process') file system
