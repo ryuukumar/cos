@@ -58,5 +58,5 @@ int dispatch_builtin (size_t argc, char** argv) {
 	else if (strcmp (argv[0], "rename") == 0 || strcmp (argv[0], "mv") == 0)
 		return builtin_rename (argc, argv);
 
-	return -1;
+	return -1000;
 }

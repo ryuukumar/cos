@@ -110,38 +110,21 @@ int create (char* filename, inode** result, inode* root) {
 	return 0;
 }
 
-int lookup (char* filename, inode** result, inode* root) {
-	if (!root) return -INTERNAL_ENOROOT;
+int lookup (char* filename, inode** result, inode* parent) {
+	if (!parent) return -EINVAL;
 	if (!filename || filename[0] == '\0') return -EINVAL;
-	if (root->i_type != DIRECTORY) return -ENOTDIR;
+	if (parent->i_type != DIRECTORY) return -ENOTDIR;
 
-	// case '.'
-	if (kstrcmp (filename, ".") == 0) {
-		*result = root;
-		return 0;
-	}
-
-	// case '*' , root is empty
-	if (!root->i_pvt) return -ENOENT;
-
-	dir_content_t* dir_content = (dir_content_t*)root->i_pvt;
-
-	// case '*' , root is empty
-	if (!dir_content->d_children) return -ENOENT;
-
+	dir_content_t* dir_content = (dir_content_t*)parent->i_pvt;
 	for (uint64_t i = 0; i < dir_content->d_count; i++) {
 		child_t* d_child = &dir_content->d_children[i];
-		// invalid child ; continue searching
 		if (!d_child->c_inode || !d_child->c_name) continue;
-
 		if (kstrcmp (d_child->c_name, filename) == 0) {
-			// case '*'
 			*result = d_child->c_inode;
 			return 0;
 		}
 	}
 
-	// case valid path, but object simply does not exist
 	return -ENOENT;
 }
 

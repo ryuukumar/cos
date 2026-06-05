@@ -26,8 +26,12 @@ int do_lstat (const char* restrict path, stat* restrict buf) {
 
 	process* current = get_current_process ();
 	inode*	 node = nullptr;
+	char*	 norm_path = nullptr;
+	int		 error = path_normalise_from_user (path, &norm_path);
+	if (error < 0) return error;
 
-	int error = do_lookup ((char*)path, &node, current->p_root, current->p_wd);
+	error = lookup_inode_by_path (norm_path, current->p_root, current->p_wd, &node, L_NLNK);
+	kfree (norm_path);
 	if (error != 0) return error;
 
 	if (!node->i_iops || !node->i_iops->stat) return -ENOSYS;

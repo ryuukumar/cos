@@ -28,7 +28,8 @@ int do_unlink (const char* path) {
 	inode*	 parent = nullptr;
 	char*	 name = nullptr;
 
-	int error = vfs_resolve_parent (path, current->p_root, current->p_wd, &parent, &name);
+	int error =
+		resolve_parent_and_childname ((char*)path, current->p_root, current->p_wd, &parent, &name);
 	if (error) return error;
 
 	inode* node = nullptr;
@@ -53,8 +54,11 @@ int do_unlink (const char* path) {
 }
 
 uint64_t sys_unlink (uint64_t path) {
-	const char* path_us = kstrdup ((const char*)path);
-	int			error = do_unlink (path_us);
+	char* path_us = nullptr;
+	int	  error = path_normalise_from_user ((const char*)path, &path_us);
+	if (error < 0) return error;
+
+	error = do_unlink (path_us);
 	kfree ((void*)path_us);
 	return error;
 }

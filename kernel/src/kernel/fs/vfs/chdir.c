@@ -17,21 +17,21 @@
 #include <kernel/error.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
+#include <liballoc/liballoc.h>
 
 int do_chdir (const char* path) {
 	if (!path) return -EINVAL;
 	inode*	 new_dir = nullptr;
 	process* current = get_current_process ();
 
-	int error = do_lookup ((char*)path, &new_dir, current->p_root, current->p_wd);
+	char* norm_path = nullptr;
+	int	  error = path_normalise_from_user (path, &norm_path);
+	if (error < 0) return error;
+	error = lookup_inode_by_path ((char*)norm_path, current->p_root, current->p_wd, &new_dir,
+								  L_FLNK | L_DCHK);
+	kfree (norm_path);
 	if (error != 0) return error;
 
-	if (new_dir->i_type == LINK) {
-		error = do_lookup ((char*)new_dir->i_pvt, &new_dir, current->p_root, current->p_wd);
-		if (error) return error;
-	}
-
-	if (new_dir->i_type != DIRECTORY) return -ENOTDIR;
 	current->p_wd = new_dir;
 	return 0;
 }

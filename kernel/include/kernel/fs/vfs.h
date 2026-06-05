@@ -20,6 +20,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define MAX_PATHLEN	  2048
+#define MAX_PCMPLEN	  256
+#define SYMLINK_LIMIT 40
+
 #define MAX_FDS 256
 
 #define O_RDONLY 0x0000
@@ -34,6 +38,11 @@
 #define SEEK_SET 0
 #define SEEK_CUR 1
 #define SEEK_END 2
+
+#define L_FLNK	0x0001
+#define L_NLNK	0x0002
+#define L_DCHK	0x0004
+#define L_NDCHK 0x0008
 
 #define ALIGN_UP(value, alignment) (((value) + (alignment) - 1) & ~((alignment) - 1))
 
@@ -91,15 +100,17 @@ struct file {
 	file_operations* f_fops;
 };
 
-int	 vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** r_parent,
-						 char** r_name);
+int	 path_normalise_from_user (const char* path, char** outpath);
 bool filename_has_invalid_chars (char* filename);
+int	 lookup_inode_by_path (const char* path, inode* proc_root, inode* proc_cwd, inode** result,
+						   uint16_t flags);
+int	 resolve_parent_and_childname (char* path, inode* proc_root, inode* proc_cwd,
+								   inode** result_parent, char** result_childname);
 
 int do_mkdir (char* dirname, inode** result, inode* parent);
 int do_chdir (const char* path);
 int do_getcwd (char* buf, size_t size);
 int do_create (char* filename, inode** result, inode* parent);
-int do_lookup (char* filename, inode** result, inode* root, inode* cwd);
 int do_unlink (const char* path);
 int do_rename (const char* old, const char* new);
 
@@ -114,7 +125,7 @@ int do_lstat (const char* restrict path, stat* restrict buf);
 int do_stat (const char* restrict path, stat* restrict buf);
 int do_ioctl (struct file* fd, uint64_t req, uint64_t arg);
 int do_link (const char* oldpath, const char* newpath);
-int do_symlink (const char* target, const char* linkpath);
+int do_symlink (const char* restrict target, const char* restrict linkpath);
 int do_readlink (const char* path, char* buf, size_t bufsz);
 
 uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size);

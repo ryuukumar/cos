@@ -19,6 +19,7 @@
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/cpio.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/process.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
@@ -68,8 +69,9 @@ static int mkdir_if_required (const char* dir, inode* root) {
 	if (!dir) return -EINVAL;
 	if (dir[0] != '/') return -INTERNAL_ENEEDABS;
 
-	char* path = kstrdup (dir);
-	if (!path) return -ENOMEM;
+	char* path = nullptr;
+	int	  error = path_normalise_from_user (dir, &path);
+	if (error < 0) return -ENOMEM;
 
 	size_t len = kstrlen (path);
 	while (len > 1 && path[len - 1] == '/') {
@@ -84,7 +86,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 
 	inode* parent_dir = nullptr;
 	char*  child_name = nullptr;
-	int	   error = vfs_resolve_parent (path, root, root, &parent_dir, &child_name);
+	error = resolve_parent_and_childname (path, root, root, &parent_dir, &child_name);
 
 	if (error == -ENOENT) {
 		child_name = nullptr;
@@ -97,7 +99,8 @@ static int mkdir_if_required (const char* dir, inode* root) {
 			*last_slash = '/';
 		}
 
-		if (error == 0) error = vfs_resolve_parent (path, root, root, &parent_dir, &child_name);
+		if (error == 0)
+			error = resolve_parent_and_childname (path, root, root, &parent_dir, &child_name);
 	} else if (error != 0) {
 		child_name = nullptr;
 	}
@@ -117,8 +120,9 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	if (!header || !out_path) return -EINVAL;
 
 	inode* root_dir = nullptr;
-	int	   error = do_lookup ((char*)out_path, &root_dir, get_current_process ()->p_root,
-							  get_current_process ()->p_wd);
+
+	int error = lookup_inode_by_path (out_path, get_current_process ()->p_root,
+									  get_current_process ()->p_wd, &root_dir, L_FLNK | L_DCHK);
 	if (error || !root_dir) return error;
 
 	uint64_t namesize = hex_to_u64 (header->c_namesize);
@@ -128,8 +132,9 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 
 	if (namesize == 0) return -EINVAL;
 
-	char* filename = kmalloc (namesize + 1);
-	kmemcpy ((void*)(filename + 1), (void*)(header + 1), namesize);
+	char* filename = nullptr;
+	error = path_normalise_from_user ((char*)(header + 1), &filename);
+	if (error < 0) return error;
 	filename[namesize] = 0; // enforce string in case corrupt
 	filename[0] = '/';		// many syscalls require absolute paths, which cpio does not guarantee
 
@@ -180,7 +185,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 
 		inode* parent = nullptr;
 		char*  name = nullptr;
-		error = vfs_resolve_parent (filename, root_dir, root_dir, &parent, &name);
+		error = resolve_parent_and_childname (filename, root_dir, root_dir, &parent, &name);
 		if (error == 0 && parent->i_iops->symlink) {
 			inode* link_result = nullptr;
 			parent->i_iops->symlink (target, name, &link_result, parent);
@@ -197,9 +202,15 @@ cleanup:
 }
 
 int load_cpio_from_memory (void* pos, const char* out_path) {
+	char* normalised_path = nullptr;
+	int	  error = path_normalise_from_user (out_path, &normalised_path);
+	if (error < 0) return error;
+
 	while (pos) {
-		parse_entry_to_inode (pos, out_path);
+		parse_entry_to_inode (pos, normalised_path);
 		pos = jump_next_file (pos);
 	}
+
+	kfree (normalised_path);
 	return 0;
 }
