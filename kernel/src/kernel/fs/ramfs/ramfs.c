@@ -35,7 +35,7 @@ static inode_operations i_ops = {.lookup = lookup,
 								 .readlink = readlink,
 								 .rename = rename,
 								 .empty = empty,
-								.rmdir = rmdir};
+								 .rmdir = rmdir};
 static file_operations	f_ops = {.read = read,
 								 .write = write,
 								 .seek = seek,
