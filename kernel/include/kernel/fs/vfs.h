@@ -44,6 +44,11 @@
 #define L_DCHK	0x0004
 #define L_NDCHK 0x0008
 
+#define F_OK 0x0000
+#define R_OK 0x0004
+#define W_OK 0x0002
+#define X_OK 0x0001
+
 #define ALIGN_UP(value, alignment) (((value) + (alignment) - 1) & ~((alignment) - 1))
 
 typedef enum { UNDEF, EFILE, DIRECTORY, LINK, CHAR_DEV, PIPE } file_type_t;
@@ -127,6 +132,7 @@ int do_ioctl (struct file* fd, uint64_t req, uint64_t arg);
 int do_link (const char* oldpath, const char* newpath);
 int do_symlink (const char* restrict target, const char* restrict linkpath);
 int do_readlink (const char* path, char* buf, size_t bufsz);
+int do_access (const char* path, uint8_t flags);
 
 uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size);
 uint64_t sys_write (uint64_t fd, uint64_t buf, uint64_t size);
@@ -148,6 +154,7 @@ uint64_t sys_readlink (uint64_t path, uint64_t buf, uint64_t bufsz);
 uint64_t sys_dup (uint64_t fd);
 uint64_t sys_dup2 (uint64_t oldfd, uint64_t newfd);
 uint64_t sys_rename (uint64_t old, uint64_t new);
+uint64_t sys_access (uint64_t path, uint64_t mode);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);

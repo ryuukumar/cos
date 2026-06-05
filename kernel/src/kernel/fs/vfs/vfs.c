@@ -51,4 +51,5 @@ void init_vfs (inode* absolute_root) {
 	register_syscall (SYSCALL_SYS_DUP2, SYS2 (sys_dup2));
 	register_syscall (SYSCALL_SYS_PIPE, SYS1 (sys_pipe));
 	register_syscall (SYSCALL_SYS_RENAME, SYS2 (sys_rename));
+	register_syscall (SYSCALL_SYS_ACCESS, SYS2 (sys_access));
 }
