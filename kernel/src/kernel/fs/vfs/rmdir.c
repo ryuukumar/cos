@@ -30,14 +30,11 @@ int do_rmdir (const char* path) {
 
 	int error =
 		resolve_parent_and_childname ((char*)path, current->p_root, current->p_wd, &parent, &name);
-	if (error) return error;
+	if (error == -INTERNAL_ENOPARENT) return -EINVAL;
+	if (error < 0) return error;
 
-	if (!parent->i_iops || !parent->i_iops->unlink) {
-		error = -ENOSYS;
-		goto cleanup;
-	}
-
-	error = parent->i_iops->lookup (name, &node, parent);
+	error = lookup_inode_by_path (name, current->p_root, parent, &node,
+								  L_DCHK | (error == 1 ? L_FLNK : 0));
 	if (error) goto cleanup;
 
 	if (node->i_type != DIRECTORY) {
@@ -45,7 +42,7 @@ int do_rmdir (const char* path) {
 		goto cleanup;
 	}
 
-	if (!node->i_iops || !node->i_iops->unlink || !node->i_iops->empty) {
+	if (!node->i_iops || !node->i_iops->rmdir || !node->i_iops->empty) {
 		error = -ENOSYS;
 		goto cleanup;
 	}
@@ -55,7 +52,12 @@ int do_rmdir (const char* path) {
 		goto cleanup;
 	}
 
-	error = node->i_iops->unlink (parent, name, node);
+	if (node == current->p_wd) {
+		error = -EINVAL;
+		goto cleanup;
+	}
+
+	error = node->i_iops->rmdir (parent, node);
 cleanup:
 	kfree (name);
 	return error;
