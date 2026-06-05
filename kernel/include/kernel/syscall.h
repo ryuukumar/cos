@@ -47,6 +47,7 @@
 #define SYSCALL_SYS_PIPE	 22
 #define SYSCALL_SYS_RENAME	 23
 #define SYSCALL_SYS_ACCESS	 24
+#define SYSCALL_SYS_RMDIR	 25
 
 /* Memory syscalls */
 
