@@ -95,8 +95,10 @@ static int navigate_single_element (const char* element_start, size_t elem_len, 
 	inode* buffer_node = nullptr;
 
 	if (kstrncmp (comp_name, "..", MAX_PCMPLEN) == 0) {
-		if (parent == root_inode) *result = parent;
-		else *result = parent->i_parent;
+		if (parent == root_inode)
+			*result = parent;
+		else
+			*result = parent->i_parent;
 	} else if (kstrncmp (comp_name, ".", MAX_PCMPLEN) == 0) {
 		*result = parent;
 	} else {
@@ -132,7 +134,8 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
 	for (size_t i = 0; i < path_len - (trailing_slash ? 1 : 0); i++) {
 		if (path_base[i] == '/') {
 			complen = &path_base[i] - path_iter;
-			error = navigate_single_element (path_iter, complen, start_node, &buffer_node, proc_root);
+			error =
+				navigate_single_element (path_iter, complen, start_node, &buffer_node, proc_root);
 			if (error) return error;
 
 			while (buffer_node && buffer_node->i_type == LINK) {
