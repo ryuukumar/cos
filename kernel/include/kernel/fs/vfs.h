@@ -115,6 +115,7 @@ int	 resolve_parent_and_childname (char* path, inode* proc_root, inode* proc_cwd
 
 int do_mkdir (char* dirname, inode** result, inode* parent);
 int do_chdir (const char* path);
+int do_chroot (const char* path);
 int do_getcwd (char* buf, size_t size);
 int do_create (char* filename, inode** result, inode* parent);
 int do_unlink (const char* path);
@@ -143,6 +144,7 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode);
 uint64_t sys_close (uint64_t fd);
 uint64_t sys_mkdir (uint64_t path, uint64_t mode);
 uint64_t sys_chdir (uint64_t path);
+uint64_t sys_chroot (uint64_t path);
 uint64_t sys_getdents (uint64_t fd, uint64_t buf, uint64_t count);
 uint64_t sys_getcwd (uint64_t buf, uint64_t size);
 uint64_t sys_fstat (uint64_t fd, uint64_t buf);

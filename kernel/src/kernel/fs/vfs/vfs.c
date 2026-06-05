@@ -41,6 +41,7 @@ void init_vfs (inode* absolute_root) {
 	register_syscall (SYSCALL_SYS_LSTAT, SYS2 (sys_lstat));
 	register_syscall (SYSCALL_SYS_STAT, SYS2 (sys_stat));
 	register_syscall (SYSCALL_SYS_CHDIR, SYS1 (sys_chdir));
+	register_syscall (SYSCALL_SYS_CHROOT, SYS1 (sys_chroot));
 	register_syscall (SYSCALL_SYS_GETCWD, SYS2 (sys_getcwd));
 	register_syscall (SYSCALL_SYS_IOCTL, SYS3 (sys_ioctl));
 	register_syscall (SYSCALL_SYS_LINK, SYS2 (sys_link));
