@@ -100,8 +100,6 @@ struct file {
 	file_operations* f_fops;
 };
 
-int	 vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** r_parent,
-						 char** r_name);
 int	 path_normalise_from_user (const char* path, char** outpath);
 bool filename_has_invalid_chars (char* filename);
 int	 lookup_inode_by_path (const char* path, inode* proc_root, inode* proc_cwd, inode** result,
@@ -113,7 +111,6 @@ int do_mkdir (char* dirname, inode** result, inode* parent);
 int do_chdir (const char* path);
 int do_getcwd (char* buf, size_t size);
 int do_create (char* filename, inode** result, inode* parent);
-int do_lookup (char* filename, inode** result, inode* root, inode* cwd);
 int do_unlink (const char* path);
 int do_rename (const char* old, const char* new);
 
