@@ -51,6 +51,7 @@ int do_rename (const char* old, const char* new) {
 	for (inode* n = new_parent;; n = n->i_parent) {
 		if (n == old_node) return -EINVAL;
 		if (n == n->i_parent) break;
+		if (n == current->p_root) break;
 	}
 	if (new_parent->i_type != DIRECTORY) return -ENOTDIR;
 
