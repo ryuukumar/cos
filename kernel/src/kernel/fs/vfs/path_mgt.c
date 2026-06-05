@@ -118,13 +118,13 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
 			error = navigate_single_element (path_iter, complen, start_node, &buffer_node);
 			if (error) return error;
 
-			while (buffer_node->i_type == LINK) {
-				if (!buffer_node->i_iops->readlink) return -ENOSYS;
+			while (buffer_node && buffer_node->i_type == LINK) {
+				if (!buffer_node->i_iops || !buffer_node->i_iops->readlink) return -ENOSYS;
 				char* target = kmalloc (MAX_PATHLEN + 1);
 				error = buffer_node->i_iops->readlink (buffer_node, target, MAX_PATHLEN + 1);
 				if (!(error > 0 && error < MAX_PATHLEN + 1)) {
 					kfree (target);
-					if (error == MAX_PATHLEN + 1) return -ENAMETOOLONG;
+					if (error >= MAX_PATHLEN + 1) return -ENAMETOOLONG;
 					if (error == 0) return -ENOENT;
 					if (error < 0) return error;
 				}
@@ -132,7 +132,7 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
 				char* target_norm = nullptr;
 				error = path_normalise_from_user (target, &target_norm);
 				kfree (target);
-				if (error) return error;
+				if (error < 0) return error;
 				error = lookup_inode_by_path_r (target_norm, proc_root, start_node, &buffer_node,
 												limit + 1, flags);
 				kfree (target_norm);
@@ -169,7 +169,7 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
 		char* target_norm = nullptr;
 		error = path_normalise_from_user (target, &target_norm);
 		kfree (target);
-		if (error) return error;
+		if (error < 0) return error;
 		error = lookup_inode_by_path_r (target_norm, proc_root, start_node->i_parent, &start_node,
 										limit + 1, flags);
 
