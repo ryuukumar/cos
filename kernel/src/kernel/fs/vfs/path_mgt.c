@@ -187,6 +187,9 @@ static int lookup_inode_by_path_r (const char* path, inode* proc_root, inode* pr
  * followed if a trailing '/' is present. Final component is verified to be a directory (after
  * symlink resolution) if trailing '/' is present.
  *
+ * Passing paths that have not been normalised by path_normalise_from_user or alternative produces
+ * undefined behaviour.
+ *
  * @param path Path to resolve
  * @param proc_root Root of (process') file system
  * @param proc_cwd Current working directory of (process') file system
@@ -198,4 +201,59 @@ int lookup_inode_by_path (const char* path, inode* proc_root, inode* proc_cwd, i
 	if (!path || !proc_root || !proc_cwd || !result) return -EINVAL;
 	if (path[0] == '\0') return -ENOENT;
 	return lookup_inode_by_path_r (path, proc_root, proc_cwd, result, 0);
+}
+
+/*!
+ * Resolves the parent of the passed path (as dictated by the path) and the name of the child.
+ * Parent resolution ensures that the parent exists and is a directory. Symlinks during parent
+ * resolution are followed.
+ *
+ * Passing paths that have not been normalised by path_normalise_from_user or alternative produces
+ * undefined behaviour.
+ *
+ * @param path Path to resolve
+ * @param proc_root Root of (process') file system
+ * @param proc_cwd Current working directory of (process') file system
+ * @param result_parent Pointer to inode* where parent will be stored, if found
+ * @param result_childname Pointer to char* where child name will be stored, if found (will be
+ * allocated by the function)
+ * @return 0 if path resolved and result populated, 1 if additionally the path dictates following
+ * the child as a symlink if it is such, and that the final child (whether or not symlinks had to be
+ * followed) is a directory, else -INTENAL_ENOPARENT, -EINVAL, -ENOENT, -ENOTDIR, -ENAMETOOLONG,
+ * -ELOOP or -ENOSYS.
+ */
+int resolve_parent_and_childname (char* path, inode* proc_root, inode* proc_cwd,
+								  inode** result_parent, char** result_childname) {
+	if (!path || !proc_root || !proc_cwd || !result_parent || !result_childname) return -EINVAL;
+	if (path[0] == '\0') return -ENOENT;
+
+	size_t path_len = kstrnlen (path, MAX_PATHLEN);
+	if (path_len == MAX_PATHLEN) return -ENAMETOOLONG;
+
+	if (kstrncmp (path, "/", MAX_PATHLEN) == 0) return -INTERNAL_ENOPARENT;
+
+	bool  trailing_slash = path[path_len - 1] == '/';
+	char* slash_ptr = trailing_slash ? &path[path_len - 2] : &path[path_len - 1];
+
+	while (slash_ptr != path && *slash_ptr != '/')
+		slash_ptr--;
+
+	if (*slash_ptr == '/') {
+		size_t parent_len = slash_ptr - path + 1;
+
+		char* parent = kstrndup (path, parent_len);
+		int	  error = lookup_inode_by_path (parent, proc_root, proc_cwd, result_parent);
+		kfree (parent);
+		if (error) return error;
+
+		*result_childname =
+			kstrndup (slash_ptr + 1, path_len - (parent_len + (trailing_slash ? 1 : 0)));
+		if (*result_childname == nullptr) return -ENOMEM;
+	} else {
+		*result_parent = proc_cwd;
+		*result_childname = kstrndup (slash_ptr, path_len - (trailing_slash ? 1 : 0));
+		if (*result_childname == nullptr) return -ENOMEM;
+	}
+
+	return trailing_slash ? 1 : 0;
 }

@@ -104,6 +104,8 @@
 
 // No root inode
 #define INTERNAL_ENOROOT 2500
+// No parent node
+#define INTERNAL_ENOPARENT 2501
 // Need an absolute path
 #define INTERNAL_ENEEDABS 2502
 
