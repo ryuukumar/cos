@@ -19,6 +19,7 @@
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/cpio.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/process.h>
 #include <kernel/syscall.h>
 #include <liballoc/liballoc.h>
@@ -117,8 +118,12 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	if (!header || !out_path) return -EINVAL;
 
 	inode* root_dir = nullptr;
-	int	   error = do_lookup ((char*)out_path, &root_dir, get_current_process ()->p_root,
-							  get_current_process ()->p_wd);
+	char*  normalised_path = nullptr;
+
+	int error = path_normalise_from_user (out_path, &normalised_path);
+	if (error < 0) return error;
+	error = lookup_inode_by_path (normalised_path, get_current_process ()->p_root,
+								  get_current_process ()->p_wd, &root_dir, L_FLNK | L_DIRCHK);
 	if (error || !root_dir) return error;
 
 	uint64_t namesize = hex_to_u64 (header->c_namesize);
