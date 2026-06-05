@@ -14,6 +14,7 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <kernel/fs/vfs.h>
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/process.h>
@@ -24,9 +25,13 @@ int do_readlink (const char* path, char* buf, size_t bufsz) {
 
 	process* current = get_current_process ();
 	inode*	 parent = nullptr;
-	char*	 name = nullptr;
+	char *	 name = nullptr, *path_norm = nullptr;
 
-	int error = vfs_resolve_parent (path, current->p_root, current->p_wd, &parent, &name);
+	int error = path_normalise_from_user (path, &path_norm);
+	if (error < 0) return error;
+	error =
+		resolve_parent_and_childname (path_norm, current->p_root, current->p_wd, &parent, &name);
+	kfree (path_norm);
 	if (error) goto cleanup;
 
 	inode* node = nullptr;
