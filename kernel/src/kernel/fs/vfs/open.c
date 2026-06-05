@@ -67,21 +67,26 @@ uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode) {
 	if (!current->p_fds[fd]) return -ENOMEM;
 
 	inode* target_inode = nullptr;
-	int	   error = do_lookup (filename, &target_inode, current->p_root, current->p_wd);
-	if (error == 0 && target_inode->i_type == LINK) {
-		error =
-			do_lookup ((char*)target_inode->i_pvt, &target_inode, current->p_root, current->p_wd);
-		if (error != 0) goto cleanup;
-	}
+	char*  filename_norm = nullptr;
+	int	   error = path_normalise_from_user (filename, &filename_norm);
+	if (error < 0) return error;
+
+	error =
+		lookup_inode_by_path (filename_norm, current->p_root, current->p_wd, &target_inode, L_FLNK);
 
 	if (error == -ENOENT && (flags & O_CREAT)) {
 		inode* parent;
 		char*  name;
-		error = vfs_resolve_parent (filename, current->p_root, current->p_wd, &parent, &name);
+		error = resolve_parent_and_childname (filename_norm, current->p_root, current->p_wd,
+											  &parent, &name);
+		kfree (filename_norm);
+		if (error == 1) return -ENOENT;
 		if (error == 0) {
 			error = do_create (name, &target_inode, parent);
 			kfree (name);
 		}
+	} else {
+		kfree (filename_norm);
 	}
 	if (error != 0) goto cleanup;
 
