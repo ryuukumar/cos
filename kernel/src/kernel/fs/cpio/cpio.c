@@ -69,8 +69,9 @@ static int mkdir_if_required (const char* dir, inode* root) {
 	if (!dir) return -EINVAL;
 	if (dir[0] != '/') return -INTERNAL_ENEEDABS;
 
-	char* path = kstrdup (dir);
-	if (!path) return -ENOMEM;
+	char* path = nullptr;
+	int	  error = path_normalise_from_user (dir, &path);
+	if (error < 0) return -ENOMEM;
 
 	size_t len = kstrlen (path);
 	while (len > 1 && path[len - 1] == '/') {
@@ -85,7 +86,7 @@ static int mkdir_if_required (const char* dir, inode* root) {
 
 	inode* parent_dir = nullptr;
 	char*  child_name = nullptr;
-	int	   error = vfs_resolve_parent (path, root, root, &parent_dir, &child_name);
+	error = resolve_parent_and_childname (path, root, root, &parent_dir, &child_name);
 
 	if (error == -ENOENT) {
 		child_name = nullptr;
@@ -98,7 +99,8 @@ static int mkdir_if_required (const char* dir, inode* root) {
 			*last_slash = '/';
 		}
 
-		if (error == 0) error = vfs_resolve_parent (path, root, root, &parent_dir, &child_name);
+		if (error == 0)
+			error = resolve_parent_and_childname (path, root, root, &parent_dir, &child_name);
 	} else if (error != 0) {
 		child_name = nullptr;
 	}
@@ -133,8 +135,9 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 
 	if (namesize == 0) return -EINVAL;
 
-	char* filename = kmalloc (namesize + 1);
-	kmemcpy ((void*)(filename + 1), (void*)(header + 1), namesize);
+	char* filename = nullptr;
+	error = path_normalise_from_user ((char*)header + 1, &filename);
+	if (error < 0) return error;
 	filename[namesize] = 0; // enforce string in case corrupt
 	filename[0] = '/';		// many syscalls require absolute paths, which cpio does not guarantee
 
@@ -185,7 +188,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 
 		inode* parent = nullptr;
 		char*  name = nullptr;
-		error = vfs_resolve_parent (filename, root_dir, root_dir, &parent, &name);
+		error = resolve_parent_and_childname (filename, root_dir, root_dir, &parent, &name);
 		if (error == 0 && parent->i_iops->symlink) {
 			inode* link_result = nullptr;
 			parent->i_iops->symlink (target, name, &link_result, parent);
