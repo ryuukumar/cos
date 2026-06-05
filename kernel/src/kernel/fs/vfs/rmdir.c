@@ -36,28 +36,18 @@ int do_rmdir (const char* path) {
 	error = lookup_inode_by_path (name, current->p_root, parent, &node,
 								  L_DCHK | (error == 1 ? L_FLNK : 0));
 	if (error) goto cleanup;
-
-	if (node->i_type != DIRECTORY) {
-		error = -ENOTDIR;
-		goto cleanup;
-	}
-
-	if (!node->i_iops || !node->i_iops->rmdir || !node->i_iops->empty) {
+    
+	if (!node->i_iops || !node->i_iops->rmdir) {
 		error = -ENOSYS;
 		goto cleanup;
 	}
 
-	if (!node->i_iops->empty (node)) {
-		error = -ENOTEMPTY;
-		goto cleanup;
-	}
-
-	if (node == current->p_wd) {
+	if (node == current->p_wd || node->i_parent == node) {
 		error = -EINVAL;
 		goto cleanup;
 	}
 
-	error = node->i_iops->rmdir (parent, node);
+	error = node->i_iops->rmdir (node->i_parent, node);
 cleanup:
 	kfree (name);
 	return error;

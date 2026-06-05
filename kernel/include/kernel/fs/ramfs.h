@@ -37,7 +37,6 @@ int symlink (char* target, char* linkname, inode** result, inode* parent);
 int readlink (inode* node, char* buf, size_t bufsz);
 int rename (inode* old_node, inode* old_parent, const char* old_name, inode* new_parent,
 			const char* new_name);
-int empty (inode* node);
 int rmdir (inode* parent, inode* node);
 
 typedef struct {
