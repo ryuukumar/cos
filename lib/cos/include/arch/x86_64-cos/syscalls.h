@@ -46,6 +46,10 @@
 #define SYSCALL_SYS_RENAME	 23
 #define SYSCALL_SYS_ACCESS	 24
 #define SYSCALL_SYS_RMDIR	 25
+#define SYSCALL_SYS_CHMOD	 26
+#define SYSCALL_SYS_CHOWN	 27
+#define SYSCALL_SYS_FSYNC	 28
+#define SYSCALL_SYS_CHROOT	 29
 
 /* Memory syscalls */
 
@@ -63,6 +67,12 @@
 #define SYSCALL_SYS_KILL		 48
 #define SYSCALL_SYS_TIMES		 49
 #define SYSCALL_SYS_WAITPID		 50
+
+/* User syscalls */
+
+#define SYSCALL_SYS_GETLOGIN 71
+#define SYSCALL_SYS_SETLOGIN 72
+#define SYSCALL_SYS_GETUID	 73
 
 /* Utility syscalls */
 
