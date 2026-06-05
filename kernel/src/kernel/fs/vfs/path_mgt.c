@@ -14,10 +14,26 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <kclib/ctype.h>
 #include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/vfs.h>
 #include <liballoc/liballoc.h>
+
+/*!
+ * Checks whether the filename contains forward slashes or non-printable characters (via isprint).
+ *
+ * @param filename Filename to check
+ * @returns true if all filename characters satisfy isprint() and are not '/', else false
+ */
+bool filename_has_invalid_chars (char* filename) {
+	while (*filename != 0) {
+		unsigned char c = (unsigned char)*filename;
+		if (c == '/' || !isprint (c)) return true;
+		filename++;
+	}
+	return false;
+}
 
 /*!
  * Parses a path passed from userland into a more regularised path which avoids multiple slashes,
