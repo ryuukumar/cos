@@ -72,6 +72,7 @@ typedef struct {
 	int (*link) (inode*, char*, inode*);
 	int (*rename) (inode*, inode*, const char*, inode*, const char*);
 	int (*empty) (inode*);
+	int (*rmdir) (inode*, inode*);
 } inode_operations;
 
 typedef struct {
