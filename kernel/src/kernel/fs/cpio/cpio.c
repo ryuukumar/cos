@@ -120,12 +120,9 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	if (!header || !out_path) return -EINVAL;
 
 	inode* root_dir = nullptr;
-	char*  normalised_path = nullptr;
 
-	int error = path_normalise_from_user (out_path, &normalised_path);
-	if (error < 0) return error;
-	error = lookup_inode_by_path (normalised_path, get_current_process ()->p_root,
-								  get_current_process ()->p_wd, &root_dir, L_FLNK | L_DCHK);
+	int error = lookup_inode_by_path (out_path, get_current_process ()->p_root,
+									  get_current_process ()->p_wd, &root_dir, L_FLNK | L_DCHK);
 	if (error || !root_dir) return error;
 
 	uint64_t namesize = hex_to_u64 (header->c_namesize);
@@ -136,7 +133,7 @@ static int parse_entry_to_inode (cpio_newc_header_t* header, const char* out_pat
 	if (namesize == 0) return -EINVAL;
 
 	char* filename = nullptr;
-	error = path_normalise_from_user ((char*)header + 1, &filename);
+	error = path_normalise_from_user ((char*)(header + 1), &filename);
 	if (error < 0) return error;
 	filename[namesize] = 0; // enforce string in case corrupt
 	filename[0] = '/';		// many syscalls require absolute paths, which cpio does not guarantee
@@ -205,9 +202,15 @@ cleanup:
 }
 
 int load_cpio_from_memory (void* pos, const char* out_path) {
+	char* normalised_path = nullptr;
+	int	  error = path_normalise_from_user (out_path, &normalised_path);
+	if (error < 0) return error;
+
 	while (pos) {
-		parse_entry_to_inode (pos, out_path);
+		parse_entry_to_inode (pos, normalised_path);
 		pos = jump_next_file (pos);
 	}
+
+	kfree (normalised_path);
 	return 0;
 }
