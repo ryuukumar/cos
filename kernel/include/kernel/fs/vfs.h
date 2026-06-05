@@ -128,7 +128,7 @@ int do_lstat (const char* restrict path, stat* restrict buf);
 int do_stat (const char* restrict path, stat* restrict buf);
 int do_ioctl (struct file* fd, uint64_t req, uint64_t arg);
 int do_link (const char* oldpath, const char* newpath);
-int do_symlink (const char* target, const char* linkpath);
+int do_symlink (const char* restrict target, const char* restrict linkpath);
 int do_readlink (const char* path, char* buf, size_t bufsz);
 
 uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size);
