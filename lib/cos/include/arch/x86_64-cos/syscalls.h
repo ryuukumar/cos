@@ -50,6 +50,7 @@
 #define SYSCALL_SYS_CHOWN	 27
 #define SYSCALL_SYS_FSYNC	 28
 #define SYSCALL_SYS_CHROOT	 29
+#define SYSCALL_SYS_FCHMOD	 30
 
 /* Memory syscalls */
 
