@@ -50,3 +50,8 @@ long sysconf (int __name) {
 	errno = EINVAL;
 	return -1;
 }
+
+int utime (const char* __path, const struct utimbuf* times) {
+	(void)__path, (void)times;
+	return 0;
+}
