@@ -40,36 +40,13 @@ int gettimeofday (struct timeval* __restrict __p, void* __restrict __tz) {
 	return -1;
 }
 
-int access (const char* __path, int __amode) {
-	(void)__path, (void)__amode;
-	errno = ENOENT;
-	return -1;
-}
-
 mode_t umask (mode_t __mask) {
 	(void)__mask;
-	return 0;
-}
-
-int chmod (const char* __path, mode_t __mode) {
-	(void)__path, (void)__mode;
 	return 0;
 }
 
 long sysconf (int __name) {
 	if (__name == _SC_OPEN_MAX) return 64;
 	errno = EINVAL;
-	return -1;
-}
-
-int dup (int __fildes) {
-	(void)__fildes;
-	errno = -ENOSYS;
-	return -1;
-}
-
-int dup2 (int __fildes, int __fildes2) {
-	(void)__fildes, (void)__fildes2;
-	errno = -ENOSYS;
 	return -1;
 }
