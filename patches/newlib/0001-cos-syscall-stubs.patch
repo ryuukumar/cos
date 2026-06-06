@@ -65,6 +65,20 @@ index 740997965..143b883d4 100644
  int	mknod (const char *__path, mode_t __mode, dev_t __dev );
  #endif
  
+diff --git a/newlib/libc/include/sys/unistd.h b/newlib/libc/include/sys/unistd.h
+index d1c9126e5..525e31d26 100644
+--- a/newlib/libc/include/sys/unistd.h
++++ b/newlib/libc/include/sys/unistd.h
+@@ -22,9 +22,7 @@ unsigned  alarm (unsigned __secs);
+ int     chdir (const char *__path);
+ int     chmod (const char *__path, mode_t __mode);
+ int     chown (const char *__path, uid_t __owner, gid_t __group);
+-#if __BSD_VISIBLE || (__XSI_VISIBLE >= 4 && __POSIX_VISIBLE < 200112)
+ int     chroot (const char *__path);
+-#endif
+ int     close (int __fildes);
+ #if __POSIX_VISIBLE >= 202405
+ int	posix_close (int __fildes, int __flag);
 diff --git a/newlib/libc/sys/Makefile.inc b/newlib/libc/sys/Makefile.inc
 index 9f8758934..2e0d30bf2 100644
 --- a/newlib/libc/sys/Makefile.inc

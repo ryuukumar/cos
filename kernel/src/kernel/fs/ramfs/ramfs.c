@@ -33,14 +33,16 @@ static inode_operations i_ops = {.lookup = lookup,
 								 .unlink = unlink,
 								 .symlink = symlink,
 								 .readlink = readlink,
-								 .rename = rename};
+								 .rename = rename,
+								 .rmdir = rmdir};
 static file_operations	f_ops = {.read = read,
 								 .write = write,
 								 .seek = seek,
 								 .open = nullptr,
 								 .close = close,
 								 .getdents = getdents,
-								 .fstat = fstat};
+								 .fstat = fstat,
+								 .fsync = fsync};
 
 int mkdir (char* dirname, inode** result, inode* root) {
 	// requires: guarantee that vfs input is valid
@@ -294,6 +296,22 @@ static void remove_dirent (inode* parent, char* name) {
 	}
 }
 
+static void remove_dirent_by_node (inode* parent, inode* node) {
+	dir_content_t* dir = (dir_content_t*)parent->i_pvt;
+	for (uint64_t i = 0; i < dir->d_count; i++) {
+		if (dir->d_children[i].c_inode == node) {
+			kfree (dir->d_children[i].c_name);
+			dir->d_children[i] = dir->d_children[--dir->d_count];
+			void* tmp = krealloc (dir->d_children, dir->d_count * sizeof (child_t));
+			if (tmp)
+				dir->d_children = tmp;
+			else
+				kmemset (&dir->d_children[dir->d_count], 0, sizeof (child_t));
+			return;
+		}
+	}
+}
+
 static void free_inode (inode* node) {
 	if (node->i_pvt) kfree (node->i_pvt);
 	if (node->i_fsinfo) kfree (node->i_fsinfo);
@@ -356,6 +374,20 @@ int rename (inode* old_node, inode* old_parent, const char* old_name, inode* new
 			if (kstrcmp (node_pvt->d_children[i].c_name, "..") == 0)
 				node_pvt->d_children[i].c_inode = new_parent;
 	}
+	return 0;
+}
+
+int rmdir (inode* parent, inode* node) {
+	if (node->i_type != DIRECTORY) return -ENOTDIR;
+	if (((dir_content_t*)node->i_pvt)->d_count > 2) return -ENOTEMPTY;
+
+	remove_dirent_by_node (parent, node);
+	if (--node->i_cnt == 0) free_inode (node);
+	return 0;
+}
+
+int fsync (file* f) {
+	(void)f;
 	return 0;
 }
 
