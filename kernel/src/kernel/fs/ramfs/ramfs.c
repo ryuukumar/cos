@@ -41,7 +41,8 @@ static file_operations	f_ops = {.read = read,
 								 .open = nullptr,
 								 .close = close,
 								 .getdents = getdents,
-								 .fstat = fstat};
+								 .fstat = fstat,
+								 .fsync = fsync};
 
 int mkdir (char* dirname, inode** result, inode* root) {
 	// requires: guarantee that vfs input is valid
@@ -382,6 +383,11 @@ int rmdir (inode* parent, inode* node) {
 
 	remove_dirent_by_node (parent, node);
 	if (--node->i_cnt == 0) free_inode (node);
+	return 0;
+}
+
+int fsync (file* f) {
+	(void)f;
 	return 0;
 }
 

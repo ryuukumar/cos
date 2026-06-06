@@ -83,6 +83,7 @@ typedef struct {
 	int (*getdents) (inode*, file*, void*, size_t);
 	int (*fstat) (inode*, file*, stat*);
 	int (*ioctl) (inode*, file*, uint64_t, uint64_t);
+	int (*fsync) (file*);
 } file_operations;
 
 struct inode {
@@ -139,6 +140,7 @@ int do_symlink (const char* restrict target, const char* restrict linkpath);
 int do_readlink (const char* path, char* buf, size_t bufsz);
 int do_access (const char* path, uint8_t flags);
 int do_chown (const char* path, uint64_t uid, uint64_t gid);
+int do_fsync (struct file* fd);
 
 uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size);
 uint64_t sys_write (uint64_t fd, uint64_t buf, uint64_t size);
@@ -165,6 +167,7 @@ uint64_t sys_rename (uint64_t old, uint64_t new);
 uint64_t sys_access (uint64_t path, uint64_t mode);
 uint64_t sys_rmdir (uint64_t path);
 uint64_t sys_chown (uint64_t path, uint64_t uid, uint64_t gid);
+uint64_t sys_fsync (uint64_t fd);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);

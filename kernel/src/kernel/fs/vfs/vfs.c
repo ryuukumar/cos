@@ -56,4 +56,5 @@ void init_vfs (inode* absolute_root) {
 	register_syscall (SYSCALL_SYS_RMDIR, SYS1 (sys_rmdir));
 	register_syscall (SYSCALL_SYS_CHMOD, SYS2 (sys_chmod));
 	register_syscall (SYSCALL_SYS_CHOWN, SYS3 (sys_chown));
+	register_syscall (SYSCALL_SYS_FSYNC, SYS1 (sys_fsync));
 }
