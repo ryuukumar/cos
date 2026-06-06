@@ -22,7 +22,7 @@
 
 int mkdir (char* dirname, inode** result, inode* root);
 int create (char* filename, inode** result, inode* root);
-int lookup (char* filename, inode** result, inode* root);
+int lookup (char* filename, inode** result, inode* parent);
 int lookup_by_ino (char* buf, size_t bufsz, uint64_t ino, inode* root);
 int read (inode* node, file* f, void* buffer, size_t size);
 int write (inode* node, file* f, void* buffer, size_t size);
@@ -35,6 +35,10 @@ int unlink (inode* parent, char* name, inode* node);
 int link (inode* existing, char* linkname, inode* parent);
 int symlink (char* target, char* linkname, inode** result, inode* parent);
 int readlink (inode* node, char* buf, size_t bufsz);
+int rename (inode* old_node, inode* old_parent, const char* old_name, inode* new_parent,
+			const char* new_name);
+int rmdir (inode* parent, inode* node);
+int fsync (file* f);
 
 typedef struct {
 	char*  c_name;

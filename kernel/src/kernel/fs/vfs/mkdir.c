@@ -71,15 +71,20 @@ uint64_t sys_mkdir (uint64_t path, uint64_t mode) {
 	process* current = get_current_process ();
 	if (!current) return -EINVAL;
 
-	inode* parent;
-	char*  name;
-	int	   err =
-		vfs_resolve_parent ((const char*)path, current->p_root, current->p_wd, &parent, &name);
-	if (err) return err;
+	char* path_norm = nullptr;
+	int	  error = path_normalise_from_user ((const char*)path, &path_norm);
+	if (error < 0) return error;
+
+	inode* parent = nullptr;
+	char*  name = nullptr;
+	error =
+		resolve_parent_and_childname (path_norm, current->p_root, current->p_wd, &parent, &name);
+	kfree (path_norm);
+	if (error) return error;
 
 	inode* result;
-	err = do_mkdir (name, &result, parent);
+	error = do_mkdir (name, &result, parent);
 
 	kfree (name);
-	return err;
+	return error;
 }

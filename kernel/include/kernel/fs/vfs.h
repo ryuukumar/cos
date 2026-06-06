@@ -20,7 +20,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define MAX_FDS 32
+#define MAX_PATHLEN	  2048
+#define MAX_PCMPLEN	  256
+#define SYMLINK_LIMIT 40
+
+#define MAX_FDS 256
 
 #define O_RDONLY 0x0000
 #define O_WRONLY 0x0001
@@ -35,15 +39,26 @@
 #define SEEK_CUR 1
 #define SEEK_END 2
 
+#define L_FLNK	0x0001
+#define L_NLNK	0x0002
+#define L_DCHK	0x0004
+#define L_NDCHK 0x0008
+
+#define F_OK 0x0000
+#define R_OK 0x0004
+#define W_OK 0x0002
+#define X_OK 0x0001
+
 #define ALIGN_UP(value, alignment) (((value) + (alignment) - 1) & ~((alignment) - 1))
 
-typedef enum { UNDEF, EFILE, DIRECTORY, LINK, CHAR_DEV } file_type_t;
+typedef enum { UNDEF, EFILE, DIRECTORY, LINK, CHAR_DEV, PIPE } file_type_t;
 
 typedef struct inode inode;
 typedef struct file	 file;
 
 typedef struct chardev_info chardev_info_t;
 typedef struct ramfs_info	ramfs_info_t;
+typedef struct pipe_info	pipe_info_t;
 
 typedef struct {
 	int (*lookup) (char*, inode**, inode*);
@@ -55,6 +70,8 @@ typedef struct {
 	int (*symlink) (char*, char*, inode**, inode*);
 	int (*readlink) (inode*, char*, size_t);
 	int (*link) (inode*, char*, inode*);
+	int (*rename) (inode*, inode*, const char*, inode*, const char*);
+	int (*rmdir) (inode*, inode*);
 } inode_operations;
 
 typedef struct {
@@ -66,19 +83,22 @@ typedef struct {
 	int (*getdents) (inode*, file*, void*, size_t);
 	int (*fstat) (inode*, file*, stat*);
 	int (*ioctl) (inode*, file*, uint64_t, uint64_t);
+	int (*fsync) (file*);
 } file_operations;
 
 struct inode {
-	uint64_t		  i_no, i_sz, i_cnt;
+	uint64_t		  i_no, i_sz, i_cnt, i_uid, i_gid;
 	void*			  i_pvt;
 	void*			  i_fsinfo;
 	inode_operations* i_iops;
 	file_operations*  i_fops;
 	file_type_t		  i_type;
 	inode*			  i_parent;
+	uint16_t		  i_perms;
 	union {
 		chardev_info_t* chardev_info;
 		ramfs_info_t*	ramfs_info;
+		pipe_info_t*	pipe_info;
 	} i_info;
 };
 
@@ -88,48 +108,65 @@ struct file {
 	file_operations* f_fops;
 };
 
-int	 vfs_resolve_parent (const char* path_arg, inode* root, inode* cwd, inode** r_parent,
-						 char** r_name);
+int	 path_normalise_from_user (const char* path, char** outpath);
 bool filename_has_invalid_chars (char* filename);
+int	 lookup_inode_by_path (const char* path, inode* proc_root, inode* proc_cwd, inode** result,
+						   uint16_t flags);
+int	 resolve_parent_and_childname (char* path, inode* proc_root, inode* proc_cwd,
+								   inode** result_parent, char** result_childname);
 
-int do_mkdir (char* dirname, inode** result, inode* parent);
+int do_access (const char* path, uint8_t flags);
 int do_chdir (const char* path);
-int do_getcwd (char* buf, size_t size);
-int do_create (char* filename, inode** result, inode* parent);
-int do_lookup (char* filename, inode** result, inode* root, inode* cwd);
-int do_unlink (const char* path);
-
-int do_read (struct file* f, void* buf, size_t size);
-int do_seek (struct file* f, size_t offset, int whence);
-int do_write (struct file* f, void* buf, size_t size);
-int do_open (inode* file, struct file* dest_fd);
+int do_chmod (const char* path, uint16_t mode);
+int do_chown (const char* path, uint64_t uid, uint64_t gid);
+int do_chroot (const char* path);
 int do_close (struct file* fd);
-int do_getdents (struct file* f, void* buf, size_t count);
+int do_create (char* filename, inode** result, inode* parent);
 int do_fstat (struct file* fd, stat* buf);
-int do_lstat (const char* restrict path, stat* restrict buf);
-int do_stat (const char* restrict path, stat* restrict buf);
+int do_fsync (struct file* fd);
+int do_getcwd (char* buf, size_t size);
+int do_getdents (struct file* f, void* buf, size_t count);
 int do_ioctl (struct file* fd, uint64_t req, uint64_t arg);
 int do_link (const char* oldpath, const char* newpath);
-int do_symlink (const char* target, const char* linkpath);
+int do_lstat (const char* restrict path, stat* restrict buf);
+int do_mkdir (char* dirname, inode** result, inode* parent);
+int do_open (inode* file, struct file* dest_fd);
+int do_read (struct file* f, void* buf, size_t size);
 int do_readlink (const char* path, char* buf, size_t bufsz);
+int do_rename (const char* old, const char* new);
+int do_rmdir (const char* path);
+int do_seek (struct file* f, size_t offset, int whence);
+int do_stat (const char* restrict path, stat* restrict buf);
+int do_symlink (const char* restrict target, const char* restrict linkpath);
+int do_unlink (const char* path);
+int do_write (struct file* f, void* buf, size_t size);
 
-uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size);
-uint64_t sys_write (uint64_t fd, uint64_t buf, uint64_t size);
-uint64_t sys_seek (uint64_t fd, uint64_t offset, uint64_t whence);
-uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode);
-uint64_t sys_close (uint64_t fd);
-uint64_t sys_mkdir (uint64_t path, uint64_t mode);
+uint64_t sys_access (uint64_t path, uint64_t mode);
 uint64_t sys_chdir (uint64_t path);
-uint64_t sys_getdents (uint64_t fd, uint64_t buf, uint64_t count);
-uint64_t sys_getcwd (uint64_t buf, uint64_t size);
+uint64_t sys_chmod (uint64_t path, uint64_t mode);
+uint64_t sys_chown (uint64_t path, uint64_t uid, uint64_t gid);
+uint64_t sys_chroot (uint64_t path);
+uint64_t sys_close (uint64_t fd);
+uint64_t sys_dup (uint64_t fd);
+uint64_t sys_dup2 (uint64_t oldfd, uint64_t newfd);
 uint64_t sys_fstat (uint64_t fd, uint64_t buf);
-uint64_t sys_lstat (uint64_t path, uint64_t buf);
-uint64_t sys_stat (uint64_t path, uint64_t buf);
+uint64_t sys_fsync (uint64_t fd);
+uint64_t sys_getcwd (uint64_t buf, uint64_t size);
+uint64_t sys_getdents (uint64_t fd, uint64_t buf, uint64_t count);
 uint64_t sys_ioctl (uint64_t fd, uint64_t req, uint64_t arg);
 uint64_t sys_link (uint64_t oldpath, uint64_t newpath);
-uint64_t sys_unlink (uint64_t path);
-uint64_t sys_symlink (uint64_t target, uint64_t linkpath);
+uint64_t sys_lstat (uint64_t path, uint64_t buf);
+uint64_t sys_mkdir (uint64_t path, uint64_t mode);
+uint64_t sys_open (uint64_t filename_ptr, uint64_t flags, uint64_t mode);
+uint64_t sys_read (uint64_t fd, uint64_t buf, uint64_t size);
 uint64_t sys_readlink (uint64_t path, uint64_t buf, uint64_t bufsz);
+uint64_t sys_rename (uint64_t old, uint64_t new);
+uint64_t sys_rmdir (uint64_t path);
+uint64_t sys_seek (uint64_t fd, uint64_t offset, uint64_t whence);
+uint64_t sys_stat (uint64_t path, uint64_t buf);
+uint64_t sys_symlink (uint64_t target, uint64_t linkpath);
+uint64_t sys_unlink (uint64_t path);
+uint64_t sys_write (uint64_t fd, uint64_t buf, uint64_t size);
 
 inode* get_absolute_root (void);
 void   init_vfs (inode* absolute_root);

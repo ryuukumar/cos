@@ -30,6 +30,8 @@ int builtin_ln (int argc, char** argv);
 int builtin_ls (int argc, char** argv);
 int builtin_mkdir (int argc, char** argv);
 int builtin_pwd (int argc, char** argv);
+int builtin_rename (int argc, char** argv);
+int builtin_rmdir (int argc, char** argv);
 int builtin_source (int argc, char** argv);
 int builtin_stat (int argc, char** argv);
 int builtin_test (int argc, char** argv);

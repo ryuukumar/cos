@@ -26,35 +26,49 @@ int do_link (const char* oldpath, const char* newpath) {
 	process* current = get_current_process ();
 
 	inode* existing = nullptr;
-	int	   error = do_lookup ((char*)oldpath, &existing, current->p_root, current->p_wd);
-	if (error) return error;
-
-	if (existing->i_type == LINK) {
-		error = do_lookup ((char*)existing->i_pvt, &existing, current->p_root, current->p_wd);
-		if (error) return error;
+	char * norm_oldpath = nullptr, *norm_newpath;
+	int	   error = path_normalise_from_user (oldpath, &norm_oldpath);
+	if (error < 0) return error;
+	error = path_normalise_from_user (newpath, &norm_newpath);
+	if (error < 0) {
+		kfree (norm_oldpath);
+		return error;
 	}
 
-	if (existing->i_type == DIRECTORY) return -EPERM;
+	error = lookup_inode_by_path ((char*)norm_oldpath, current->p_root, current->p_wd, &existing,
+								  L_FLNK | L_NDCHK);
+	kfree (norm_oldpath);
+	if (error == -EISDIR) return -EPERM;
+	if (error != 0) return error;
 
 	inode* parent = nullptr;
 	char*  name = nullptr;
-	error = vfs_resolve_parent (newpath, current->p_root, current->p_wd, &parent, &name);
-	if (error) return error;
+	error =
+		resolve_parent_and_childname (norm_newpath, current->p_root, current->p_wd, &parent, &name);
+	kfree (norm_newpath);
+	if (error == -INTERNAL_ENOPARENT) return -EINVAL;
+	if (error < 0) return error;
+	if (error == 1) return -ENOENT;
 
 	// TODO: -EXDEV if on different devices/filesystems
 
 	inode* check = nullptr;
-	if (parent->i_iops->lookup (name, &check, parent) == 0) {
-		kfree (name);
-		return -EEXIST;
-	}
+	error = parent->i_iops->lookup (name, &check, parent);
+
+	if (error == 0) {
+		error = -EEXIST;
+		goto cleanup;
+	} else if (error != -ENOENT)
+		goto cleanup;
 
 	if (!parent->i_iops->link) {
-		kfree (name);
-		return -ENOSYS;
+		error = -ENOSYS;
+		goto cleanup;
 	}
 
 	error = parent->i_iops->link (existing, name, parent);
+
+cleanup:
 	kfree (name);
 	return error;
 }

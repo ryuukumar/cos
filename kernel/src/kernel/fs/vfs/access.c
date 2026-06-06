@@ -1,5 +1,5 @@
 /*
- * lstat.c
+ * access.c
  * Copyright (C) 2026  Aditya Kumar
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
@@ -19,28 +19,31 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
-#include <stddef.h>
 
-int do_lstat (const char* restrict path, stat* restrict buf) {
-	if (!path || !buf) return -EINVAL;
+int do_access (const char* path, uint8_t flags) {
+	(void)flags;
 
 	process* current = get_current_process ();
-	inode*	 node = nullptr;
-	char*	 norm_path = nullptr;
-	int		 error = path_normalise_from_user (path, &norm_path);
-	if (error < 0) return error;
+	inode*	 result = nullptr;
 
-	error = lookup_inode_by_path (norm_path, current->p_root, current->p_wd, &node, L_NLNK);
-	kfree (norm_path);
-	if (error != 0) return error;
+	int error = lookup_inode_by_path (path, current->p_root, current->p_wd, &result, L_FLNK);
+	if (error) return error;
 
-	if (!node->i_iops || !node->i_iops->stat) return -ENOSYS;
-	return node->i_iops->stat (node, buf);
+	bool access_ok = true;
+
+	// TODO: check for permissions, when implemented
+
+	return access_ok;
 }
 
-uint64_t sys_lstat (uint64_t path, uint64_t buf) {
-	const char* path_us = kstrdup ((const char*)path);
-	int			error = do_stat (path_us, (stat*)buf);
-	kfree ((void*)path_us);
+uint64_t sys_access (uint64_t path, uint64_t flags) {
+	char* path_norm = nullptr;
+
+	int error = path_normalise_from_user ((char*)path, &path_norm);
+	if (error < 0) return error;
+
+	error = do_access (path_norm, (uint8_t)(flags & 0xF));
+
+	kfree ((void*)path_norm);
 	return error;
 }

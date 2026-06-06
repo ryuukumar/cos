@@ -1,5 +1,5 @@
 /*
- * chdir.c
+ * fsync.c
  * Copyright (C) 2026  Aditya Kumar
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
@@ -14,26 +14,9 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <kernel/error.h>
-#include <kernel/fs/vfs.h>
-#include <kernel/process.h>
-#include <liballoc/liballoc.h>
+#include <arch/x86_64-cos/syscalls.h>
+#include <unistd.h>
 
-int do_chdir (const char* path) {
-	if (!path) return -EINVAL;
-	inode*	 new_dir = nullptr;
-	process* current = get_current_process ();
-
-	char* norm_path = nullptr;
-	int	  error = path_normalise_from_user (path, &norm_path);
-	if (error < 0) return error;
-	error = lookup_inode_by_path ((char*)norm_path, current->p_root, current->p_wd, &new_dir,
-								  L_FLNK | L_DCHK);
-	kfree (norm_path);
-	if (error != 0) return error;
-
-	current->p_wd = new_dir;
-	return 0;
+int fsync (int __fd) {
+	return (int)syscall_ret ((long)syscall1 (SYSCALL_SYS_FSYNC, (uint64_t)__fd));
 }
-
-uint64_t sys_chdir (uint64_t path) { return (uint64_t)do_chdir ((const char*)path); }

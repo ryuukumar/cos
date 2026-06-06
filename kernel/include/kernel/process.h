@@ -84,6 +84,8 @@ void process_signal_wakeup (process* p);
 
 int	 send_signal (process* target, int signum);
 void deliver_pending_signals (registers_t* registers);
+int	 is_signal_ignored (process* p, int signum);
+int	 has_pending_nonignored_signal (process* p);
 
 void schedule (registers_t* registers);
 

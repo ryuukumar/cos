@@ -1,5 +1,5 @@
 /*
- * chdir.c
+ * dup.c
  * Copyright (C) 2026  Aditya Kumar
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
@@ -17,23 +17,36 @@
 #include <kernel/error.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
-#include <liballoc/liballoc.h>
 
-int do_chdir (const char* path) {
-	if (!path) return -EINVAL;
-	inode*	 new_dir = nullptr;
-	process* current = get_current_process ();
+uint64_t sys_dup (uint64_t fd) {
+	process* p = get_current_process ();
+	if (!p || fd >= MAX_FDS || !p->p_fds[fd]) return -EBADF;
 
-	char* norm_path = nullptr;
-	int	  error = path_normalise_from_user (path, &norm_path);
-	if (error < 0) return error;
-	error = lookup_inode_by_path ((char*)norm_path, current->p_root, current->p_wd, &new_dir,
-								  L_FLNK | L_DCHK);
-	kfree (norm_path);
-	if (error != 0) return error;
+	int newfd = -1;
+	for (int i = 0; i < MAX_FDS; i++) {
+		if (!p->p_fds[i]) {
+			newfd = i;
+			break;
+		}
+	}
+	if (newfd < 0) return -EMFILE;
 
-	current->p_wd = new_dir;
-	return 0;
+	p->p_fds[newfd] = p->p_fds[fd];
+	p->p_fds[newfd]->f_cnt++;
+	return newfd;
 }
 
-uint64_t sys_chdir (uint64_t path) { return (uint64_t)do_chdir ((const char*)path); }
+uint64_t sys_dup2 (uint64_t oldfd, uint64_t newfd) {
+	process* p = get_current_process ();
+	if (!p || oldfd >= MAX_FDS || newfd >= MAX_FDS || !p->p_fds[oldfd]) return -EBADF;
+
+	if (p->p_fds[newfd]) {
+		struct file* old = p->p_fds[newfd];
+		p->p_fds[newfd] = nullptr;
+		do_close (old);
+	}
+
+	p->p_fds[newfd] = p->p_fds[oldfd];
+	p->p_fds[newfd]->f_cnt++;
+	return newfd;
+}

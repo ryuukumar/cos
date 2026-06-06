@@ -91,7 +91,8 @@ int dispatch (size_t argc, char** argv) {
 	if (argc == 0) return 0;
 
 	int d_builtin = dispatch_builtin (argc, argv);
-	if (d_builtin != -1) return d_builtin;
+	if (d_builtin == -1) perror (argv[0]);
+	if (d_builtin != -1000) return d_builtin;
 
 	int ret = exec_and_wait (argv[0], argv);
 	if (ret != 127) return ret;

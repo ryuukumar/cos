@@ -57,7 +57,7 @@ typedef struct {
 #define S_IXUSR	  0000100 /* execute/search permission, owner */
 #define S_IRWXG	  (S_IRGRP | S_IWGRP | S_IXGRP)
 #define S_IRGRP	  0000040 /* read permission, group */
-#define S_IWGRP	  0000020 /* write permission, grougroup */
+#define S_IWGRP	  0000020 /* write permission, group */
 #define S_IXGRP	  0000010 /* execute/search permission, group */
 #define S_IRWXO	  (S_IROTH | S_IWOTH | S_IXOTH)
 #define S_IROTH	  0000004 /* read permission, other */

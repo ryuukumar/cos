@@ -1,5 +1,5 @@
 /*
- * filename_has_invalid_chars.c
+ * pipe.c
  * Copyright (C) 2026  Aditya Kumar
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
@@ -14,14 +14,9 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <kclib/ctype.h>
-#include <kernel/fs/vfs.h>
+#include <arch/x86_64-cos/syscalls.h>
+#include <unistd.h>
 
-bool filename_has_invalid_chars (char* filename) {
-	while (*filename != 0) {
-		unsigned char c = (unsigned char)*filename;
-		if (c == '/' || !isprint (c)) return true;
-		filename++;
-	}
-	return false;
+int pipe (int __fildes[2]) {
+	return (int)syscall_ret ((long)syscall1 (SYSCALL_SYS_PIPE, (uint64_t)__fildes));
 }

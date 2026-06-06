@@ -20,14 +20,15 @@
 #include <kernel/process.h>
 #include <liballoc/liballoc.h>
 
-int do_symlink (const char* target, const char* linkpath) {
+int do_symlink (const char* restrict target, const char* restrict linkpath) {
 	if (!target || !linkpath) return -EINVAL;
 
 	process* current = get_current_process ();
 	inode*	 parent = nullptr;
 	char*	 name = nullptr;
 
-	int error = vfs_resolve_parent (linkpath, current->p_root, current->p_wd, &parent, &name);
+	int error = resolve_parent_and_childname ((char*)linkpath, current->p_root, current->p_wd,
+											  &parent, &name);
 	if (error) return error;
 
 	inode* existing = nullptr;
@@ -50,10 +51,15 @@ cleanup:
 }
 
 uint64_t sys_symlink (uint64_t target, uint64_t linkpath) {
-	const char* target_us = kstrdup ((const char*)target);
-	const char* linkpt_us = kstrdup ((const char*)linkpath);
-	if (!target_us || !linkpt_us) return -ENOMEM;
-	int error = do_symlink (target_us, linkpt_us);
+	char *target_us = nullptr, *linkpt_us = nullptr;
+
+	int error = path_normalise_from_user ((char*)target, &target_us);
+	if (error < 0) return error;
+	error = path_normalise_from_user ((char*)linkpath, &linkpt_us);
+	if (error < 0) return error;
+
+	error = do_symlink (target_us, linkpt_us);
+
 	kfree ((void*)target_us), kfree ((void*)linkpt_us);
 	return error;
 }

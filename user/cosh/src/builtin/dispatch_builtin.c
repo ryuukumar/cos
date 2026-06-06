@@ -55,6 +55,10 @@ int dispatch_builtin (size_t argc, char** argv) {
 		return builtin_unlink (argc, argv);
 	else if (strcmp (argv[0], "link") == 0 || strcmp (argv[0], "ln") == 0)
 		return builtin_ln (argc, argv);
+	else if (strcmp (argv[0], "rename") == 0 || strcmp (argv[0], "mv") == 0)
+		return builtin_rename (argc, argv);
+	else if (strcmp (argv[0], "rmdir") == 0)
+		return builtin_rmdir (argc, argv);
 
-	return -1;
+	return -1000;
 }

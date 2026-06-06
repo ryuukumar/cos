@@ -1,5 +1,5 @@
 /*
- * lstat.c
+ * fsync.c
  * Copyright (C) 2026  Aditya Kumar
  *
  * This program is free software; you can redistribute it and/or modify it under the terms of the
@@ -14,33 +14,19 @@
  * not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <kclib/string.h>
 #include <kernel/error.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/process.h>
-#include <liballoc/liballoc.h>
 #include <stddef.h>
 
-int do_lstat (const char* restrict path, stat* restrict buf) {
-	if (!path || !buf) return -EINVAL;
-
-	process* current = get_current_process ();
-	inode*	 node = nullptr;
-	char*	 norm_path = nullptr;
-	int		 error = path_normalise_from_user (path, &norm_path);
-	if (error < 0) return error;
-
-	error = lookup_inode_by_path (norm_path, current->p_root, current->p_wd, &node, L_NLNK);
-	kfree (norm_path);
-	if (error != 0) return error;
-
-	if (!node->i_iops || !node->i_iops->stat) return -ENOSYS;
-	return node->i_iops->stat (node, buf);
+int do_fsync (struct file* fd) {
+	if (!fd) return -EINVAL;
+	if (!fd->f_fops || !fd->f_fops->fsync) return -ENOSYS;
+	return fd->f_fops->fsync (fd);
 }
 
-uint64_t sys_lstat (uint64_t path, uint64_t buf) {
-	const char* path_us = kstrdup ((const char*)path);
-	int			error = do_stat (path_us, (stat*)buf);
-	kfree ((void*)path_us);
-	return error;
+uint64_t sys_fsync (uint64_t fd) {
+	process* current = get_current_process ();
+	if (fd >= MAX_FDS || !current || !current->p_fds[fd]) return -EINVAL;
+	return do_fsync (current->p_fds[fd]);
 }
