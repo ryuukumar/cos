@@ -51,6 +51,37 @@ index a1040386b..7098f2def 100644
    d10v
    epiphany
    h8300hms h8500hms
+diff --git a/newlib/libc/include/inttypes.h b/newlib/libc/include/inttypes.h
+index 417ff224c..37aa47093 100644
+--- a/newlib/libc/include/inttypes.h
++++ b/newlib/libc/include/inttypes.h
+@@ -213,7 +213,7 @@
+ #define __PRI64FAST(x) __FAST64 __STRINGIFY(x)
+ #define __SCN64FAST(x) __FAST64 __STRINGIFY(x)
+ 
+-#if __int64_t_defined
++#if __int64_t_defined || defined(__INT64_TYPE__)
+ #define PRId64		__PRI64(d)
+ #define PRIi64		__PRI64(i)
+ #define PRIo64		__PRI64(o)
+@@ -228,7 +228,7 @@
+ #define SCNx64		__SCN64(x)
+ #endif
+ 
+-#if __int_least64_t_defined
++#if __int_least64_t_defined || defined(__INT_LEAST64_TYPE__)
+ #define PRIdLEAST64	__PRI64LEAST(d)
+ #define PRIiLEAST64	__PRI64LEAST(i)
+ #define PRIoLEAST64	__PRI64LEAST(o)
+@@ -243,7 +243,7 @@
+ #define SCNxLEAST64	__SCN64LEAST(x)
+ #endif
+ 
+-#if __int_fast64_t_defined
++#if __int_fast64_t_defined || defined(__INT_FAST64_TYPE__)
+ #define PRIdFAST64	__PRI64FAST(d)
+ #define PRIiFAST64	__PRI64FAST(i)
+ #define PRIoFAST64	__PRI64FAST(o)
 diff --git a/newlib/libc/include/sys/stat.h b/newlib/libc/include/sys/stat.h
 index 740997965..143b883d4 100644
 --- a/newlib/libc/include/sys/stat.h
