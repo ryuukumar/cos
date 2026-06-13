@@ -36,13 +36,14 @@ rbtree* rbtree_create () {
 
 static void rbtree_node_destroy_r (rbtree_node* node) {
 	if (node == nullptr || node == &rbtree_NIL) return;
-	rbtree_node_destroy_r (node->left), rbtree_node_destroy_r (node->right);
-	kfree (node->left), kfree (node->right);
+	rbtree_node_destroy_r (node->left);
+	rbtree_node_destroy_r (node->right);
+	kfree (node);
 }
 
 void rbtree_destroy (rbtree* rbt) {
-	rbtree_node_destroy_r (rbt->head);
-	kfree (rbt->head);
+	if (!rbt) return;
+	if (rbt->head != &rbtree_NIL) rbtree_node_destroy_r (rbt->head);
 	kfree (rbt);
 }
 
