@@ -44,7 +44,6 @@ rbtree* rbtree_create (rbtree_cmp comparator) {
 	kmemset (new_rbtree, 0, sizeof (rbtree));
 
 	new_rbtree->head = &rbtree_NIL;
-	new_rbtree->nodes = 0;
 	new_rbtree->comparator = comparator;
 
 	return new_rbtree;
