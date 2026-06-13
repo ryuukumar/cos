@@ -21,6 +21,9 @@
 
 static rbtree_node rbtree_NIL = {.color = BLACK};
 
+static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_node** out,
+							 int8_t bound_flag);
+
 rbtree* rbtree_create () {
 	rbtree* new_rbtree = kmalloc (sizeof (rbtree));
 	if (!new_rbtree) return nullptr;
@@ -51,7 +54,7 @@ size_t rbtree_size (const rbtree* rbt) {
 	return rbt->nodes;
 }
 
-static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_elem* out,
+static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_node** out,
 							 int8_t bound_flag) {
 	if (!root) return -EINVAL;
 	if (root == &rbtree_NIL) return -INTERNAL_ENOTFOUND;
@@ -60,7 +63,7 @@ static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_elem* 
 		rbtree_node* curr = root;
 		while (curr != &rbtree_NIL) {
 			if (curr->value == value) {
-				*out = curr->value;
+				*out = curr;
 				return 0;
 			}
 			curr = (value < curr->value) ? curr->left : curr->right;
@@ -83,24 +86,36 @@ static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_elem* 
 
 	if (candidate == &rbtree_NIL) return -INTERNAL_ENOTFOUND;
 
-	*out = candidate->value;
+	*out = candidate;
 	return 0;
 }
 
 int rbtree_find (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	if (!rbt || !out) return -EINVAL;
 	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
-	return rbtree_node_find (rbt->head, value, out, 0);
+	rbtree_node* result = nullptr;
+
+	int error = rbtree_node_find (rbt->head, value, &result, 0);
+	if (!error) *out = result->value;
+	return error;
 }
 
 int rbtree_find_atleast (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	if (!rbt || !out) return -EINVAL;
 	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
-	return rbtree_node_find (rbt->head, value, out, 1);
+	rbtree_node* result = nullptr;
+
+	int error = rbtree_node_find (rbt->head, value, &result, 1);
+	if (!error) *out = result->value;
+	return error;
 }
 
 int rbtree_find_atmost (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	if (!rbt || !out) return -EINVAL;
 	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
-	return rbtree_node_find (rbt->head, value, out, -1);
+	rbtree_node* result = nullptr;
+
+	int error = rbtree_node_find (rbt->head, value, &result, -1);
+	if (!error) *out = result->value;
+	return error;
 }
