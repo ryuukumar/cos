@@ -85,11 +85,6 @@ static void rbtree_rotate_left (rbtree_node* node, rbtree* tree) {
 	node->parent = right_child;
 }
 
-static void rbtree_recolor_node (rbtree_node* node) {
-	if (!node || node == &rbtree_NIL) return;
-	node->color = (node->color == RED) ? BLACK : RED;
-}
-
 int rbtree_insert (rbtree* rbt, rbtree_elem value) {
 	if (!rbt) return -EINVAL;
 
