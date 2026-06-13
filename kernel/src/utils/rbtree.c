@@ -98,7 +98,10 @@ int rbtree_insert (rbtree* rbt, rbtree_elem value) {
 	rbtree_node *x = rbt->head, *y = &rbtree_NIL;
 	while (x != &rbtree_NIL) {
 		y = x;
-		if (value < x->value)
+		if (value == x->value) {
+			kfree (z);
+			return -INTERNAL_EEXISTS;
+		} else if (value < x->value)
 			x = x->left;
 		else
 			x = x->right;
@@ -114,6 +117,7 @@ int rbtree_insert (rbtree* rbt, rbtree_elem value) {
 
 	z->left = z->right = &rbtree_NIL;
 	z->color = RED;
+	rbt->nodes++;
 
 	while (z->parent->color == RED) {
 		if (z->parent == z->parent->parent->left) {
