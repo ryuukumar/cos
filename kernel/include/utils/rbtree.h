@@ -38,9 +38,9 @@ typedef struct {
 rbtree* rbtree_create ();
 void	rbtree_destroy (rbtree* rbt);
 
-int	   rbtree_insert (rbtree* rbt, rbtree_elem value);
-int	   rbtree_delete (rbtree* rbt, rbtree_elem* out);
-size_t rbtree_size (const rbtree* rbt);
+int		rbtree_insert (rbtree* rbt, rbtree_elem value);
+int		rbtree_delete (rbtree* rbt, rbtree_elem* out);
+int64_t rbtree_size (const rbtree* rbt);
 
 int rbtree_find (rbtree* rbt, rbtree_elem value, rbtree_elem* out);
 int rbtree_find_atleast (rbtree* rbt, rbtree_elem value, rbtree_elem* out);

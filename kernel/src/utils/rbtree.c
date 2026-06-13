@@ -160,7 +160,7 @@ int rbtree_insert (rbtree* rbt, rbtree_elem value) {
 
 // int	   rbtree_delete (rbtree* rbt, rbtree_elem* out);
 
-size_t rbtree_size (const rbtree* rbt) {
+int64_t rbtree_size (const rbtree* rbt) {
 	if (!rbt) return -EINVAL;
 	return rbt->nodes;
 }
