@@ -19,7 +19,8 @@
 #include <liballoc/liballoc.h>
 #include <utils/rbtree.h>
 
-static rbtree_node rbtree_NIL = {.color = BLACK};
+static rbtree_node rbtree_NIL = {
+	.color = BLACK, .left = &rbtree_NIL, .right = &rbtree_NIL, .parent = &rbtree_NIL};
 
 static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_node** out,
 							 int8_t bound_flag);
@@ -150,7 +151,114 @@ int rbtree_insert (rbtree* rbt, rbtree_elem value) {
 	return 0;
 }
 
-// int	   rbtree_delete (rbtree* rbt, rbtree_elem* out);
+static void rbtree_transplant (rbtree* rbt, rbtree_node* u, rbtree_node* v) {
+	if (u->parent == &rbtree_NIL)
+		rbt->head = v;
+	else if (u == u->parent->left)
+		u->parent->left = v;
+	else
+		u->parent->right = v;
+	v->parent = u->parent;
+}
+
+int rbtree_delete (rbtree* rbt, rbtree_elem value) {
+	rbtree_node *z = &rbtree_NIL, *y = &rbtree_NIL, *x = &rbtree_NIL;
+
+	int error = rbtree_node_find (rbt->head, value, &z, 0);
+	if (error) return error;
+
+	y = z;
+	rbtree_color y_orig = y->color;
+
+	if (z->left == &rbtree_NIL) {
+		x = z->right;
+		rbtree_transplant (rbt, z, z->right);
+	} else if (z->right == &rbtree_NIL) {
+		x = z->left;
+		rbtree_transplant (rbt, z, z->left);
+	} else {
+		int error = rbtree_node_find (z->right, y->value, &y, 1);
+		if (error) return error;
+		y_orig = y->color;
+		x = y->right;
+
+		if (y->parent == z)
+			x->parent = y;
+		else {
+			rbtree_transplant (rbt, y, y->right);
+			y->right = z->right;
+			y->right->parent = y;
+		}
+
+		rbtree_transplant (rbt, z, y);
+		y->left = z->left;
+		y->left->parent = y;
+		y->color = z->color;
+	}
+
+	if (y_orig == BLACK) {
+		while (x != rbt->head && x->color == BLACK) {
+			if (x == x->parent->left) {
+				rbtree_node* w = x->parent->right;
+				if (w->color == RED) {
+					w->color = BLACK;
+					x->parent->color = RED;
+					rbtree_rotate_left (x->parent, rbt);
+					w = x->parent->right;
+				}
+
+				if (w->left->color == BLACK && w->right->color == BLACK) {
+					w->color = RED;
+					x = x->parent;
+				} else {
+					if (w->right->color == BLACK) {
+						w->left->color = BLACK;
+						w->color = RED;
+						rbtree_rotate_right (w, rbt);
+						w = x->parent->right;
+					}
+
+					w->color = x->parent->color;
+					x->parent->color = BLACK;
+					w->right->color = BLACK;
+					rbtree_rotate_left (x->parent, rbt);
+					x = rbt->head;
+				}
+			} else {
+				rbtree_node* w = x->parent->left;
+				if (w->color == RED) {
+					w->color = BLACK;
+					x->parent->color = RED;
+					rbtree_rotate_right (x->parent, rbt);
+					w = x->parent->left;
+				}
+
+				if (w->right->color == BLACK && w->left->color == BLACK) {
+					w->color = RED;
+					x = x->parent;
+				} else {
+					if (w->left->color == BLACK) {
+						w->right->color = BLACK;
+						w->color = RED;
+						rbtree_rotate_left (w, rbt);
+						w = x->parent->left;
+					}
+
+					w->color = x->parent->color;
+					x->parent->color = BLACK;
+					w->left->color = BLACK;
+					rbtree_rotate_right (x->parent, rbt);
+					x = rbt->head;
+				}
+			}
+		}
+		x->color = BLACK;
+	}
+
+	rbt->nodes--;
+	kfree (z);
+	return 0;
+}
 
 int64_t rbtree_size (const rbtree* rbt) {
 	if (!rbt) return -EINVAL;
