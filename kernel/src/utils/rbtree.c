@@ -47,42 +47,34 @@ void rbtree_destroy (rbtree* rbt) {
 	kfree (rbt);
 }
 
-static void rbtree_rotate_right (rbtree_node* node, rbtree* tree) {
-	rbtree_node* left_child = node->left;
-	rbtree_node* lc_right_child = left_child->right;
-
-	node->left = lc_right_child;
-	if (lc_right_child != &rbtree_NIL) lc_right_child->parent = node;
-
-	left_child->parent = node->parent;
-	if (node->parent == nullptr)
-		tree->head = left_child;
-	else if (node == node->parent->left)
-		node->parent->left = left_child;
+static void rbtree_rotate_right (rbtree_node* x, rbtree* tree) {
+	rbtree_node* y = x->left;
+	x->left = y->right;
+	if (y->right != &rbtree_NIL) y->right->parent = x;
+	y->parent = x->parent;
+	if (x->parent == &rbtree_NIL)
+		tree->head = y;
+	else if (x == x->parent->right)
+		x->parent->right = y;
 	else
-		node->parent->right = left_child;
-
-	left_child->right = node;
-	node->parent = left_child;
+		x->parent->left = y;
+	y->right = x;
+	x->parent = y;
 }
 
-static void rbtree_rotate_left (rbtree_node* node, rbtree* tree) {
-	rbtree_node* right_child = node->right;
-	rbtree_node* rc_left_child = right_child->left;
-
-	node->right = rc_left_child;
-	if (rc_left_child != &rbtree_NIL) rc_left_child->parent = node;
-
-	right_child->parent = node->parent;
-	if (node->parent == nullptr)
-		tree->head = right_child;
-	else if (node == node->parent->left)
-		node->parent->left = right_child;
+static void rbtree_rotate_left (rbtree_node* x, rbtree* tree) {
+	rbtree_node* y = x->right;
+	x->right = y->left;
+	if (y->left != &rbtree_NIL) y->left->parent = x;
+	y->parent = x->parent;
+	if (x->parent == &rbtree_NIL)
+		tree->head = y;
+	else if (x == x->parent->left)
+		x->parent->left = y;
 	else
-		node->parent->right = right_child;
-
-	right_child->left = node;
-	node->parent = right_child;
+		x->parent->right = y;
+	y->left = x;
+	x->parent = y;
 }
 
 int rbtree_insert (rbtree* rbt, rbtree_elem value) {
