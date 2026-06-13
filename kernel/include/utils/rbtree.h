@@ -21,8 +21,9 @@
 
 typedef struct rbtree_node rbtree_node;
 typedef uint64_t		   rbtree_elem;
-
 typedef enum { RED, BLACK } rbtree_color;
+
+typedef int (*rbtree_cmp) (rbtree_elem, rbtree_elem);
 
 struct rbtree_node {
 	rbtree_elem	 value;
@@ -32,10 +33,11 @@ struct rbtree_node {
 
 typedef struct {
 	rbtree_node* head;
+	rbtree_cmp	 comparator;
 	size_t		 nodes;
 } rbtree;
 
-rbtree* rbtree_create ();
+rbtree* rbtree_create (rbtree_cmp comparator);
 void	rbtree_destroy (rbtree* rbt);
 
 int		rbtree_insert (rbtree* rbt, rbtree_elem value);

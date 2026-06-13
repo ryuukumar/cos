@@ -23,9 +23,21 @@ static rbtree_node rbtree_NIL = {
 	.color = BLACK, .left = &rbtree_NIL, .right = &rbtree_NIL, .parent = &rbtree_NIL};
 
 static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_node** out,
-							 int8_t bound_flag);
+							 int8_t bound_flag, rbtree_cmp compr);
 
-rbtree* rbtree_create () {
+/*!
+ * Allocates and initialises an empty RB-tree.
+ *
+ * RB-trees require a comparator function to main sorted order. You must provide a comparator
+ * function for comparing elements a & b, where return is 0 if a == b, negative if a < b and
+ * positive if a > b.
+ *
+ * @param comparator comparator function as defined above
+ * @return pointer to rbtree object, or nullptr if error
+ */
+rbtree* rbtree_create (rbtree_cmp comparator) {
+	if (!comparator) return nullptr;
+
 	rbtree* new_rbtree = kmalloc (sizeof (rbtree));
 	if (!new_rbtree) return nullptr;
 
@@ -91,10 +103,11 @@ int rbtree_insert (rbtree* rbt, rbtree_elem value) {
 	rbtree_node *x = rbt->head, *y = &rbtree_NIL;
 	while (x != &rbtree_NIL) {
 		y = x;
-		if (value == x->value) {
+		int comp_cached = rbt->comparator (value, x->value);
+		if (comp_cached == 0) {
 			kfree (z);
 			return -INTERNAL_EEXISTS;
-		} else if (value < x->value)
+		} else if (comp_cached < 0)
 			x = x->left;
 		else
 			x = x->right;
@@ -103,7 +116,7 @@ int rbtree_insert (rbtree* rbt, rbtree_elem value) {
 
 	if (y == &rbtree_NIL)
 		rbt->head = z;
-	else if (z->value < y->value)
+	else if (rbt->comparator (z->value, y->value) < 0)
 		y->left = z;
 	else
 		y->right = z;
@@ -164,7 +177,7 @@ static void rbtree_transplant (rbtree* rbt, rbtree_node* u, rbtree_node* v) {
 int rbtree_delete (rbtree* rbt, rbtree_elem value) {
 	rbtree_node *z = &rbtree_NIL, *y = &rbtree_NIL, *x = &rbtree_NIL;
 
-	int error = rbtree_node_find (rbt->head, value, &z, 0);
+	int error = rbtree_node_find (rbt->head, value, &z, 0, rbt->comparator);
 	if (error) return error;
 
 	y = z;
@@ -177,7 +190,7 @@ int rbtree_delete (rbtree* rbt, rbtree_elem value) {
 		x = z->left;
 		rbtree_transplant (rbt, z, z->left);
 	} else {
-		int error = rbtree_node_find (z->right, y->value, &y, 1);
+		int error = rbtree_node_find (z->right, y->value, &y, 1, rbt->comparator);
 		if (error) return error;
 		y_orig = y->color;
 		x = y->right;
@@ -266,18 +279,19 @@ int64_t rbtree_size (const rbtree* rbt) {
 }
 
 static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_node** out,
-							 int8_t bound_flag) {
+							 int8_t bound_flag, rbtree_cmp compr) {
 	if (!root) return -EINVAL;
 	if (root == &rbtree_NIL) return -INTERNAL_ENOTFOUND;
 
 	if (bound_flag == 0) {
 		rbtree_node* curr = root;
 		while (curr != &rbtree_NIL) {
-			if (curr->value == value) {
+			int comp_cached = compr (value, curr->value);
+			if (comp_cached == 0) {
 				*out = curr;
 				return 0;
 			}
-			curr = (value < curr->value) ? curr->left : curr->right;
+			curr = (comp_cached < 0) ? curr->left : curr->right;
 		}
 		return -INTERNAL_ENOTFOUND;
 	}
@@ -286,8 +300,8 @@ static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_node**
 	rbtree_node* candidate = &rbtree_NIL;
 
 	while (curr != &rbtree_NIL) {
-		if ((bound_flag == 1 && curr->value >= value) ||
-			(bound_flag == -1 && curr->value <= value)) {
+		int comp_cached = compr (curr->value, value);
+		if ((bound_flag == 1 && comp_cached >= 0) || (bound_flag == -1 && comp_cached <= 0)) {
 			candidate = curr;
 			curr = (bound_flag == 1) ? curr->left : curr->right;
 		} else {
@@ -306,7 +320,7 @@ int rbtree_find (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
 	rbtree_node* result = nullptr;
 
-	int error = rbtree_node_find (rbt->head, value, &result, 0);
+	int error = rbtree_node_find (rbt->head, value, &result, 0, rbt->comparator);
 	if (!error) *out = result->value;
 	return error;
 }
@@ -316,7 +330,7 @@ int rbtree_find_atleast (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
 	rbtree_node* result = nullptr;
 
-	int error = rbtree_node_find (rbt->head, value, &result, 1);
+	int error = rbtree_node_find (rbt->head, value, &result, 1, rbt->comparator);
 	if (!error) *out = result->value;
 	return error;
 }
@@ -326,7 +340,7 @@ int rbtree_find_atmost (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
 	rbtree_node* result = nullptr;
 
-	int error = rbtree_node_find (rbt->head, value, &result, -1);
+	int error = rbtree_node_find (rbt->head, value, &result, -1, rbt->comparator);
 	if (!error) *out = result->value;
 	return error;
 }
