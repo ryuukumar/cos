@@ -115,3 +115,5 @@
 #define INTERNAL_EEMPQ 2602
 // Not found
 #define INTERNAL_ENOTFOUND 2603
+// Already exists
+#define INTERNAL_EEXISTS 2604

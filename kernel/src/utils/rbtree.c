@@ -46,7 +46,47 @@ void rbtree_destroy (rbtree* rbt) {
 	kfree (rbt);
 }
 
-// int	   rbtree_insert (rbtree* rbt, rbtree_elem value);
+int rbtree_insert (rbtree* rbt, rbtree_elem value) {
+	if (!rbt) return -EINVAL;
+
+	rbtree_node* new_node = kmalloc (sizeof (rbtree_node));
+	if (!new_node) return -ENOMEM;
+
+	new_node->value = value;
+	new_node->left = new_node->right = &rbtree_NIL;
+	new_node->color = RED;
+
+	// case 0: we are root
+	if (rbt->nodes == 0) {
+		rbt->head = new_node;
+		rbt->nodes = 1;
+		new_node->color = BLACK;
+		return 0;
+	}
+
+	// if we are not empty, find the insertion spot
+	rbtree_node *curr = rbt->head, *parent = nullptr;
+	while (curr != &rbtree_NIL) {
+		parent = curr;
+		if (value == curr->value) {
+			kfree (new_node);
+			return -INTERNAL_EEXISTS;
+		}
+		curr = (value < curr->value) ? curr->left : curr->right;
+	}
+
+	bool is_left_child = false;
+	new_node->parent = parent;
+	if (value < parent->value) {
+		parent->left = new_node;
+		is_left_child = true;
+	} else
+		parent->right = new_node;
+
+	rbt->nodes++;
+	return 0;
+}
+
 // int	   rbtree_delete (rbtree* rbt, rbtree_elem* out);
 
 size_t rbtree_size (const rbtree* rbt) {
