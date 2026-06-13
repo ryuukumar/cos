@@ -33,7 +33,7 @@ static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_node**
  * positive if a > b.
  *
  * @param comparator comparator function as defined above
- * @return pointer to rbtree object, or nullptr if error
+ * @return pointer to RB-tree object, or nullptr if out of memory or invalid argument
  */
 rbtree* rbtree_create (rbtree_cmp comparator) {
 	if (!comparator) return nullptr;
@@ -58,12 +58,29 @@ static void rbtree_node_destroy_r (rbtree_node* node, rbtree_freer freer) {
 	kfree (node);
 }
 
+/*!
+ * Destroys an RB-tree and all its contained data. If a freer function was passed previously via
+ * rbtree_set_freer, it is called on each element before being destroyed.
+ *
+ * Any attempt to use the rbtree as referenced by the passed rbt object will constitute a
+ * use-after-free violation and causes undefined behavior.
+ *
+ * @param rbt pointer to RB-tree object
+ */
 void rbtree_destroy (rbtree* rbt) {
 	if (!rbt) return;
 	if (rbt->head != &rbtree_NIL) rbtree_node_destroy_r (rbt->head, rbt->freer);
 	kfree (rbt);
 }
 
+/*!
+ * Set a freer function to be called during the deletion/destruction of an element from the RB-tree.
+ * Passing nullptr equates to having no freer function at all.
+ *
+ * @param rbt pointer to RB-tree object
+ * @param freer freer function
+ * @return 0 if successful, else -EINVAL
+ */
 int rbtree_set_freer (rbtree* rbt, rbtree_freer freer) {
 	if (!rbt) return -EINVAL;
 	rbt->freer = freer;
@@ -100,6 +117,18 @@ static void rbtree_rotate_left (rbtree_node* x, rbtree* tree) {
 	x->parent = y;
 }
 
+/*!
+ * Insert an element into the RB-tree object. Inserting duplicate elements will be rejected with
+ * -INTERNAL_EEXISTS.
+ *
+ * Insertion is typically O(log n), where n is the number of elements currently in the RB-tree.
+ * Calls the comparator function as provided during initialisation for maintaining internal
+ * structures.
+ *
+ * @param rbt pointer to RB-tree object
+ * @param value value to add to the RB-tree object.
+ * @return 0 if successful, else -EINVAL, -ENOMEM or -INTERNAL_EEXISTS
+ */
 int rbtree_insert (rbtree* rbt, rbtree_elem value) {
 	if (!rbt) return -EINVAL;
 
@@ -184,7 +213,19 @@ static void rbtree_transplant (rbtree* rbt, rbtree_node* u, rbtree_node* v) {
 	v->parent = u->parent;
 }
 
+/*!
+ * Deletes the node corresponding to the provided value from the RB-tree object. If a freer function
+ * was passed previously via rbtree_set_freer, it is called on the element before being deleted.
+ *
+ * Deletion is typically O(log n), where n is the number of elements currently in the RB-tree. Calls
+ * the comparator function as provided during initialisation for maintaining internal structures.
+ *
+ * @param rbt pointer to RB-tree object
+ * @param value value to delete from the RB-tree object.
+ * @return 0 if successful, else -EINVAL or -INTERNAL_ENOTFOUND
+ */
 int rbtree_delete (rbtree* rbt, rbtree_elem value) {
+	if (!rbt) return -EINVAL;
 	rbtree_node *z = &rbtree_NIL, *y = &rbtree_NIL, *x = &rbtree_NIL;
 
 	int error = rbtree_node_find (rbt->head, value, &z, 0, rbt->comparator);
@@ -284,6 +325,12 @@ int rbtree_delete (rbtree* rbt, rbtree_elem value) {
 	return 0;
 }
 
+/*!
+ * Returns the number of nodes currently in the RB-tree object.
+ *
+ * @param rbt pointer to RB-tree object
+ * @return size if successful, else -EINVAL
+ */
 int64_t rbtree_size (const rbtree* rbt) {
 	if (!rbt) return -EINVAL;
 	return rbt->nodes;
@@ -326,6 +373,21 @@ static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_node**
 	return 0;
 }
 
+/*!
+ * Finds a node whose value is exactly equal to the provided value (as assessed by the comparator
+ * function provided during initialisation), and places its value into the address passed via out.
+ * This can be useful as a test for whether an element exists in the RB-tree, or to retrieve the
+ * properties of the object that are not used in comparison, if rbtree_elem is interpreted as a
+ * pointer to an object.
+ *
+ * Search is typically O(log n), where n is the number of elements currently in the RB-tree. Calls
+ * the comparator function as provided during initialisation for maintaining internal structures.
+ *
+ * @param rbt pointer to RB-tree object
+ * @param value value to look for in the RB-tree object.
+ * @param out pointer to memory where matched value will be stored.
+ * @return 0 if successful, else -EINVAL or -INTERNAL_ENOTFOUND
+ */
 int rbtree_find (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	if (!rbt || !out) return -EINVAL;
 	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
@@ -336,6 +398,19 @@ int rbtree_find (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	return error;
 }
 
+/*!
+ * Finds the node with the smallest value that is >= the provided value (as assessed by the
+ * comparator function provided during initialisation), and places its value into the address passed
+ * via out.
+ *
+ * Search is typically O(log n), where n is the number of elements currently in the RB-tree. Calls
+ * the comparator function as provided during initialisation for maintaining internal structures.
+ *
+ * @param rbt pointer to RB-tree object
+ * @param value value to look for in the RB-tree object.
+ * @param out pointer to memory where matched value will be stored.
+ * @return 0 if successful, else -EINVAL or -INTERNAL_ENOTFOUND
+ */
 int rbtree_find_atleast (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	if (!rbt || !out) return -EINVAL;
 	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
@@ -346,6 +421,19 @@ int rbtree_find_atleast (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	return error;
 }
 
+/*!
+ * Finds the node with the largest value that is <= the provided value (as assessed by the
+ * comparator function provided during initialisation), and places its value into the address passed
+ * via out.
+ *
+ * Search is typically O(log n), where n is the number of elements currently in the RB-tree. Calls
+ * the comparator function as provided during initialisation for maintaining internal structures.
+ *
+ * @param rbt pointer to RB-tree object
+ * @param value value to look for in the RB-tree object.
+ * @param out pointer to memory where matched value will be stored.
+ * @return 0 if successful, else -EINVAL or -INTERNAL_ENOTFOUND
+ */
 int rbtree_find_atmost (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	if (!rbt || !out) return -EINVAL;
 	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
