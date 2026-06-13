@@ -46,44 +46,115 @@ void rbtree_destroy (rbtree* rbt) {
 	kfree (rbt);
 }
 
+static void rbtree_rotate_right (rbtree_node* node, rbtree* tree) {
+	rbtree_node* left_child = node->left;
+	rbtree_node* lc_right_child = left_child->right;
+
+	node->left = lc_right_child;
+	if (lc_right_child != &rbtree_NIL) lc_right_child->parent = node;
+
+	left_child->parent = node->parent;
+	if (node->parent == nullptr)
+		tree->head = left_child;
+	else if (node == node->parent->left)
+		node->parent->left = left_child;
+	else
+		node->parent->right = left_child;
+
+	left_child->right = node;
+	node->parent = left_child;
+}
+
+static void rbtree_rotate_left (rbtree_node* node, rbtree* tree) {
+	rbtree_node* right_child = node->right;
+	rbtree_node* rc_left_child = right_child->left;
+
+	node->right = rc_left_child;
+	if (rc_left_child != &rbtree_NIL) rc_left_child->parent = node;
+
+	right_child->parent = node->parent;
+	if (node->parent == nullptr)
+		tree->head = right_child;
+	else if (node == node->parent->left)
+		node->parent->left = right_child;
+	else
+		node->parent->right = right_child;
+
+	right_child->left = node;
+	node->parent = right_child;
+}
+
+static void rbtree_recolor_node (rbtree_node* node) {
+	if (!node || node == &rbtree_NIL) return;
+	node->color = (node->color == RED) ? BLACK : RED;
+}
+
 int rbtree_insert (rbtree* rbt, rbtree_elem value) {
 	if (!rbt) return -EINVAL;
 
-	rbtree_node* new_node = kmalloc (sizeof (rbtree_node));
-	if (!new_node) return -ENOMEM;
+	rbtree_node* z = kmalloc (sizeof (rbtree_node));
+	if (!z) return -ENOMEM;
 
-	new_node->value = value;
-	new_node->left = new_node->right = &rbtree_NIL;
-	new_node->color = RED;
+	kmemset (z, 0, sizeof (rbtree_node));
 
-	// case 0: we are root
-	if (rbt->nodes == 0) {
-		rbt->head = new_node;
-		rbt->nodes = 1;
-		new_node->color = BLACK;
-		return 0;
+	z->value = value;
+
+	rbtree_node *x = rbt->head, *y = &rbtree_NIL;
+	while (x != &rbtree_NIL) {
+		y = x;
+		if (value < x->value)
+			x = x->left;
+		else
+			x = x->right;
 	}
+	z->parent = y;
 
-	// if we are not empty, find the insertion spot
-	rbtree_node *curr = rbt->head, *parent = nullptr;
-	while (curr != &rbtree_NIL) {
-		parent = curr;
-		if (value == curr->value) {
-			kfree (new_node);
-			return -INTERNAL_EEXISTS;
+	if (y == &rbtree_NIL)
+		rbt->head = z;
+	else if (z->value < y->value)
+		y->left = z;
+	else
+		y->right = z;
+
+	z->left = z->right = &rbtree_NIL;
+	z->color = RED;
+
+	while (z->parent->color == RED) {
+		if (z->parent == z->parent->parent->left) {
+			y = z->parent->parent->right;
+			if (y->color == RED) {
+				z->parent->color = BLACK;
+				y->color = BLACK;
+				z->parent->parent->color = RED;
+				z = z->parent->parent;
+			} else {
+				if (z == z->parent->right) {
+					z = z->parent;
+					rbtree_rotate_left (z, rbt);
+				}
+				z->parent->color = BLACK;
+				z->parent->parent->color = RED;
+				rbtree_rotate_right (z->parent->parent, rbt);
+			}
+		} else {
+			y = z->parent->parent->left;
+			if (y->color == RED) {
+				z->parent->color = BLACK;
+				y->color = BLACK;
+				z->parent->parent->color = RED;
+				z = z->parent->parent;
+			} else {
+				if (z == z->parent->left) {
+					z = z->parent;
+					rbtree_rotate_right (z, rbt);
+				}
+				z->parent->color = BLACK;
+				z->parent->parent->color = RED;
+				rbtree_rotate_left (z->parent->parent, rbt);
+			}
 		}
-		curr = (value < curr->value) ? curr->left : curr->right;
 	}
-
-	bool is_left_child = false;
-	new_node->parent = parent;
-	if (value < parent->value) {
-		parent->left = new_node;
-		is_left_child = true;
-	} else
-		parent->right = new_node;
-
-	rbt->nodes++;
+	rbt->head->color = BLACK;
 	return 0;
 }
 
