@@ -45,10 +45,14 @@ void rbtree_destroy (rbtree* rbt) {
 
 // int	   rbtree_insert (rbtree* rbt, rbtree_elem value);
 // int	   rbtree_delete (rbtree* rbt, rbtree_elem* out);
-// size_t rbtree_size (const rbtree* rbt);
+
+size_t rbtree_size (const rbtree* rbt) {
+	if (!rbt) return -EINVAL;
+	return rbt->nodes;
+}
 
 static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_elem* out,
-							   int8_t bound_flag) {
+							 int8_t bound_flag) {
 	if (!root) return -EINVAL;
 	if (root == &rbtree_NIL) return -INTERNAL_ENOTFOUND;
 
