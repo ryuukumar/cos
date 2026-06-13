@@ -41,23 +41,33 @@ rbtree* rbtree_create (rbtree_cmp comparator) {
 	rbtree* new_rbtree = kmalloc (sizeof (rbtree));
 	if (!new_rbtree) return nullptr;
 
+	kmemset (new_rbtree, 0, sizeof (rbtree));
+
 	new_rbtree->head = &rbtree_NIL;
 	new_rbtree->nodes = 0;
+	new_rbtree->comparator = comparator;
 
 	return new_rbtree;
 }
 
-static void rbtree_node_destroy_r (rbtree_node* node) {
+static void rbtree_node_destroy_r (rbtree_node* node, rbtree_freer freer) {
 	if (node == nullptr || node == &rbtree_NIL) return;
-	rbtree_node_destroy_r (node->left);
-	rbtree_node_destroy_r (node->right);
+	rbtree_node_destroy_r (node->left, freer);
+	rbtree_node_destroy_r (node->right, freer);
+	if (freer) freer (node->value);
 	kfree (node);
 }
 
 void rbtree_destroy (rbtree* rbt) {
 	if (!rbt) return;
-	if (rbt->head != &rbtree_NIL) rbtree_node_destroy_r (rbt->head);
+	if (rbt->head != &rbtree_NIL) rbtree_node_destroy_r (rbt->head, rbt->freer);
 	kfree (rbt);
+}
+
+int rbtree_set_freer (rbtree* rbt, rbtree_freer freer) {
+	if (!rbt) return -EINVAL;
+	rbt->freer = freer;
+	return 0;
 }
 
 static void rbtree_rotate_right (rbtree_node* x, rbtree* tree) {
@@ -269,6 +279,7 @@ int rbtree_delete (rbtree* rbt, rbtree_elem value) {
 	}
 
 	rbt->nodes--;
+	if (rbt->freer) rbt->freer (z->value);
 	kfree (z);
 	return 0;
 }
