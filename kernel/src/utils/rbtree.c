@@ -47,6 +47,56 @@ void rbtree_destroy (rbtree* rbt) {
 // int	   rbtree_delete (rbtree* rbt, rbtree_elem* out);
 // size_t rbtree_size (const rbtree* rbt);
 
-// int rbtree_find (rbtree* rbt, rbtree_elem value, rbtree_elem* out);
-// int rbtree_find_atleast (rbtree* rbt, rbtree_elem value, rbtree_elem* out);
-// int rbtree_find_atmost (rbtree* rbt, rbtree_elem value, rbtree_elem* out);
+static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_elem* out,
+							   int8_t bound_flag) {
+	if (!root) return -EINVAL;
+	if (root == &rbtree_NIL) return -INTERNAL_ENOTFOUND;
+
+	if (bound_flag == 0) {
+		rbtree_node* curr = root;
+		while (curr != &rbtree_NIL) {
+			if (curr->value == value) {
+				*out = curr->value;
+				return 0;
+			}
+			curr = (value < curr->value) ? curr->left : curr->right;
+		}
+		return -INTERNAL_ENOTFOUND;
+	}
+
+	rbtree_node* curr = root;
+	rbtree_node* candidate = &rbtree_NIL;
+
+	while (curr != &rbtree_NIL) {
+		if ((bound_flag == 1 && curr->value >= value) ||
+			(bound_flag == -1 && curr->value <= value)) {
+			candidate = curr;
+			curr = (bound_flag == 1) ? curr->left : curr->right;
+		} else {
+			curr = (bound_flag == 1) ? curr->right : curr->left;
+		}
+	}
+
+	if (candidate == &rbtree_NIL) return -INTERNAL_ENOTFOUND;
+
+	*out = candidate->value;
+	return 0;
+}
+
+int rbtree_find (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
+	if (!rbt || !out) return -EINVAL;
+	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
+	return rbtree_node_find (rbt->head, value, out, 0);
+}
+
+int rbtree_find_atleast (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
+	if (!rbt || !out) return -EINVAL;
+	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
+	return rbtree_node_find (rbt->head, value, out, 1);
+}
+
+int rbtree_find_atmost (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
+	if (!rbt || !out) return -EINVAL;
+	if (rbt->nodes == 0) return -INTERNAL_ENOTFOUND;
+	return rbtree_node_find (rbt->head, value, out, -1);
+}

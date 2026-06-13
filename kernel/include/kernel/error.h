@@ -113,3 +113,5 @@
 #define INTERNAL_ECORRQ 2601
 // Empty queue
 #define INTERNAL_EEMPQ 2602
+// Not found
+#define INTERNAL_ENOTFOUND 2603
