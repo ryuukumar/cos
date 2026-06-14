@@ -114,6 +114,7 @@ static int64_t __vma_dealloc_block (vma* vmaobj, uint64_t mem_start, uint64_t me
 				 arg_end_incl < res_end_incl) {
 			uint64_t new_start = arg_end_incl + 1, new_len = res_end_incl - new_start + 1;
 			dealloc_by_cr3 (cr3, res_start, (res->mem_len - new_len) / PAGE_SIZE);
+			res->f_offset += new_start - res->mem_start;
 			res->mem_start = new_start;
 			res->mem_len = new_len;
 			mem_end--; // prevent infinite loop
@@ -126,6 +127,7 @@ static int64_t __vma_dealloc_block (vma* vmaobj, uint64_t mem_start, uint64_t me
 			kmemcpy (new_b2, res, sizeof (vma_alloc));
 			new_b2->mem_start = arg_end_incl + 1;
 			new_b2->mem_len = res_end_incl - new_b2->mem_start + 1;
+			new_b2->f_offset = (new_b2->mem_start - res->mem_start) + res->f_offset;
 
 			error = rbtree_insert (vmaobj->vma_rbtree, (rbtree_elem)new_b2);
 			if (error) {
@@ -233,7 +235,7 @@ int64_t vma_dealloc_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, ui
 	if (mem_start % PAGE_SIZE || mem_len % PAGE_SIZE) return -INTERNAL_EBADADDR;
 
 	uint64_t slflags = spinlock_acquire (&vmaobj->lock);
-	int		 error = __vma_dealloc_block (vmaobj, mem_start, mem_len, cr3);
+	int64_t	 error = __vma_dealloc_block (vmaobj, mem_start, mem_len, cr3);
 	spinlock_release (&vmaobj->lock, slflags);
 	return error;
 }
