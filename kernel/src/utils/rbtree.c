@@ -53,7 +53,7 @@ static void rbtree_node_destroy_r (rbtree_node* node, rbtree_freer freer) {
 	if (node == nullptr || node == &rbtree_NIL) return;
 	rbtree_node_destroy_r (node->left, freer);
 	rbtree_node_destroy_r (node->right, freer);
-	if (freer) freer (node->value);
+	if (freer) freer (&node->value);
 	kfree (node);
 }
 
@@ -141,7 +141,7 @@ int rbtree_insert (rbtree* rbt, rbtree_elem value) {
 	rbtree_node *x = rbt->head, *y = &rbtree_NIL;
 	while (x != &rbtree_NIL) {
 		y = x;
-		int comp_cached = rbt->comparator (value, x->value);
+		int comp_cached = rbt->comparator (&value, &x->value);
 		if (comp_cached == 0) {
 			kfree (z);
 			return -INTERNAL_EEXISTS;
@@ -154,7 +154,7 @@ int rbtree_insert (rbtree* rbt, rbtree_elem value) {
 
 	if (y == &rbtree_NIL)
 		rbt->head = z;
-	else if (rbt->comparator (z->value, y->value) < 0)
+	else if (rbt->comparator (&z->value, &y->value) < 0)
 		y->left = z;
 	else
 		y->right = z;
@@ -319,7 +319,7 @@ int rbtree_delete (rbtree* rbt, rbtree_elem value) {
 	}
 
 	rbt->nodes--;
-	if (rbt->freer) rbt->freer (z->value);
+	if (rbt->freer) rbt->freer (&z->value);
 	kfree (z);
 	return 0;
 }
@@ -343,7 +343,7 @@ static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_node**
 	if (bound_flag == 0) {
 		rbtree_node* curr = root;
 		while (curr != &rbtree_NIL) {
-			int comp_cached = compr (value, curr->value);
+			int comp_cached = compr (&value, &curr->value);
 			if (comp_cached == 0) {
 				*out = curr;
 				return 0;
@@ -357,7 +357,7 @@ static int rbtree_node_find (rbtree_node* root, rbtree_elem value, rbtree_node**
 	rbtree_node* candidate = &rbtree_NIL;
 
 	while (curr != &rbtree_NIL) {
-		int comp_cached = compr (curr->value, value);
+		int comp_cached = compr (&curr->value, &value);
 		if ((bound_flag == 1 && comp_cached >= 0) || (bound_flag == -1 && comp_cached <= 0)) {
 			candidate = curr;
 			curr = (bound_flag == 1) ? curr->left : curr->right;
