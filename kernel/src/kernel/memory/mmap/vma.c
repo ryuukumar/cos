@@ -146,6 +146,87 @@ static int64_t __vma_dealloc_block (vma* vmaobj, uint64_t mem_start, uint64_t me
 	return 0;
 }
 
+static int64_t __vma_alloc_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, uint64_t cr3,
+								  uint8_t flags, void* backing, size_t offset) {
+	uint64_t mem_end = mem_start + mem_len;
+	int64_t	 error = 0;
+
+	if (flags & MEM_NOW) {
+		vma_alloc  comp = {.mem_start = mem_end - 1};
+		vma_alloc* res = nullptr;
+
+		error = rbtree_find_atmost (vmaobj->vma_rbtree, (rbtree_elem)&comp, (rbtree_elem*)&res);
+		if (error != 0 && error != -INTERNAL_ENOTFOUND) return error;
+
+		if (!(error == -INTERNAL_ENOTFOUND || res->mem_start + res->mem_len - 1 < mem_start))
+			return -EEXIST;
+	}
+
+	__vma_dealloc_block (vmaobj, mem_start, mem_len, cr3);
+
+	// check if we can extend a predecessor
+	vma_alloc  tgt_comp = {.mem_start = mem_start};
+	vma_alloc* tgt_alloc = nullptr;
+
+	error =
+		rbtree_find_atmost (vmaobj->vma_rbtree, (rbtree_elem)&tgt_comp, (rbtree_elem*)&tgt_alloc);
+	if (error != 0 && error != -INTERNAL_ENOTFOUND) return error;
+
+	if (tgt_alloc && tgt_alloc->mem_start + tgt_alloc->mem_len == mem_start &&
+		tgt_alloc->mem_flags == (flags & (~MEM_NOW)) && tgt_alloc->mem_backing == backing &&
+		tgt_alloc->f_offset + tgt_alloc->mem_len == offset) {
+		tgt_alloc->mem_len += mem_len;
+	} else {
+		tgt_alloc = kmalloc (sizeof (vma_alloc));
+		if (!tgt_alloc) return -ENOMEM;
+
+		tgt_alloc->mem_start = mem_start;
+		tgt_alloc->mem_len = mem_len;
+		tgt_alloc->mem_flags = flags & (~MEM_NOW);
+
+		error = rbtree_insert (vmaobj->vma_rbtree, (rbtree_elem)tgt_alloc);
+		if (error) {
+			kfree (tgt_alloc);
+			return error;
+		}
+	}
+
+	// check if we can extend to cover a successor
+	vma_alloc  succ_comp = {.mem_start = mem_start + mem_len};
+	vma_alloc* succ_res = nullptr;
+
+	error = rbtree_find (vmaobj->vma_rbtree, (rbtree_elem)&succ_comp, (rbtree_elem*)&succ_res);
+	if (error != 0 && error != -INTERNAL_ENOTFOUND) return error;
+
+	if (succ_res && succ_res->mem_flags == (flags & (~MEM_NOW)) &&
+		tgt_alloc->mem_backing == succ_res->mem_backing &&
+		tgt_alloc->f_offset + tgt_alloc->mem_len == succ_res->f_offset) {
+		tgt_alloc->mem_len += succ_res->mem_len;
+		error = rbtree_delete (vmaobj->vma_rbtree, (rbtree_elem)succ_res);
+		if (error) return error;
+	}
+
+	// allocate the actual memory needed
+	alloc_by_cr3 (cr3, mem_start, mem_len / PAGE_SIZE,
+				  M_PG_READ | ((flags & MEM_W) ? M_PG_WRITE : 0) |
+					  ((flags & MEM_X) ? M_PG_EXEC : 0));
+
+	error = 0;
+	return error;
+}
+
+int64_t vma_alloc_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, uint64_t cr3,
+						 uint8_t flags, void* backing, size_t offset) {
+	if (!vmaobj || !vmaobj->vma_rbtree) return -EINVAL;
+	if (mem_start == 0 || mem_len == 0) return -EINVAL;
+	if (mem_start % PAGE_SIZE || mem_len % PAGE_SIZE) return -INTERNAL_EBADADDR;
+
+	uint64_t slflags = spinlock_acquire (&vmaobj->lock);
+	int64_t	 error = __vma_alloc_block (vmaobj, mem_start, mem_len, cr3, flags, backing, offset);
+	spinlock_release (&vmaobj->lock, slflags);
+	return error;
+}
+
 int64_t vma_dealloc_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, uint64_t cr3) {
 	if (!vmaobj || !vmaobj->vma_rbtree) return -EINVAL;
 	if (mem_start == 0 || mem_len == 0) return -EINVAL;
