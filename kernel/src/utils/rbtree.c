@@ -442,3 +442,73 @@ int rbtree_find_atmost (rbtree* rbt, rbtree_elem value, rbtree_elem* out) {
 	if (!error) *out = result->value;
 	return error;
 }
+
+/*!
+ * Returns the internal rbtree_node object from the RB-tree corresponding to the provided value.
+ * Returned object is considered read-only, and attempting to make any changes to its properties
+ * (including those properties of the value used during comparison) will cause undefined behavior.
+ *
+ * @param rbt pointer to RB-tree object
+ * @param value value to look for in the RB-tree object
+ * @return const pointer to the corresponding rbtree_node object, or nullptr if not found or invalid
+ * input
+ */
+const rbtree_node* rbtree_node_by_value (rbtree* rbt, rbtree_elem value) {
+	if (!rbt || rbt->nodes == 0) return nullptr;
+	rbtree_node* ret = nullptr;
+
+	int error = rbtree_node_find (rbt->head, value, &ret, 0, rbt->comparator);
+	return error ? nullptr : ret;
+}
+
+/*!
+ * Returns the internal rbtree_node object from the RB-tree that appears first during in-order
+ * traversal. Returned object is considered read-only, and attempting to make any changes to its
+ * properties (including those properties of the value used during comparison) will cause undefined
+ * behavior.
+ *
+ * @param rbt pointer to RB-tree object
+ * @param value value to look for in the RB-tree object
+ * @return const pointer to the corresponding rbtree_node object, or nullptr if not found or invalid
+ * input
+ */
+const rbtree_node* rbtree_node_first_inorder (rbtree* rbt) {
+	if (!rbt || rbt->nodes == 0) return nullptr;
+	rbtree_node* ret = rbt->head;
+	while (ret->left != &rbtree_NIL)
+		ret = ret->left;
+	return ret;
+}
+
+/*!
+ * Returns the internal rbtree_node object from the RB-tree that appears after the provided 'prev'
+ * node during in-order traversal. Returned object is considered read-only, and attempting to make
+ * any changes to its properties (including those properties of the value used during comparison)
+ * will cause undefined behavior.
+ *
+ * If the provided node is the last during in-order traversal, nullptr is returned.
+ *
+ * @param rbt pointer to RB-tree object
+ * @param value value to look for in the RB-tree object
+ * @return const pointer to the corresponding rbtree_node object, or nullptr if not found or invalid
+ * input
+ */
+const rbtree_node* rbtree_node_next_inorder (rbtree* rbt, const rbtree_node* prev) {
+	if (!rbt || rbt->nodes == 0 || !prev || prev == &rbtree_NIL) return nullptr;
+	rbtree_node* ret = nullptr;
+
+	if (prev->right != &rbtree_NIL) {
+		ret = prev->right;
+		while (ret->left != &rbtree_NIL)
+			ret = ret->left;
+		return ret;
+	}
+
+	ret = prev->parent;
+	while (ret != &rbtree_NIL && prev == ret->right) {
+		prev = ret;
+		ret = ret->parent;
+	}
+
+	return (ret == &rbtree_NIL) ? nullptr : ret;
+}
