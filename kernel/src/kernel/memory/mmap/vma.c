@@ -21,12 +21,17 @@
 #include <utils/spinlock.h>
 
 static int vma_comp (const rbtree_elem* a, const rbtree_elem* b) {
-	const vma_alloc *a_vma = (const vma_alloc*)a, *b_vma = (const vma_alloc*)b;
+	const vma_alloc *a_vma = (const vma_alloc*)*a, *b_vma = (const vma_alloc*)*b;
 	if (a_vma->mem_start > b_vma->mem_start)
 		return 1;
 	else if (a_vma->mem_start < b_vma->mem_start)
 		return -1;
 	return 0;
+}
+
+static void vma_freer (const rbtree_elem* e) {
+	const vma_alloc* v = (const vma_alloc*)*e;
+	kfree ((void*)v);
 }
 
 vma* create_vma () {
@@ -40,6 +45,8 @@ vma* create_vma () {
 		kfree (new_vma);
 		return nullptr;
 	}
+
+	rbtree_set_freer (new_vma->vma_rbtree, vma_freer);
 
 	new_vma->min_alloc = vma_min_alloc;
 	new_vma->max_alloc = vma_max_alloc;
