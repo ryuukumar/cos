@@ -23,8 +23,8 @@ typedef struct rbtree_node rbtree_node;
 typedef uint64_t		   rbtree_elem;
 typedef enum { RED, BLACK } rbtree_color;
 
-typedef int (*rbtree_cmp) (rbtree_elem, rbtree_elem);
-typedef void (*rbtree_freer) (rbtree_elem);
+typedef int (*rbtree_cmp) (const rbtree_elem*, const rbtree_elem*);
+typedef void (*rbtree_freer) (const rbtree_elem*);
 
 struct rbtree_node {
 	rbtree_elem	 value;
@@ -51,3 +51,7 @@ int64_t rbtree_size (const rbtree* rbt);
 int rbtree_find (rbtree* rbt, rbtree_elem value, rbtree_elem* out);
 int rbtree_find_atleast (rbtree* rbt, rbtree_elem value, rbtree_elem* out);
 int rbtree_find_atmost (rbtree* rbt, rbtree_elem value, rbtree_elem* out);
+
+const rbtree_node* rbtree_node_by_value (rbtree* rbt, rbtree_elem value);
+const rbtree_node* rbtree_node_first_inorder (rbtree* rbt);
+const rbtree_node* rbtree_node_next_inorder (rbtree* rbt, const rbtree_node* prev);
