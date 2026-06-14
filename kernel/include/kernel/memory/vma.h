@@ -43,8 +43,10 @@ typedef struct {
 vma* create_vma ();
 void destroy_vma (vma* vmaobj);
 
-int64_t vma_alloc_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, uint8_t flags);
-int64_t vma_reflag_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, uint8_t flags);
-int64_t vma_dealloc_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len);
+int64_t vma_alloc_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, uint64_t cr3,
+						 uint8_t flags);
+int64_t vma_reflag_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, uint64_t cr3,
+						  uint8_t flags);
+int64_t vma_dealloc_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, uint64_t cr3);
 
 const vma_alloc* get_vma_alloc_by_addr (vma* vmaobj, uint64_t address);

@@ -15,6 +15,8 @@
  */
 
 #include <kclib/string.h>
+#include <kernel/error.h>
+#include <kernel/memmgt.h>
 #include <kernel/memory/vma.h>
 #include <liballoc/liballoc.h>
 #include <utils/rbtree.h>
@@ -64,6 +66,95 @@ void destroy_vma (vma* vmaobj) {
 
 	spinlock_release (&vmaobj->lock, flags);
 	kfree (vmaobj);
+}
+
+int64_t vma_dealloc_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, uint64_t cr3) {
+	if (!vmaobj || !vmaobj->vma_rbtree) return -EINVAL;
+	if (mem_start == 0 || mem_len == 0) return -EINVAL;
+	if (mem_start % PAGE_SIZE || mem_len % PAGE_SIZE) return -INTERNAL_EBADADDR;
+
+	// acquire spinlock
+	uint64_t slflags = spinlock_acquire (&vmaobj->lock), mem_end = mem_start + mem_len;
+	int		 error = 0;
+
+	while (true) {
+		vma_alloc  comp = {.mem_start = mem_end};
+		vma_alloc* res = nullptr;
+
+		error = rbtree_find_atmost (vmaobj->vma_rbtree, (rbtree_elem)&comp, (rbtree_elem*)&res);
+		if (error != 0 && error != -INTERNAL_ENOTFOUND) goto release_and_error;
+
+		// case 0: nothing before our range
+		if (error == -INTERNAL_ENOTFOUND) {
+			error = 0;
+			break;
+		}
+
+		uint64_t res_start = res->mem_start, res_end_incl = res->mem_start + res->mem_len - 1,
+				 arg_start = mem_start, arg_end_incl = mem_start + mem_len - 1;
+
+		// for all following cases: {} is detected vma_alloc and [] is given range
+
+		// case 1: {..}..[..]
+		if (res_end_incl < arg_start) break;
+
+		// case 2: {..[..}..]
+		else if (res_start < arg_start && arg_start <= res_end_incl &&
+				 res_end_incl <= arg_end_incl) {
+			uint64_t new_len = arg_start - res_start;
+			dealloc_by_cr3 (cr3, arg_start, (res_end_incl - arg_start + 1) / PAGE_SIZE);
+			res->mem_len = new_len;
+		}
+
+		// case 3: [..{..}..]
+		else if (arg_start <= res_start && res_end_incl <= arg_end_incl) {
+			dealloc_by_cr3 (cr3, res_start, res->mem_len / PAGE_SIZE);
+			error = rbtree_delete (vmaobj->vma_rbtree, (rbtree_elem)res);
+			if (error) goto release_and_error;
+		}
+
+		// case 4: [..{..]..}
+		else if (arg_start <= res_start && res_start <= arg_end_incl &&
+				 arg_end_incl < res_end_incl) {
+			uint64_t new_start = arg_end_incl + 1, new_len = res_end_incl - new_start + 1;
+			dealloc_by_cr3 (cr3, res_start, (res->mem_len - new_len) / PAGE_SIZE);
+			res->mem_start = new_start;
+			res->mem_len = new_len;
+			mem_end--; // prevent infinite loop
+		}
+
+		// case 5: {..[..]..}
+		else if (res_start < arg_start && arg_end_incl < res_end_incl) {
+			vma_alloc* new_b2 = kmalloc (sizeof (vma_alloc));
+			if (!new_b2) {
+				error = -ENOMEM;
+				goto release_and_error;
+			}
+			kmemcpy (new_b2, res, sizeof (vma_alloc));
+			new_b2->mem_start = arg_end_incl + 1;
+			new_b2->mem_len = res_end_incl - new_b2->mem_start + 1;
+
+			error = rbtree_insert (vmaobj->vma_rbtree, (rbtree_elem)new_b2);
+			if (error) {
+				kfree (new_b2);
+				goto release_and_error;
+			}
+
+			dealloc_by_cr3 (cr3, arg_start, (mem_len) / PAGE_SIZE);
+			res->mem_len = arg_start - res_start;
+
+			break; // no other intersecting vma_alloc objects exist
+		}
+
+		else
+			break;
+	}
+
+	error = 0;
+
+release_and_error:
+	spinlock_release (&vmaobj->lock, slflags);
+	return error;
 }
 
 /*!

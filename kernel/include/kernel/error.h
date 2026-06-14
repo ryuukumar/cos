@@ -117,3 +117,5 @@
 #define INTERNAL_ENOTFOUND 2603
 // Already exists
 #define INTERNAL_EEXISTS 2604
+// Invalid address
+#define INTERNAL_EBADADDR 2605
