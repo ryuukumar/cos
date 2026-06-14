@@ -65,3 +65,30 @@ void destroy_vma (vma* vmaobj) {
 	spinlock_release (&vmaobj->lock, flags);
 	kfree (vmaobj);
 }
+
+/*!
+ * Retrieve the vma_alloc object which contains the passed address. The returned vma_alloc object is
+ * guaranteed to be valid until the next mutation to the vma object (typically deletion). If there
+ * is no vma object corresponding to this address, or the vma object is invalid, nullptr is
+ * returned.
+ *
+ * The returned object, if valid, is considered read-only, and changing paramters would cause
+ * undefined behavior.
+ *
+ * @param vmaobj pointer to VMA object
+ * @param address address to search for
+ * @return pointer to vma_alloc object if found, else nullptr
+ */
+const vma_alloc* get_vma_alloc_by_addr (vma* vmaobj, uint64_t address) {
+	if (!vmaobj || !vmaobj->vma_rbtree) return nullptr;
+
+	vma_alloc  comp = {.mem_start = address};
+	vma_alloc* res = nullptr;
+
+	uint64_t flags = spinlock_acquire (&vmaobj->lock);
+	int error = rbtree_find_atmost (vmaobj->vma_rbtree, (rbtree_elem)&comp, (rbtree_elem*)&res);
+	spinlock_release (&vmaobj->lock, flags);
+	if (error) return nullptr;
+
+	return (address >= res->mem_start && address < res->mem_start + res->mem_len) ? res : nullptr;
+}

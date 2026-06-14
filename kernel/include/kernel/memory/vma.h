@@ -47,4 +47,4 @@ int64_t vma_alloc_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, uint
 int64_t vma_reflag_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len, uint8_t flags);
 int64_t vma_dealloc_block (vma* vmaobj, uint64_t mem_start, uint64_t mem_len);
 
-vma_alloc* get_vma_alloc_by_addr (vma* vmaobj, uint64_t address);
+const vma_alloc* get_vma_alloc_by_addr (vma* vmaobj, uint64_t address);
