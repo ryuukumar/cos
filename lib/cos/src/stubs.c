@@ -17,7 +17,9 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #undef errno
 extern int errno;
@@ -30,4 +32,26 @@ int fcntl (int fd, int cmd, ...) {
 	(void)cmd;
 	errno = ENOSYS;
 	return -1;
+}
+
+int gettimeofday (struct timeval* __restrict __p, void* __restrict __tz) {
+	(void)__p, (void)__tz;
+	errno = ENOSYS;
+	return -1;
+}
+
+mode_t umask (mode_t __mask) {
+	(void)__mask;
+	return 0;
+}
+
+long sysconf (int __name) {
+	if (__name == _SC_OPEN_MAX) return 64;
+	errno = EINVAL;
+	return -1;
+}
+
+int utime (const char* __path, const struct utimbuf* times) {
+	(void)__path, (void)times;
+	return 0;
 }
