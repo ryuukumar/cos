@@ -103,8 +103,8 @@ mkdir "$BUILD_DIR/build-gcc-s1"
 cd "$BUILD_DIR/build-gcc-s1"
 ../gcc/gcc-$GCC_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --enable-languages=c --without-headers --disable-hosted-libstdcxx --disable-fixincludes
 
-$MAKE all-gcc
-$MAKE install-gcc
+$MAKE all-gcc -j$NPROC
+$MAKE install-gcc -j$NPROC
 
 export PATH="$INSTALL_DIR/bin:$PATH"
 
@@ -137,4 +137,4 @@ cd "$BUILD_DIR/build-gcc-s2"
 ../gcc/gcc-$GCC_VER/configure --target=x86_64-rcos --prefix="$INSTALL_DIR" --disable-nls --enable-languages=c,c++ --with-sysroot="$SYSROOT_DIR" --with-newlib --disable-fixincludes --enable-threads=single
 
 $MAKE all -j$NPROC
-$MAKE install
+$MAKE install -j$NPROC
